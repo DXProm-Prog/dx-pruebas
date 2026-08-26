@@ -275,7 +275,54 @@ function AdminReturnScreen({ backendUrl, onBack, onEntered }) {
   );
 }
 
-function EntryScreen({ onChooseExplain, onChooseCreate, onChooseAdminReturn, onChooseJoin }) {
+function buildJoinLink(code) {
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?code=${code}`;
+}
+
+function ShareGroup({ groupName, code }) {
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const link = buildJoinLink(code);
+
+  const copy = async (text, setFlag) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setFlag(true);
+      setTimeout(() => setFlag(false), 1500);
+    } catch (e) {
+      // Si el navegador bloquea el portapapeles, no pasa nada grave.
+    }
+  };
+
+  const mailtoHref =
+    `mailto:?subject=${encodeURIComponent(`Invitación a "${groupName}" en Democracia por Promedio`)}` +
+    `&body=${encodeURIComponent(`Únete a nuestro grupo con este código: ${code}\n\nO abre este link directo:\n${link}`)}`;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: BLUE_SOFT }}>
+        <span className="dp-mono text-sm font-semibold" style={{ color: INK }}>{code}</span>
+        <button onClick={() => copy(code, setCopiedCode)} className="dp-body text-[11px] font-medium" style={{ color: BLUE }}>
+          {copiedCode ? "✓ copiado" : "copiar código"}
+        </button>
+      </div>
+      <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: BLUE_SOFT }}>
+        <span className="dp-mono text-[11px] truncate mr-2" style={{ color: INK + "aa" }}>{link}</span>
+        <button onClick={() => copy(link, setCopiedLink)} className="dp-body text-[11px] font-medium shrink-0" style={{ color: BLUE }}>
+          {copiedLink ? "✓ copiado" : "copiar link"}
+        </button>
+      </div>
+      <a
+        href={mailtoHref}
+        className="dp-body text-center text-[12px] px-2.5 py-2 rounded-full font-medium"
+        style={{ background: BLUE, color: "#fff" }}
+      >
+        ✉ Enviar código y link por correo
+      </a>
+    </div>
+  );
+}
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
       <button
@@ -326,6 +373,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
   const [name, setName] = useState("");
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
+  const [requireApproval, setRequireApproval] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -337,11 +385,11 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
       const res = await fetch(`${backendUrl}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, adminName, adminEmail }),
+        body: JSON.stringify({ name, adminName, adminEmail, requireApproval }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo crear el grupo");
-      onCreated({ code: data.code, memberId: data.adminId });
+      onCreated({ code: data.code, memberId: data.adminId, groupName: name });
     } catch (e) {
       setError(
         e.message === "Failed to fetch"
@@ -363,6 +411,35 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
           <Field label="Tu nombre (administrador)" value={adminName} onChange={setAdminName} placeholder="ej. Bernardo" />
           <Field label="Tu correo (para avisarte de solicitudes nuevas)" value={adminEmail} onChange={setAdminEmail} placeholder="ej. bernardo@correo.com" type="email" />
         </div>
+
+        <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
+          ¿Quién puede participar?
+        </div>
+        <div className="flex flex-col gap-2 mb-3">
+          <button
+            onClick={() => setRequireApproval(true)}
+            className="dp-body text-left rounded-lg px-3 py-2 text-[13px]"
+            style={
+              requireApproval
+                ? { background: BLUE, color: "#fff" }
+                : { background: BLUE_SOFT, color: INK }
+            }
+          >
+            Yo apruebo cada solicitud antes de que participen
+          </button>
+          <button
+            onClick={() => setRequireApproval(false)}
+            className="dp-body text-left rounded-lg px-3 py-2 text-[13px]"
+            style={
+              !requireApproval
+                ? { background: BLUE, color: "#fff" }
+                : { background: BLUE_SOFT, color: INK }
+            }
+          >
+            Cualquiera con el código puede participar de inmediato
+          </button>
+        </div>
+
         <PrimaryButton onClick={submit} disabled={loading || !name || !adminName}>
           {loading ? "Creando…" : "Crear grupo"}
         </PrimaryButton>
@@ -372,11 +449,29 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
   );
 }
 
-function JoinGroupScreen({ backendUrl, onBack, onJoined }) {
-  const [code, setCode] = useState("");
+function GroupCreatedScreen({ groupName, code, onContinue }) {
+  return (
+    <div className="px-4 py-6">
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>¡Tu grupo "{groupName}" ya existe!</div>
+        <p className="dp-body text-[12px] mb-3" style={{ color: INK + "88" }}>
+          Comparte el código o el link con quienes quieras invitar.
+        </p>
+        <ShareGroup groupName={groupName} code={code} />
+        <div className="mt-4">
+          <PrimaryButton onClick={onContinue}>Continuar a mi grupo</PrimaryButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined }) {
+  const [code, setCode] = useState(initialCode || "");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
 
   const submit = async () => {
     if (!code || !name) return;
@@ -390,6 +485,7 @@ function JoinGroupScreen({ backendUrl, onBack, onJoined }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo unir al grupo");
+      setStatus(data.status);
       onJoined({ code: code.trim(), memberId: data.memberId });
     } catch (e) {
       setError(
@@ -448,7 +544,11 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
     }
   };
 
-  useEffect(() => { fetchGroup(); }, []);
+  useEffect(() => {
+    fetchGroup();
+    const interval = setInterval(fetchGroup, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const addQuestion = async () => {
     if (!newQText) return;
@@ -534,6 +634,11 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
           <a href={`${backendUrl}/api/groups/${groupCode}/export/respuestas.csv`} className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium" style={{ background: BLUE_SOFT, color: INK }}>⬇ Respuestas (CSV)</a>
           <a href={`${backendUrl}/api/groups/${groupCode}/export/resultados.csv`} className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium" style={{ background: BLUE_SOFT, color: INK }}>⬇ Resultados (CSV)</a>
         </div>
+        {isAdmin && (
+          <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${BLUE}22` }}>
+            <ShareGroup groupName={group.name} code={group.code} />
+          </div>
+        )}
       </div>
 
       {isAdmin && pendingMembers.length > 0 && (
@@ -614,9 +719,20 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
 function DemocraciaPorPromedioConectada() {
   const [backendUrl, setBackendUrl] = useState("https://democracia-por-promedio.onrender.com");
   const [showSettings, setShowSettings] = useState(false);
-  const [view, setView] = useState("entry"); // entry | explain | create | adminReturn | join | connected
+  const [view, setView] = useState("entry"); // entry | explain | create | groupCreated | adminReturn | join | connected
   const [groupCode, setGroupCode] = useState("");
   const [memberId, setMemberId] = useState("");
+  const [createdGroupName, setCreatedGroupName] = useState("");
+  const [urlCode, setUrlCode] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (code) {
+      setUrlCode(code);
+      setView("join");
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
@@ -626,7 +742,7 @@ function DemocraciaPorPromedioConectada() {
           <h1 className="dp-display text-xl font-semibold mt-0.5" style={{ color: INK }}>Democracia por Promedio</h1>
           <ol className="dp-body text-[13px] mt-3 space-y-1.5 leading-snug list-decimal list-outside pl-4">
             {[
-              "Cada miembro propone una cantidad.",
+              "Cada miembro ingresa su propuesta.",
               "Se descartan las propuestas más extremas para evitar que opiniones radicales distorsionen o manipulen el resultado.",
               "Se promedian las propuestas restantes para obtener la decisión grupal.",
             ].map((step, i) => (
@@ -648,11 +764,19 @@ function DemocraciaPorPromedioConectada() {
           <CreateGroupScreen
             backendUrl={backendUrl}
             onBack={() => setView("entry")}
-            onCreated={({ code, memberId }) => {
+            onCreated={({ code, memberId, groupName }) => {
               setGroupCode(code);
               setMemberId(memberId);
-              setView("connected");
+              setCreatedGroupName(groupName);
+              setView("groupCreated");
             }}
+          />
+        )}
+        {view === "groupCreated" && (
+          <GroupCreatedScreen
+            groupName={createdGroupName}
+            code={groupCode}
+            onContinue={() => setView("connected")}
           />
         )}
         {view === "adminReturn" && (
@@ -669,6 +793,7 @@ function DemocraciaPorPromedioConectada() {
         {view === "join" && (
           <JoinGroupScreen
             backendUrl={backendUrl}
+            initialCode={urlCode}
             onBack={() => setView("entry")}
             onJoined={({ code, memberId }) => {
               setGroupCode(code);

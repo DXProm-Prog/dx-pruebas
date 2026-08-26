@@ -38,4 +38,33 @@ async function notifyNewJoinRequest({ adminEmail, groupName, applicantName }) {
   }
 }
 
-module.exports = { notifyNewJoinRequest, isConfigured };
+async function notifyGroupCreated({ adminEmail, groupName, code, frontendUrl }) {
+  if (!isConfigured() || !adminEmail) return { sent: false, reason: "SMTP no configurado o falta correo de administrador" };
+
+  const link = frontendUrl ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}` : null;
+
+  try {
+    const transport = getTransport();
+    await transport.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: adminEmail,
+      subject: `Tu grupo "${groupName}" ya está listo`,
+      text: [
+        `Creaste el grupo "${groupName}" en Democracia por Promedio.`,
+        ``,
+        `Código para invitar personas: ${code}`,
+        link ? `Link directo: ${link}` : null,
+        ``,
+        `Comparte el código o el link con quienes quieras invitar.`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error("No se pudo enviar el correo de bienvenida:", err.message);
+    return { sent: false, reason: err.message };
+  }
+}
+
+module.exports = { notifyNewJoinRequest, notifyGroupCreated, isConfigured };

@@ -5,7 +5,7 @@ const cors = require("cors");
 const { load, save, generateCode, generateId } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { toCsv } = require("./csv");
-const { notifyNewJoinRequest } = require("./email");
+const { notifyNewJoinRequest, notifyGroupCreated } = require("./email");
 
 const app = express();
 app.use(cors());
@@ -13,8 +13,8 @@ app.use(express.json());
 
 // ---------- Grupos ----------
 
-app.post("/api/groups", (req, res) => {
-  const { name, adminName, adminEmail } = req.body;
+app.post("/api/groups", async (req, res) => {
+  const { name, adminName, adminEmail, requireApproval } = req.body;
   if (!name || !adminName) {
     return res.status(400).json({ error: "Faltan campos: name, adminName" });
   }
@@ -27,12 +27,20 @@ app.post("/api/groups", (req, res) => {
     code,
     name,
     admin: { id: adminId, name: adminName, email: adminEmail || null },
+    requireApproval: requireApproval !== false, // por defecto true
     members: [{ id: adminId, name: adminName, approved: true }],
     questions: [],
     responses: [], // { id, questionId, memberId, memberName, value, timestamp }
     results: [], // { questionId, timestamp, trimPercent, n, trimmedCount, average }
   };
   save(db);
+
+  await notifyGroupCreated({
+    adminEmail,
+    groupName: name,
+    code,
+    frontendUrl: process.env.FRONTEND_URL,
+  });
 
   res.json({ code, adminId, group: db.groups[code] });
 });
@@ -53,16 +61,19 @@ app.post("/api/groups/:code/join", async (req, res) => {
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
   const memberId = generateId();
-  group.members.push({ id: memberId, name, approved: false });
+  const autoApprove = group.requireApproval === false;
+  group.members.push({ id: memberId, name, approved: autoApprove });
   save(db);
 
-  await notifyNewJoinRequest({
-    adminEmail: group.admin.email,
-    groupName: group.name,
-    applicantName: name,
-  });
+  if (!autoApprove) {
+    await notifyNewJoinRequest({
+      adminEmail: group.admin.email,
+      groupName: group.name,
+      applicantName: name,
+    });
+  }
 
-  res.json({ memberId, status: "pendiente de aprobación" });
+  res.json({ memberId, status: autoApprove ? "aprobado" : "pendiente de aprobación" });
 });
 
 app.post("/api/groups/:code/members/:memberId/approve", (req, res) => {
