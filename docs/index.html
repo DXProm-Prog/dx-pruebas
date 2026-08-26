@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Democracia por Promedio</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; }
+  .dp-display { font-family: 'Space Grotesk', sans-serif; }
+  .dp-body { font-family: 'Inter', sans-serif; }
+  .dp-mono { font-family: 'JetBrains Mono', monospace; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const INK = "#26415E";
+const BLUE = "#6FA1D6";
+const BLUE_SOFT = "#EAF2FC";
+const WARM_WHITE = "#FDFBF6";
+const PAGE_BG = "#E9EFF8";
+const CORAL = "#E38F72";
+const GREEN = "#5FA87C";
+
+function Field({ label, value, onChange, placeholder, type = "text" }) {
+  return (
+    <label className="dp-body flex flex-col gap-1 text-xs" style={{ color: INK + "99" }}>
+      {label}
+      <input
+        type={type}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="dp-mono rounded-lg px-2.5 py-1.5 text-sm outline-none"
+        style={{ background: BLUE_SOFT, color: INK }}
+      />
+    </label>
+  );
+}
+
+function PrimaryButton({ children, onClick, disabled }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="dp-body w-full flex items-center justify-center gap-1.5 text-sm py-2.5 rounded-full text-white font-medium disabled:opacity-40"
+      style={{ background: BLUE }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
+  const [value, setValue] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [sent, setSent] = useState(false);
+  const [result, setResult] = useState(null);
+  const [computing, setComputing] = useState(false);
+  const [resultError, setResultError] = useState("");
+
+  const sendResponse = async () => {
+    if (!memberId || value === "") return;
+    setSending(true);
+    setSendError("");
+    try {
+      const res = await fetch(
+        `${backendUrl}/api/groups/${groupCode}/questions/${question.id}/responses`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ memberId, value: Number(value) }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al enviar");
+      setSent(true);
+      setValue("");
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const computeResults = async () => {
+    setComputing(true);
+    setResultError("");
+    try {
+      const res = await fetch(
+        `${backendUrl}/api/groups/${groupCode}/questions/${question.id}/results`
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al calcular");
+      setResult(data);
+    } catch (e) {
+      setResultError(e.message);
+    } finally {
+      setComputing(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl p-4 mb-4 shadow-sm" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+      <div className="dp-body text-[15px] mb-1" style={{ color: INK }}>{question.text}</div>
+      <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>recorte: {question.trimPercent}%</div>
+
+      <div className="flex items-center gap-2 mb-2">
+        <input
+          type="number"
+          placeholder="tu propuesta"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="dp-mono flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
+          style={{ background: BLUE_SOFT, color: INK }}
+        />
+        <button
+          onClick={sendResponse}
+          disabled={sending || value === "" || !memberId}
+          className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: GREEN }}
+        >
+          📤 {sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+      {sent && (
+        <div className="dp-body text-[11px] flex items-center gap-1 mb-2" style={{ color: GREEN }}>
+          ✅ Propuesta guardada
+        </div>
+      )}
+      {sendError && (
+        <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>
+      )}
+
+      <button
+        onClick={computeResults}
+        disabled={computing}
+        className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full font-medium disabled:opacity-40"
+        style={{ background: BLUE, color: "#fff" }}
+      >
+        ✨ {computing ? "Calculando…" : "Calcular decisión colectiva"}
+      </button>
+      {resultError && (
+        <div className="dp-body text-[11px] mt-2" style={{ color: CORAL }}>{resultError}</div>
+      )}
+
+      {result && (
+        <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          <div className="dp-body text-[11px] font-medium mb-2.5" style={{ color: INK + "99" }}>
+            {result.n} propuestas · {result.trimmedCount} recortadas de cada extremo
+            {result.suggestedMinPercent > question.trimPercent && (
+              <> · mínimo sugerido: {result.suggestedMinPercent}%</>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {result.sorted.map((v, i) => {
+              const isTrimmed = i < result.trimmedCount || i >= result.sorted.length - result.trimmedCount;
+              return (
+                <span
+                  key={i}
+                  className="dp-mono text-xs px-2 py-1 rounded-md"
+                  style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
+                >
+                  {v}
+                </span>
+              );
+            })}
+          </div>
+          <div className="dp-mono text-xs mb-2.5 leading-relaxed" style={{ color: INK + "aa" }}>
+            ({result.kept.join(" + ")}) ÷ {result.kept.length} = {result.average.toFixed(2)}
+          </div>
+          <div className="flex items-baseline justify-between pt-2.5" style={{ borderTop: `1px solid ${BLUE}33` }}>
+            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+            <span className="dp-display text-3xl font-bold" style={{ color: BLUE }}>{result.average.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExplanationScreen({ onBack }) {
+  return (
+    <div className="px-4 py-6">
+      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>¿Qué es la democracia por promedio?</div>
+        <p className="dp-body text-[13px] leading-relaxed" style={{ color: INK + "aa" }}>
+          Es una forma de tomar decisiones en grupo usando números en vez de
+          votos de sí/no. Cada persona propone una cantidad (una cuota, un
+          porcentaje, un presupuesto), y la decisión final es el promedio de
+          todas las propuestas — pero antes de promediar, se descartan las
+          propuestas más extremas para que nadie pueda manipular el
+          resultado con un número absurdo.
+        </p>
+      </div>
+
+      <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>Ejemplo</div>
+        <p className="dp-body text-[13px] leading-relaxed mb-2" style={{ color: INK + "aa" }}>
+          6 vecinos proponen una cuota mensual: $750, $800, $820, $900, $950
+          y $3,000 (este último parece un error o un intento de manipular).
+        </p>
+        <p className="dp-body text-[13px] leading-relaxed mb-2" style={{ color: INK + "aa" }}>
+          Con 6 participantes, la app recorta automáticamente al menos la
+          propuesta más alta y la más baja antes de promediar. El resultado
+          usa solo $800, $820, $900 y $950 → una decisión de <b>$867.50</b>,
+          sin que el $3,000 la distorsione.
+        </p>
+      </div>
+
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>Cómo funciona la app</div>
+        <ul className="dp-body text-[13px] leading-relaxed space-y-1.5 list-disc list-outside pl-4" style={{ color: INK + "aa" }}>
+          <li>Un administrador crea un grupo y comparte el código con los demás.</li>
+          <li>Cada persona se une con ese código y espera la aprobación del administrador.</li>
+          <li>El administrador agrega preguntas y define el % de recorte.</li>
+          <li>Cada miembro aprobado envía su propuesta numérica.</li>
+          <li>La app calcula y muestra la decisión colectiva, con la fórmula visible.</li>
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function AdminReturnScreen({ backendUrl, onBack, onEntered }) {
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!code) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${code.trim()}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Grupo no encontrado");
+      onEntered({ code: code.trim(), memberId: data.admin.id });
+    } catch (e) {
+      setError(
+        e.message === "Failed to fetch"
+          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          : e.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="px-4 py-6">
+      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Ingresar a un grupo que administras</div>
+        <p className="dp-body text-[12px] mb-3" style={{ color: INK + "77" }}>
+          Solo necesitas el código del grupo que creaste.
+        </p>
+        <div className="flex flex-col gap-2.5 mb-3">
+          <Field label="Código del grupo" value={code} onChange={setCode} placeholder="ej. MC231G" />
+        </div>
+        <PrimaryButton onClick={submit} disabled={loading || !code}>
+          {loading ? "Entrando…" : "Entrar como administrador"}
+        </PrimaryButton>
+        {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
+      </div>
+    </div>
+  );
+}
+
+function EntryScreen({ onChooseExplain, onChooseCreate, onChooseAdminReturn, onChooseJoin }) {
+  return (
+    <div className="px-4 py-6 flex flex-col gap-3">
+      <button
+        onClick={onChooseExplain}
+        className="dp-body text-left rounded-2xl p-4 shadow-sm"
+        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
+      >
+        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>📖 Explicación y ejemplos</div>
+        <div className="text-xs" style={{ color: INK + "88" }}>
+          Cómo funciona la democracia por promedio y la app.
+        </div>
+      </button>
+      <button
+        onClick={onChooseCreate}
+        className="dp-body text-left rounded-2xl p-4 shadow-sm"
+        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
+      >
+        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>➕ Crear un grupo nuevo</div>
+        <div className="text-xs" style={{ color: INK + "88" }}>
+          Serás el administrador. Podrás agregar preguntas y aprobar a quienes se unan.
+        </div>
+      </button>
+      <button
+        onClick={onChooseAdminReturn}
+        className="dp-body text-left rounded-2xl p-4 shadow-sm"
+        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
+      >
+        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🔧 Ingresar a un grupo que administras</div>
+        <div className="text-xs" style={{ color: INK + "88" }}>
+          Ya creaste este grupo antes y necesitas volver a entrar.
+        </div>
+      </button>
+      <button
+        onClick={onChooseJoin}
+        className="dp-body text-left rounded-2xl p-4 shadow-sm"
+        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
+      >
+        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🔑 Unirme a un grupo con un código</div>
+        <div className="text-xs" style={{ color: INK + "88" }}>
+          Alguien ya creó un grupo y te compartió su código.
+        </div>
+      </button>
+    </div>
+  );
+}
+
+function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
+  const [name, setName] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!name || !adminName) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, adminName, adminEmail }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo crear el grupo");
+      onCreated({ code: data.code, memberId: data.adminId });
+    } catch (e) {
+      setError(
+        e.message === "Failed to fetch"
+          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          : e.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="px-4 py-6">
+      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>Crear un grupo nuevo</div>
+        <div className="flex flex-col gap-2.5 mb-3">
+          <Field label="Nombre del grupo" value={name} onChange={setName} placeholder="ej. Condominio Las Flores" />
+          <Field label="Tu nombre (administrador)" value={adminName} onChange={setAdminName} placeholder="ej. Bernardo" />
+          <Field label="Tu correo (para avisarte de solicitudes nuevas)" value={adminEmail} onChange={setAdminEmail} placeholder="ej. bernardo@correo.com" type="email" />
+        </div>
+        <PrimaryButton onClick={submit} disabled={loading || !name || !adminName}>
+          {loading ? "Creando…" : "Crear grupo"}
+        </PrimaryButton>
+        {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
+      </div>
+    </div>
+  );
+}
+
+function JoinGroupScreen({ backendUrl, onBack, onJoined }) {
+  const [code, setCode] = useState("");
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async () => {
+    if (!code || !name) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${code.trim()}/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo unir al grupo");
+      onJoined({ code: code.trim(), memberId: data.memberId });
+    } catch (e) {
+      setError(
+        e.message === "Failed to fetch"
+          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          : e.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="px-4 py-6">
+      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>Unirme con un código</div>
+        <div className="flex flex-col gap-2.5 mb-3">
+          <Field label="Código del grupo" value={code} onChange={setCode} placeholder="ej. MC231G" />
+          <Field label="Tu nombre" value={name} onChange={setName} placeholder="ej. Luis" />
+        </div>
+        <PrimaryButton onClick={submit} disabled={loading || !code || !name}>
+          {loading ? "Enviando…" : "Unirme"}
+        </PrimaryButton>
+        {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
+      </div>
+    </div>
+  );
+}
+
+function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
+  const [group, setGroup] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [newQText, setNewQText] = useState("");
+  const [newQTrim, setNewQTrim] = useState("5");
+  const [addingQ, setAddingQ] = useState(false);
+  const [approving, setApproving] = useState("");
+
+  const fetchGroup = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Grupo no encontrado");
+      setGroup(data);
+    } catch (e) {
+      setError(
+        e.message === "Failed to fetch"
+          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          : e.message
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchGroup(); }, []);
+
+  const addQuestion = async () => {
+    if (!newQText) return;
+    setAddingQ(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: newQText, trimPercent: Number(newQTrim) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al crear la pregunta");
+      setNewQText("");
+      await fetchGroup();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setAddingQ(false);
+    }
+  };
+
+  const approve = async (id) => {
+    setApproving(id);
+    try {
+      await fetch(`${backendUrl}/api/groups/${groupCode}/members/${id}/approve`, { method: "POST" });
+      await fetchGroup();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setApproving("");
+    }
+  };
+
+  const reject = async (id) => {
+    setApproving(id);
+    try {
+      await fetch(`${backendUrl}/api/groups/${groupCode}/members/${id}/reject`, { method: "POST" });
+      await fetchGroup();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setApproving("");
+    }
+  };
+
+  if (loading && !group) {
+    return <div className="dp-body text-sm text-center py-10" style={{ color: INK + "88" }}>Conectando…</div>;
+  }
+  if (error && !group) {
+    return (
+      <div className="px-4 py-6">
+        <div className="dp-body text-[13px]" style={{ color: CORAL }}>{error}</div>
+        <button onClick={onExit} className="dp-body text-xs mt-3" style={{ color: INK + "88" }}>← Volver</button>
+      </div>
+    );
+  }
+  if (!group) return null;
+
+  const me = group.members.find((m) => m.id === memberId);
+  const isAdmin = group.admin.id === memberId;
+  const pendingMembers = group.members.filter((m) => !m.approved);
+
+  return (
+    <div className="px-4 py-4">
+      <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="dp-body text-sm font-semibold" style={{ color: INK }}>{group.name}</div>
+            <div className="dp-mono text-xs mt-0.5" style={{ color: INK + "88" }}>código: {group.code}</div>
+          </div>
+          <button onClick={onExit} className="dp-body text-[11px]" style={{ color: INK + "77" }}>Salir</button>
+        </div>
+        <div className="dp-body text-[11px] mt-2" style={{ color: INK + "88" }}>
+          {group.members.filter((m) => m.approved).length} miembro(s) aprobado(s)
+          {isAdmin && " · eres el administrador"}
+        </div>
+        {me && !me.approved && (
+          <div className="dp-body text-[12px] mt-2 rounded-lg px-2.5 py-1.5" style={{ background: CORAL + "22", color: CORAL }}>
+            Tu participación está pendiente de aprobación del administrador.
+          </div>
+        )}
+        <div className="flex gap-2 mt-2.5">
+          <a href={`${backendUrl}/api/groups/${groupCode}/export/respuestas.csv`} className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium" style={{ background: BLUE_SOFT, color: INK }}>⬇ Respuestas (CSV)</a>
+          <a href={`${backendUrl}/api/groups/${groupCode}/export/resultados.csv`} className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium" style={{ background: BLUE_SOFT, color: INK }}>⬇ Resultados (CSV)</a>
+        </div>
+      </div>
+
+      {isAdmin && pendingMembers.length > 0 && (
+        <div className="rounded-2xl p-4 mb-4" style={{ background: CORAL + "15", border: `1.5px solid ${CORAL}55` }}>
+          <div className="dp-body text-xs font-semibold mb-2.5" style={{ color: CORAL }}>
+            {pendingMembers.length} solicitud(es) pendiente(s)
+          </div>
+          <div className="flex flex-col gap-2">
+            {pendingMembers.map((m) => (
+              <div key={m.id} className="flex items-center justify-between">
+                <span className="dp-body text-sm" style={{ color: INK }}>{m.name}</span>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => approve(m.id)}
+                    disabled={approving === m.id}
+                    className="dp-body text-[11px] px-2.5 py-1.5 rounded-full text-white font-medium disabled:opacity-40"
+                    style={{ background: GREEN }}
+                  >
+                    {approving === m.id ? "…" : "Aprobar"}
+                  </button>
+                  <button
+                    onClick={() => reject(m.id)}
+                    disabled={approving === m.id}
+                    className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium disabled:opacity-40"
+                    style={{ background: "#fff", color: CORAL, border: `1px solid ${CORAL}55` }}
+                  >
+                    Rechazar
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isAdmin && (
+        <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+          <div className="dp-body text-xs font-medium mb-3" style={{ color: INK }}>Nueva pregunta</div>
+          <textarea
+            rows={2}
+            value={newQText}
+            onChange={(e) => setNewQText(e.target.value)}
+            placeholder="Escribe la pregunta…"
+            className="dp-body w-full resize-none rounded-lg px-2.5 py-2 text-sm outline-none mb-2"
+            style={{ background: BLUE_SOFT, color: INK }}
+          />
+          <div className="flex items-center gap-2">
+            <div className="dp-body flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full" style={{ background: BLUE_SOFT, color: INK }}>
+              <span style={{ opacity: 0.6 }}>Recorte</span>
+              <input type="number" value={newQTrim} onChange={(e) => setNewQTrim(e.target.value)} className="w-9 bg-transparent dp-mono text-center outline-none font-medium" />
+              <span style={{ opacity: 0.6 }}>%</span>
+            </div>
+            <button
+              onClick={addQuestion}
+              disabled={addingQ || !newQText}
+              className="dp-body flex-1 flex items-center justify-center gap-1.5 text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+              style={{ background: BLUE }}
+            >
+              ➕ Agregar pregunta
+            </button>
+          </div>
+        </div>
+      )}
+
+      {group.questions.length === 0 && (
+        <div className="dp-body text-xs text-center py-4" style={{ color: INK + "77" }}>
+          Este grupo todavía no tiene preguntas.
+        </div>
+      )}
+
+      {group.questions.map((q) => (
+        <QuestionRunner key={q.id} backendUrl={backendUrl} groupCode={groupCode} memberId={memberId} question={q} />
+      ))}
+    </div>
+  );
+}
+
+function DemocraciaPorPromedioConectada() {
+  const [backendUrl, setBackendUrl] = useState("https://democracia-por-promedio.onrender.com");
+  const [showSettings, setShowSettings] = useState(false);
+  const [view, setView] = useState("entry"); // entry | explain | create | adminReturn | join | connected
+  const [groupCode, setGroupCode] = useState("");
+  const [memberId, setMemberId] = useState("");
+
+  return (
+    <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
+      <div className="w-full max-w-[420px] rounded-[32px] overflow-hidden shadow-xl" style={{ background: PAGE_BG, border: `1px solid ${BLUE}33` }}>
+        <div className="px-6 pt-7 pb-5" style={{ background: WARM_WHITE }}>
+          <div className="dp-display text-4xl font-bold tracking-tight" style={{ color: BLUE }}>D×%</div>
+          <h1 className="dp-display text-xl font-semibold mt-0.5" style={{ color: INK }}>Democracia por Promedio</h1>
+          <ol className="dp-body text-[13px] mt-3 space-y-1.5 leading-snug list-decimal list-outside pl-4">
+            {[
+              "Cada miembro propone una cantidad.",
+              "Se descartan las propuestas más extremas para evitar que opiniones radicales distorsionen o manipulen el resultado.",
+              "Se promedian las propuestas restantes para obtener la decisión grupal.",
+            ].map((step, i) => (
+              <li key={i} style={{ color: INK + "99" }}>{step}</li>
+            ))}
+          </ol>
+        </div>
+
+        {view === "entry" && (
+          <EntryScreen
+            onChooseExplain={() => setView("explain")}
+            onChooseCreate={() => setView("create")}
+            onChooseAdminReturn={() => setView("adminReturn")}
+            onChooseJoin={() => setView("join")}
+          />
+        )}
+        {view === "explain" && <ExplanationScreen onBack={() => setView("entry")} />}
+        {view === "create" && (
+          <CreateGroupScreen
+            backendUrl={backendUrl}
+            onBack={() => setView("entry")}
+            onCreated={({ code, memberId }) => {
+              setGroupCode(code);
+              setMemberId(memberId);
+              setView("connected");
+            }}
+          />
+        )}
+        {view === "adminReturn" && (
+          <AdminReturnScreen
+            backendUrl={backendUrl}
+            onBack={() => setView("entry")}
+            onEntered={({ code, memberId }) => {
+              setGroupCode(code);
+              setMemberId(memberId);
+              setView("connected");
+            }}
+          />
+        )}
+        {view === "join" && (
+          <JoinGroupScreen
+            backendUrl={backendUrl}
+            onBack={() => setView("entry")}
+            onJoined={({ code, memberId }) => {
+              setGroupCode(code);
+              setMemberId(memberId);
+              setView("connected");
+            }}
+          />
+        )}
+        {view === "connected" && (
+          <ConnectedScreen
+            backendUrl={backendUrl}
+            groupCode={groupCode}
+            memberId={memberId}
+            onExit={() => {
+              setGroupCode("");
+              setMemberId("");
+              setView("entry");
+            }}
+          />
+        )}
+
+        <div className="px-4 pb-4">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="dp-body text-[10px]"
+            style={{ color: INK + "55" }}
+          >
+            servidor: {backendUrl} {showSettings ? "▲" : "▼"}
+          </button>
+          {showSettings && (
+            <input
+              value={backendUrl}
+              onChange={(e) => setBackendUrl(e.target.value)}
+              className="dp-mono w-full mt-1.5 rounded-lg px-2.5 py-1.5 text-xs outline-none"
+              style={{ background: BLUE_SOFT, color: INK }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<DemocraciaPorPromedioConectada />);
+</script>
+</body>
+</html>
