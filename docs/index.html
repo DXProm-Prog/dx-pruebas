@@ -767,11 +767,27 @@ function DemocraciaPorPromedioConectada() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
-    if (code) {
+    const member = params.get("member");
+    if (code && member) {
+      // Link de sesión propia (admin o miembro ya identificado): entra directo, sin pedir nada.
+      setGroupCode(code);
+      setMemberId(member);
+      setView("connected");
+    } else if (code) {
+      // Link de invitación compartido: pide nombre antes de unirse.
       setUrlCode(code);
       setView("join");
     }
   }, []);
+
+  const persistSession = (code, member) => {
+    const url = `${window.location.pathname}?code=${code}&member=${member}`;
+    window.history.replaceState(null, "", url);
+  };
+
+  const clearSession = () => {
+    window.history.replaceState(null, "", window.location.pathname);
+  };
 
   return (
     <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
@@ -807,6 +823,7 @@ function DemocraciaPorPromedioConectada() {
               setGroupCode(code);
               setMemberId(memberId);
               setCreatedGroupName(groupName);
+              persistSession(code, memberId);
               setView("groupCreated");
             }}
           />
@@ -825,6 +842,7 @@ function DemocraciaPorPromedioConectada() {
             onEntered={({ code, memberId }) => {
               setGroupCode(code);
               setMemberId(memberId);
+              persistSession(code, memberId);
               setView("connected");
             }}
           />
@@ -837,6 +855,7 @@ function DemocraciaPorPromedioConectada() {
             onJoined={({ code, memberId }) => {
               setGroupCode(code);
               setMemberId(memberId);
+              persistSession(code, memberId);
               setView("connected");
             }}
           />
@@ -849,6 +868,7 @@ function DemocraciaPorPromedioConectada() {
             onExit={() => {
               setGroupCode("");
               setMemberId("");
+              clearSession();
               setView("entry");
             }}
           />
