@@ -474,6 +474,15 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [previewName, setPreviewName] = useState("");
+
+  useEffect(() => {
+    if (!initialCode) return;
+    fetch(`${backendUrl}/api/groups/${initialCode}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => setPreviewName(data.name))
+      .catch(() => {});
+  }, [initialCode]);
 
   const submit = async () => {
     if (!code || !name) return;
@@ -504,7 +513,13 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined }) {
     <div className="px-4 py-6">
       <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>Unirme con un código</div>
+        <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Unirme con un código</div>
+        {previewName && (
+          <p className="dp-body text-[12px] mb-3" style={{ color: GREEN }}>
+            Te vas a unir a: <b>{previewName}</b>
+          </p>
+        )}
+        {!previewName && <div className="mb-3" />}
         <div className="flex flex-col gap-2.5 mb-3">
           <Field label="Código del grupo" value={code} onChange={setCode} placeholder="ej. MC231G" />
           <Field label="Tu nombre" value={name} onChange={setName} placeholder="ej. Luis" />
@@ -638,6 +653,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
         </div>
         {isAdmin && (
           <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${BLUE}22` }}>
+            <div className="dp-body text-xs font-medium mb-2" style={{ color: INK }}>
+              Link directo para invitar usuarios a este grupo
+            </div>
             <ShareGroup groupName={group.name} code={group.code} />
           </div>
         )}
