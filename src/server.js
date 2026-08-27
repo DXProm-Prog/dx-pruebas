@@ -14,7 +14,7 @@ app.use(express.json());
 // ---------- Grupos ----------
 
 app.post("/api/groups", async (req, res) => {
-  const { name, adminName, adminEmail, requireApproval } = req.body;
+  const { name, adminName, adminEmail, requireApproval, secretResponses } = req.body;
   if (!name || !adminName) {
     return res.status(400).json({ error: "Faltan campos: name, adminName" });
   }
@@ -28,6 +28,7 @@ app.post("/api/groups", async (req, res) => {
     name,
     admin: { id: adminId, name: adminName, email: adminEmail || null },
     requireApproval: requireApproval !== false, // por defecto true
+    secretResponses: secretResponses !== false, // por defecto true (propuestas secretas)
     members: [{ id: adminId, name: adminName, approved: true }],
     questions: [],
     responses: [], // { id, questionId, memberId, memberName, value, timestamp }
@@ -164,11 +165,19 @@ app.get("/api/groups/:code/questions/:questionId/results", (req, res) => {
   const question = group.questions.find((q) => q.id === req.params.questionId);
   if (!question) return res.status(404).json({ error: "Pregunta no encontrada" });
 
-  const values = group.responses
-    .filter((r) => r.questionId === question.id)
-    .map((r) => r.value);
+  const relevantResponses = group.responses.filter((r) => r.questionId === question.id);
+  const values = relevantResponses.map((r) => r.value);
 
   const result = computeTrimmedMean(values, question.trimPercent);
+
+  // Solo se arma la lista con nombres si el grupo NO es secreto. Si es
+  // secreto, el backend ni siquiera envía los nombres al navegador.
+  let sortedWithNames = null;
+  if (group.secretResponses === false) {
+    sortedWithNames = [...relevantResponses]
+      .sort((a, b) => a.value - b.value)
+      .map((r) => ({ value: r.value, name: r.memberName }));
+  }
 
   group.results.push({
     questionId: question.id,
@@ -183,6 +192,8 @@ app.get("/api/groups/:code/questions/:questionId/results", (req, res) => {
   res.json({
     question,
     suggestedMinPercent: suggestedMinPercent(result.n),
+    secretResponses: group.secretResponses !== false,
+    sortedWithNames,
     ...result,
   });
 });

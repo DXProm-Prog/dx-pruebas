@@ -169,13 +169,14 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
           <div className="flex flex-wrap gap-1.5 mb-3">
             {result.sorted.map((v, i) => {
               const isTrimmed = i < result.trimmedCount || i >= result.sorted.length - result.trimmedCount;
+              const named = result.sortedWithNames && result.sortedWithNames[i];
               return (
                 <span
                   key={i}
                   className="dp-mono text-xs px-2 py-1 rounded-md"
                   style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
                 >
-                  {v}
+                  {named ? `${named.name}: ${named.value}` : v}
                 </span>
               );
             })}
@@ -383,6 +384,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
   const [adminName, setAdminName] = useState("");
   const [adminEmail, setAdminEmail] = useState("");
   const [requireApproval, setRequireApproval] = useState(true);
+  const [secretResponses, setSecretResponses] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -394,7 +396,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
       const res = await fetch(`${backendUrl}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, adminName, adminEmail, requireApproval }),
+        body: JSON.stringify({ name, adminName, adminEmail, requireApproval, secretResponses }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo crear el grupo");
@@ -446,6 +448,34 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
             }
           >
             Cualquiera con el código puede participar de inmediato
+          </button>
+        </div>
+
+        <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
+          ¿Las propuestas son secretas?
+        </div>
+        <div className="flex flex-col gap-2 mb-3">
+          <button
+            onClick={() => setSecretResponses(true)}
+            className="dp-body text-left rounded-lg px-3 py-2 text-[13px]"
+            style={
+              secretResponses
+                ? { background: BLUE, color: "#fff" }
+                : { background: BLUE_SOFT, color: INK }
+            }
+          >
+            Secretas — solo se ven los números, no quién propuso qué
+          </button>
+          <button
+            onClick={() => setSecretResponses(false)}
+            className="dp-body text-left rounded-lg px-3 py-2 text-[13px]"
+            style={
+              !secretResponses
+                ? { background: BLUE, color: "#fff" }
+                : { background: BLUE_SOFT, color: INK }
+            }
+          >
+            Visibles — se muestra el nombre junto a cada propuesta
           </button>
         </div>
 
