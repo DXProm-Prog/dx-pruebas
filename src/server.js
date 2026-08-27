@@ -36,14 +36,16 @@ app.post("/api/groups", async (req, res) => {
   };
   save(db);
 
-  await notifyGroupCreated({
+  res.json({ code, adminId, group: db.groups[code] });
+
+  // El correo se manda DESPUÉS de responder, en segundo plano: si el
+  // envío falla o se traba, no debe impedir que el grupo se cree.
+  notifyGroupCreated({
     adminEmail,
     groupName: name,
     code,
     frontendUrl: process.env.FRONTEND_URL,
-  });
-
-  res.json({ code, adminId, group: db.groups[code] });
+  }).catch((err) => console.error("Error de correo (bienvenida):", err.message));
 });
 
 app.get("/api/groups/:code", (req, res) => {
@@ -66,15 +68,15 @@ app.post("/api/groups/:code/join", async (req, res) => {
   group.members.push({ id: memberId, name, approved: autoApprove });
   save(db);
 
+  res.json({ memberId, status: autoApprove ? "aprobado" : "pendiente de aprobación" });
+
   if (!autoApprove) {
-    await notifyNewJoinRequest({
+    notifyNewJoinRequest({
       adminEmail: group.admin.email,
       groupName: group.name,
       applicantName: name,
-    });
+    }).catch((err) => console.error("Error de correo (solicitud):", err.message));
   }
-
-  res.json({ memberId, status: autoApprove ? "aprobado" : "pendiente de aprobación" });
 });
 
 app.post("/api/groups/:code/members/:memberId/approve", (req, res) => {
