@@ -19,7 +19,7 @@ app.post("/api/groups", async (req, res) => {
     return res.status(400).json({ error: "Faltan campos: name, adminName" });
   }
 
-  const db = load();
+  const db = await load();
   const code = generateCode();
   const adminId = generateId();
 
@@ -34,7 +34,7 @@ app.post("/api/groups", async (req, res) => {
     responses: [], // { id, questionId, memberId, memberName, value, timestamp }
     results: [], // { questionId, timestamp, trimPercent, n, trimmedCount, average }
   };
-  save(db);
+  await save(db);
 
   res.json({ code, adminId, group: db.groups[code] });
 
@@ -48,8 +48,8 @@ app.post("/api/groups", async (req, res) => {
   }).catch((err) => console.error("Error de correo (bienvenida):", err.message));
 });
 
-app.get("/api/groups/:code", (req, res) => {
-  const db = load();
+app.get("/api/groups/:code", async (req, res) => {
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
   res.json(group);
@@ -59,14 +59,14 @@ app.post("/api/groups/:code/join", async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: "Falta el campo: name" });
 
-  const db = load();
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
   const memberId = generateId();
   const autoApprove = group.requireApproval === false;
   group.members.push({ id: memberId, name, approved: autoApprove });
-  save(db);
+  await save(db);
 
   res.json({ memberId, status: autoApprove ? "aprobado" : "pendiente de aprobación" });
 
@@ -82,8 +82,8 @@ app.post("/api/groups/:code/join", async (req, res) => {
   }
 });
 
-app.post("/api/groups/:code/members/:memberId/approve", (req, res) => {
-  const db = load();
+app.post("/api/groups/:code/members/:memberId/approve", async (req, res) => {
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
@@ -91,13 +91,13 @@ app.post("/api/groups/:code/members/:memberId/approve", (req, res) => {
   if (!member) return res.status(404).json({ error: "Miembro no encontrado" });
 
   member.approved = true;
-  save(db);
+  await save(db);
   res.json(member);
 });
 
 // El administrador rechaza (elimina) una solicitud pendiente.
-app.post("/api/groups/:code/members/:memberId/reject", (req, res) => {
-  const db = load();
+app.post("/api/groups/:code/members/:memberId/reject", async (req, res) => {
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
@@ -107,37 +107,37 @@ app.post("/api/groups/:code/members/:memberId/reject", (req, res) => {
     return res.status(404).json({ error: "Miembro no encontrado" });
   }
 
-  save(db);
+  await save(db);
   res.json({ status: "rechazado" });
 });
 
 // ---------- Preguntas ----------
 
-app.post("/api/groups/:code/questions", (req, res) => {
+app.post("/api/groups/:code/questions", async (req, res) => {
   const { text, trimPercent } = req.body;
   if (!text || trimPercent === undefined) {
     return res.status(400).json({ error: "Faltan campos: text, trimPercent" });
   }
 
-  const db = load();
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
   const question = { id: generateId(), text, trimPercent: Number(trimPercent) };
   group.questions.push(question);
-  save(db);
+  await save(db);
 
   res.json(question);
 });
 
 // Un miembro aprobado envía su propuesta numérica para una pregunta.
-app.post("/api/groups/:code/questions/:questionId/responses", (req, res) => {
+app.post("/api/groups/:code/questions/:questionId/responses", async (req, res) => {
   const { memberId, value } = req.body;
   if (!memberId || value === undefined) {
     return res.status(400).json({ error: "Faltan campos: memberId, value" });
   }
 
-  const db = load();
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
@@ -155,15 +155,15 @@ app.post("/api/groups/:code/questions/:questionId/responses", (req, res) => {
     value: Number(value),
     timestamp: new Date().toISOString(),
   });
-  save(db);
+  await save(db);
 
   res.json({ status: "guardado" });
 });
 
 // Calcula el promedio recortado con las respuestas guardadas y lo registra
 // en el historial de resultados del grupo.
-app.get("/api/groups/:code/questions/:questionId/results", (req, res) => {
-  const db = load();
+app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
@@ -192,7 +192,7 @@ app.get("/api/groups/:code/questions/:questionId/results", (req, res) => {
     trimmedCount: result.trimmedCount,
     average: result.average,
   });
-  save(db);
+  await save(db);
 
   res.json({
     question,
@@ -208,8 +208,8 @@ app.get("/api/groups/:code/questions/:questionId/results", (req, res) => {
 // Descarga todas las respuestas del grupo en un .csv (se abre en Excel,
 // Numbers, Google Sheets, lo que sea). Abrir esta URL en el navegador ya
 // descarga el archivo directamente.
-app.get("/api/groups/:code/export/respuestas.csv", (req, res) => {
-  const db = load();
+app.get("/api/groups/:code/export/respuestas.csv", async (req, res) => {
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).send("Grupo no encontrado");
 
@@ -225,8 +225,8 @@ app.get("/api/groups/:code/export/respuestas.csv", (req, res) => {
 });
 
 // Descarga el historial de decisiones colectivas calculadas.
-app.get("/api/groups/:code/export/resultados.csv", (req, res) => {
-  const db = load();
+app.get("/api/groups/:code/export/resultados.csv", async (req, res) => {
+  const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).send("Grupo no encontrado");
 
