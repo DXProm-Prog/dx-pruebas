@@ -83,6 +83,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
       if (!res.ok) throw new Error(data.error || "Error al enviar");
       setSent(true);
       setValue("");
+      await computeResults();
     } catch (e) {
       setSendError(e.message);
     } finally {
@@ -90,8 +91,8 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
     }
   };
 
-  const computeResults = async () => {
-    setComputing(true);
+  const computeResults = async (silent) => {
+    if (!silent) setComputing(true);
     setResultError("");
     try {
       const res = await fetch(
@@ -101,11 +102,17 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
       if (!res.ok) throw new Error(data.error || "Error al calcular");
       setResult(data);
     } catch (e) {
-      setResultError(e.message);
+      if (!silent) setResultError(e.message);
     } finally {
-      setComputing(false);
+      if (!silent) setComputing(false);
     }
   };
+
+  useEffect(() => {
+    if (!result) return;
+    const interval = setInterval(() => computeResults(true), 15000);
+    return () => clearInterval(interval);
+  }, [Boolean(result)]);
 
   return (
     <div className="rounded-2xl p-4 mb-4 shadow-sm" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
