@@ -541,6 +541,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
   const [newQTrim, setNewQTrim] = useState("5");
   const [addingQ, setAddingQ] = useState(false);
   const [approving, setApproving] = useState("");
+  const prevPendingCount = React.useRef(null);
 
   const fetchGroup = async () => {
     setLoading(true);
@@ -550,6 +551,21 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Grupo no encontrado");
       setGroup(data);
+
+      const isAdminNow = data.admin.id === memberId;
+      const pendingCount = data.members.filter((m) => !m.approved).length;
+      if (
+        isAdminNow &&
+        prevPendingCount.current !== null &&
+        pendingCount > prevPendingCount.current &&
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted"
+      ) {
+        new Notification("Nueva solicitud pendiente", {
+          body: `Alguien quiere unirse a "${data.name}". Entra a la app para aprobar o rechazar.`,
+        });
+      }
+      prevPendingCount.current = pendingCount;
     } catch (e) {
       setError(
         e.message === "Failed to fetch"
@@ -564,6 +580,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
   useEffect(() => {
     fetchGroup();
     const interval = setInterval(fetchGroup, 15000);
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
     return () => clearInterval(interval);
   }, []);
 
