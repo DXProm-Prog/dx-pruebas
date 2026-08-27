@@ -75,6 +75,9 @@ app.post("/api/groups/:code/join", async (req, res) => {
       adminEmail: group.admin.email,
       groupName: group.name,
       applicantName: name,
+      code: group.code,
+      adminId: group.admin.id,
+      frontendUrl: process.env.FRONTEND_URL,
     }).catch((err) => console.error("Error de correo (solicitud):", err.message));
   }
 });

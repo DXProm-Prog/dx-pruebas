@@ -40,11 +40,19 @@ async function sendEmail({ to, subject, text }) {
   }
 }
 
-async function notifyNewJoinRequest({ adminEmail, groupName, applicantName }) {
+async function notifyNewJoinRequest({ adminEmail, groupName, applicantName, code, adminId, frontendUrl }) {
+  const link =
+    frontendUrl && code && adminId
+      ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}&member=${adminId}`
+      : null;
+
   return sendEmail({
     to: adminEmail,
     subject: `Nueva solicitud para unirse a "${groupName}"`,
-    text: `${applicantName} quiere unirse a tu grupo "${groupName}" en Democracia por Promedio. Entra a la app para aprobar o rechazar la solicitud.`,
+    text: [
+      `${applicantName} quiere unirse a tu grupo "${groupName}" en Democracia por Promedio.`,
+      link ? `Entra aquí para aprobar o rechazar la solicitud:\n${link}` : `Entra a la app para aprobar o rechazar la solicitud.`,
+    ].join("\n\n"),
   });
 }
 
