@@ -1621,7 +1621,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
             {liveCount} de {approvedMemberCount} miembro(s) han respondido
           </div>
-          <StageInput stage={stage} onSend={sendResponse} sending={sending} disabled={sent} />
+          <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} />
           {sent && <div className="dp-body text-[11px] mb-2" style={{ color: GREEN }}>✅ Guardado</div>}
           {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
           {isAdmin && (
