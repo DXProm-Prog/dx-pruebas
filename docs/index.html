@@ -106,44 +106,47 @@ function OptionBar({ option, count, percent, highlight }) {
   );
 }
 
-function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
-  const isMulti = question.type === "encuesta";
-  const [value, setValue] = useState(isMulti ? [] : "");
+function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) {
+  const rule = question.majorityRule;
+  const isRankeado = rule === "rankeado";
+  const isSegundaVuelta = rule === "segunda_vuelta";
+
+  const [value, setValue] = useState("");
+  const [rankOrder, setRankOrder] = useState([]);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
   const [result, setResult] = useState(null);
   const [computing, setComputing] = useState(false);
   const [resultError, setResultError] = useState("");
+  const [closingRound, setClosingRound] = useState(false);
 
-  const toggleOption = (opt) => {
-    if (isMulti) {
-      setValue((prev) => (prev.includes(opt) ? prev.filter((v) => v !== opt) : [...prev, opt]));
-    } else {
-      setValue(opt);
-    }
+  const hasValue = isRankeado ? rankOrder.length > 0 : value !== "";
+
+  const toggleRank = (opt) => {
+    setRankOrder((prev) => (prev.includes(opt) ? prev.filter((o) => o !== opt) : [...prev, opt]));
   };
-
-  const hasValue = isMulti ? value.length > 0 : value !== "";
 
   const sendResponse = async () => {
     if (!memberId || !hasValue) return;
     setSending(true);
     setSendError("");
     try {
+      const sendValue = isRankeado ? rankOrder : question.type === "promedio" ? Number(value) : value;
       const res = await fetch(
         `${backendUrl}/api/groups/${groupCode}/questions/${question.id}/responses`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ memberId, value }),
+          body: JSON.stringify({ memberId, value: sendValue }),
         }
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar");
       setSent(true);
-      setValue(isMulti ? [] : "");
-      await computeResults();
+      setValue("");
+      setRankOrder([]);
+      await computeResults(false);
     } catch (e) {
       setSendError(e.message);
     } finally {
@@ -155,9 +158,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
     if (!silent) setComputing(true);
     setResultError("");
     try {
-      const res = await fetch(
-        `${backendUrl}/api/groups/${groupCode}/questions/${question.id}/results`
-      );
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/questions/${question.id}/results`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al calcular");
       setResult(data);
@@ -168,22 +169,55 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
     }
   };
 
+  const closeRound = async () => {
+    setClosingRound(true);
+    try {
+      await fetch(`${backendUrl}/api/groups/${groupCode}/questions/${question.id}/close-round`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      await computeResults(true);
+    } catch (e) {
+      setResultError(e.message);
+    } finally {
+      setClosingRound(false);
+    }
+  };
+
   useEffect(() => {
-    if (!result) return;
+    if (isSegundaVuelta) computeResults(true);
+  }, []);
+
+  useEffect(() => {
+    if (!result && !isSegundaVuelta) return;
     const interval = setInterval(() => computeResults(true), 15000);
     return () => clearInterval(interval);
-  }, [Boolean(result)]);
+  }, [Boolean(result), isSegundaVuelta]);
+
+  const ruleLabel = {
+    simple: "gana la más votada",
+    absoluta: "necesita más del 50%",
+    calificada: `necesita más del ${question.qualifiedPct}%`,
+    rankeado: "voto ranqueado (automático)",
+    segunda_vuelta: `${question.numRounds} rondas · elimina ${question.elimPerRound}/ronda`,
+  }[rule];
+
+  const currentOptions = isSegundaVuelta && result ? result.currentOptions : question.options;
+  const isClosedForVoting = isSegundaVuelta ? Boolean(result && result.finished) : question.closed;
 
   return (
     <div className="rounded-2xl p-4 mb-4 shadow-sm" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="dp-body text-[15px]" style={{ color: INK }}>{question.text}</div>
-        <CountdownBadge closesAt={question.closesAt} closed={question.closed} />
+        {!isSegundaVuelta && <CountdownBadge closesAt={question.closesAt} closed={question.closed} />}
+        {isSegundaVuelta && result && (
+          <CountdownBadge closesAt={result.finished ? null : question.roundClosesAt} closed={result.finished} />
+        )}
       </div>
       <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
-        {question.type === "promedio" && `recorte: ${question.trimPercent}%`}
-        {question.type === "mayoria" && (question.majorityRule === "pluralidad" ? "gana la más votada" : "necesita más del 50%")}
-        {question.type === "encuesta" && "puedes elegir varias opciones"}
+        {question.type === "promedio" ? `recorte: ${question.trimPercent}%` : ruleLabel}
+        {isSegundaVuelta && result && !result.finished && ` · ronda ${result.currentRound}`}
       </div>
 
       {question.type === "promedio" && (
@@ -192,14 +226,14 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
             type="number"
             placeholder="tu propuesta"
             value={value}
-            disabled={question.closed}
+            disabled={isClosedForVoting}
             onChange={(e) => setValue(e.target.value)}
             className="dp-mono flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none disabled:opacity-50"
             style={{ background: BLUE_SOFT, color: INK }}
           />
           <button
             onClick={sendResponse}
-            disabled={sending || !hasValue || !memberId || question.closed}
+            disabled={sending || !hasValue || !memberId || isClosedForVoting}
             className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
             style={{ background: GREEN }}
           >
@@ -208,19 +242,44 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
         </div>
       )}
 
-      {(question.type === "mayoria" || question.type === "encuesta") && (
+      {question.type === "mayoria" && !isRankeado && (
         <div className="flex flex-col gap-1.5 mb-2">
+          {currentOptions.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setValue(opt)}
+              disabled={isClosedForVoting}
+              className="dp-body text-left text-sm px-3 py-2 rounded-lg disabled:opacity-50"
+              style={value === opt ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+            >
+              {value === opt ? "● " : "○ "}{opt}
+            </button>
+          ))}
+          <button
+            onClick={sendResponse}
+            disabled={sending || !hasValue || !memberId || isClosedForVoting}
+            className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
+            style={{ background: GREEN }}
+          >
+            📤 {sending ? "Enviando…" : "Enviar"}
+          </button>
+        </div>
+      )}
+
+      {isRankeado && (
+        <div className="flex flex-col gap-1.5 mb-2">
+          <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>toca en orden de preferencia (1ª, 2ª…)</div>
           {question.options.map((opt) => {
-            const selected = isMulti ? value.includes(opt) : value === opt;
+            const idx = rankOrder.indexOf(opt);
             return (
               <button
                 key={opt}
-                onClick={() => toggleOption(opt)}
+                onClick={() => toggleRank(opt)}
                 disabled={question.closed}
-                className="dp-body text-left text-sm px-3 py-2 rounded-lg disabled:opacity-50"
-                style={selected ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+                className="dp-body flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg disabled:opacity-50"
+                style={idx >= 0 ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
               >
-                {selected ? (isMulti ? "☑ " : "● ") : (isMulti ? "☐ " : "○ ")}
+                <span className="dp-mono font-semibold" style={{ minWidth: "16px" }}>{idx >= 0 ? idx + 1 : "–"}</span>
                 {opt}
               </button>
             );
@@ -241,13 +300,22 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
           ✅ {question.type === "promedio" ? "Propuesta guardada" : "Voto guardado"}
         </div>
       )}
-      {sendError && (
-        <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>
+      {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+
+      {isSegundaVuelta && isAdmin && result && !result.finished && (
+        <button
+          onClick={closeRound}
+          disabled={closingRound}
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
+          style={{ background: BLUE }}
+        >
+          🔒 {closingRound ? "Cerrando…" : "Cerrar ronda y avanzar"}
+        </button>
       )}
 
-      {!result && (
+      {!isSegundaVuelta && !result && (
         <button
-          onClick={computeResults}
+          onClick={() => computeResults(false)}
           disabled={computing}
           className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full font-medium disabled:opacity-40"
           style={{ background: BLUE, color: "#fff" }}
@@ -255,17 +323,13 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
           ✨ {computing ? "Calculando…" : "Calcular decisión colectiva"}
         </button>
       )}
-      {resultError && (
-        <div className="dp-body text-[11px] mt-2" style={{ color: CORAL }}>{resultError}</div>
-      )}
+      {resultError && <div className="dp-body text-[11px] mt-2" style={{ color: CORAL }}>{resultError}</div>}
 
-      {result && result.type === "promedio" && (
+      {result && question.type === "promedio" && (
         <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
           <div className="dp-body text-[11px] font-medium mb-2.5" style={{ color: INK + "99" }}>
             {result.n} propuestas · {result.trimmedCount} recortadas de cada extremo
-            {result.suggestedMinPercent > question.trimPercent && (
-              <> · mínimo sugerido: {result.suggestedMinPercent}%</>
-            )}
+            {result.suggestedMinPercent > question.trimPercent && <> · mínimo sugerido: {result.suggestedMinPercent}%</>}
           </div>
           <div className="flex flex-wrap gap-1.5 mb-3">
             {result.sorted.map((v, i) => {
@@ -292,20 +356,64 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question }) {
         </div>
       )}
 
-      {result && (result.type === "mayoria" || result.type === "encuesta") && (
+      {result && (rule === "simple" || rule === "absoluta" || rule === "calificada") && (
         <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>
-            {result.totalVoters} voto(s)
-          </div>
+          <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>{result.totalVoters} voto(s)</div>
           {result.tally.map((t) => (
             <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={result.winner === t.option} />
           ))}
-          {result.type === "mayoria" && (
+          <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
+            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+            <span className="dp-display text-lg font-bold" style={{ color: result.winner ? GREEN : CORAL }}>
+              {result.winner || "sin ganador todavía"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {result && isRankeado && (
+        <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          {result.rounds.map((rd, i) => (
+            <div key={i} className="mb-3">
+              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
+                Ronda {i + 1}{rd.eliminated ? ` · se elimina "${rd.eliminated}"` : ""}
+              </div>
+              {rd.tally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={rd.winner === t.option} />
+              ))}
+            </div>
+          ))}
+          <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
+            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+            <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
+          </div>
+        </div>
+      )}
+
+      {isSegundaVuelta && result && (
+        <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          {result.completedRounds.map((rd) => (
+            <div key={rd.roundNum} className="mb-3">
+              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
+                Ronda {rd.roundNum} · se elimina: {rd.eliminated.join(", ")}
+              </div>
+              {rd.tally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+              ))}
+            </div>
+          ))}
+          {!result.finished && result.liveTally && (
+            <div className="mb-2">
+              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>Ronda {result.currentRound} (en curso)</div>
+              {result.liveTally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+              ))}
+            </div>
+          )}
+          {result.finished && (
             <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
               <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-              <span className="dp-display text-lg font-bold" style={{ color: result.winner ? GREEN : CORAL }}>
-                {result.winner || "sin ganador todavía"}
-              </span>
+              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
             </div>
           )}
         </div>
@@ -756,7 +864,14 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
   const [trimPercent, setTrimPercent] = useState("5");
   const [options, setOptions] = useState(["", ""]);
   const [majorityRule, setMajorityRule] = useState("absoluta");
-  const [closesInHours, setClosesInHours] = useState("");
+  const [qualifiedPct, setQualifiedPct] = useState("66");
+  const [numRounds, setNumRounds] = useState("3");
+  const [elimPerRound, setElimPerRound] = useState("1");
+  const [showDefs, setShowDefs] = useState(false);
+  const [useLimit, setUseLimit] = useState(false);
+  const [days, setDays] = useState("0");
+  const [hours, setHours] = useState("0");
+  const [minutes, setMinutes] = useState("0");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
 
@@ -764,10 +879,21 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
   const addOption = () => setOptions([...options, ""]);
   const removeOption = (i) => setOptions(options.filter((_, idx) => idx !== i));
 
+  const totalMinutes = () => Number(days || 0) * 1440 + Number(hours || 0) * 60 + Number(minutes || 0);
+
+  const RULE_LABEL = { simple: "Simple", absoluta: "Absoluta", calificada: "Calificada", rankeado: "Voto ranqueado", segunda_vuelta: "Segunda vuelta electoral" };
+  const RULE_DEF = {
+    simple: "Gana la opción con más votos, sin importar el porcentaje.",
+    absoluta: "La opción ganadora necesita más del 50% de los votos.",
+    calificada: "La opción ganadora necesita superar el porcentaje que tú definas (mayor al 50%).",
+    rankeado: "Cada quien ordena las opciones por preferencia. La app calcula sola, en rondas, quién gana: elimina la menos votada y reparte esos votos a la siguiente preferencia, hasta que alguien pase el 50%.",
+    segunda_vuelta: "Se vota por una sola opción a la vez, en rondas. Al cerrarse una ronda (por tiempo o porque tú la cierras), se elimina a las opciones menos votadas que definas, y se vuelve a votar entre las que quedan.",
+  };
+
   const submit = async () => {
     if (!text) return;
     const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
-    if (type !== "promedio" && cleanOptions.length < 2) {
+    if (type === "mayoria" && cleanOptions.length < 2) {
       setError("Agrega al menos 2 opciones");
       return;
     }
@@ -775,13 +901,24 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
     setError("");
     try {
       const body = { type, text };
-      if (closesInHours) body.closesInHours = Number(closesInHours);
+      const mins = useLimit ? totalMinutes() : 0;
+
       if (type === "promedio") {
         body.trimPercent = Number(trimPercent);
+        if (mins > 0) body.closesInMinutes = mins;
       } else {
         body.options = cleanOptions;
-        if (type === "mayoria") body.majorityRule = majorityRule;
+        body.majorityRule = majorityRule;
+        if (majorityRule === "calificada") body.qualifiedPct = Number(qualifiedPct);
+        if (majorityRule === "segunda_vuelta") {
+          body.numRounds = Number(numRounds);
+          body.elimPerRound = Number(elimPerRound);
+          if (mins > 0) body.roundDurationMinutes = mins;
+        } else if (mins > 0) {
+          body.closesInMinutes = mins;
+        }
       }
+
       const res = await fetch(`${backendUrl}/api/groups/${groupCode}/questions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -791,7 +928,8 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
       if (!res.ok) throw new Error(data.error || "Error al crear la pregunta");
       setText("");
       setOptions(["", ""]);
-      setClosesInHours("");
+      setUseLimit(false);
+      setDays("0"); setHours("0"); setMinutes("0");
       await onAdded();
     } catch (e) {
       setError(e.message);
@@ -800,16 +938,14 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
     }
   };
 
+  const isSegundaVuelta = majorityRule === "segunda_vuelta";
+
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="dp-body text-xs font-medium mb-3" style={{ color: INK }}>Nueva pregunta</div>
 
       <div className="flex gap-1.5 mb-3">
-        {[
-          { key: "promedio", label: "Promedio" },
-          { key: "mayoria", label: "Mayoría" },
-          { key: "encuesta", label: "Encuesta" },
-        ].map((t) => (
+        {[{ key: "promedio", label: "Promedio" }, { key: "mayoria", label: "Mayoría" }].map((t) => (
           <button
             key={t.key}
             onClick={() => setType(t.key)}
@@ -838,58 +974,124 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         </div>
       )}
 
-      {(type === "mayoria" || type === "encuesta") && (
-        <div className="mb-3">
-          {options.map((opt, i) => (
-            <div key={i} className="flex items-center gap-2 mb-1.5">
-              <input
-                value={opt}
-                onChange={(e) => updateOption(i, e.target.value)}
-                placeholder={`Opción ${i + 1}`}
-                className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
-                style={{ background: BLUE_SOFT, color: INK }}
-              />
-              {options.length > 2 && (
-                <button onClick={() => removeOption(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
-              )}
-            </div>
-          ))}
-          <button onClick={addOption} className="dp-body text-xs font-medium" style={{ color: BLUE }}>
-            + agregar opción
-          </button>
-        </div>
-      )}
-
       {type === "mayoria" && (
-        <div className="flex gap-1.5 mb-3">
+        <React.Fragment>
+          <div className="mb-3">
+            {options.map((opt, i) => (
+              <div key={i} className="flex items-center gap-2 mb-1.5">
+                <input
+                  value={opt}
+                  onChange={(e) => updateOption(i, e.target.value)}
+                  placeholder={`Opción ${i + 1}`}
+                  className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
+                  style={{ background: BLUE_SOFT, color: INK }}
+                />
+                {options.length > 2 && (
+                  <button onClick={() => removeOption(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
+                )}
+              </div>
+            ))}
+            <button onClick={addOption} className="dp-body text-xs font-medium" style={{ color: BLUE }}>+ agregar opción</button>
+          </div>
+
+          <div className="dp-body text-[10px] font-semibold mb-1.5" style={{ color: INK + "88", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+            Mayoría
+          </div>
+          <div className="flex gap-1.5 mb-2">
+            {["simple", "absoluta", "calificada"].map((r) => (
+              <button
+                key={r}
+                onClick={() => setMajorityRule(r)}
+                className="dp-body text-[11px] px-2 py-1.5 rounded-full font-medium flex-1"
+                style={majorityRule === r ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+              >
+                {RULE_LABEL[r]}
+              </button>
+            ))}
+          </div>
+          {majorityRule === "calificada" && (
+            <div className="dp-body flex items-center gap-2 text-xs mb-3" style={{ color: INK }}>
+              requiere más de
+              <input type="number" min="51" max="99" value={qualifiedPct} onChange={(e) => setQualifiedPct(e.target.value)} className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+              %
+            </div>
+          )}
+
+          <div style={{ height: "1px", background: BLUE + "22", margin: "8px 0" }} />
           <button
-            onClick={() => setMajorityRule("absoluta")}
-            className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium flex-1"
-            style={majorityRule === "absoluta" ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+            onClick={() => setMajorityRule("rankeado")}
+            className="dp-body block w-full text-left text-xs font-medium px-2.5 py-2 rounded-lg mb-2"
+            style={majorityRule === "rankeado" ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
           >
-            Mayoría absoluta (+50%)
+            Voto ranqueado
           </button>
+
+          <div style={{ height: "1px", background: BLUE + "22", margin: "8px 0" }} />
           <button
-            onClick={() => setMajorityRule("pluralidad")}
-            className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium flex-1"
-            style={majorityRule === "pluralidad" ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+            onClick={() => setMajorityRule("segunda_vuelta")}
+            className="dp-body block w-full text-left text-xs font-medium px-2.5 py-2 rounded-lg mb-2"
+            style={majorityRule === "segunda_vuelta" ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
           >
-            Pluralidad (la más votada)
+            Segunda vuelta electoral
           </button>
-        </div>
+          {isSegundaVuelta && (
+            <div className="flex gap-3 mb-2">
+              <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK }}>
+                Número de rondas
+                <input type="number" min="1" value={numRounds} onChange={(e) => setNumRounds(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+              </label>
+            </div>
+          )}
+          {isSegundaVuelta && (
+            <div className="flex gap-3 mb-3">
+              <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK }}>
+                Eliminadas/ronda
+                <input type="number" min="1" value={elimPerRound} onChange={(e) => setElimPerRound(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+              </label>
+            </div>
+          )}
+
+          <button onClick={() => setShowDefs(!showDefs)} className="dp-body text-[11px] font-medium mb-2" style={{ color: BLUE }}>
+            {showDefs ? "ocultar definiciones" : "¿qué significa cada una?"}
+          </button>
+          {showDefs && (
+            <div className="rounded-lg p-2.5 mb-3 text-[11px] leading-relaxed" style={{ background: BLUE_SOFT, color: INK + "cc" }}>
+              {Object.entries(RULE_LABEL).map(([k, l]) => (
+                <div key={k} className="mb-1">
+                  <b style={{ color: INK }}>{l}:</b> {RULE_DEF[k]}
+                </div>
+              ))}
+            </div>
+          )}
+        </React.Fragment>
       )}
 
-      <label className="dp-body flex items-center gap-1.5 text-xs mb-3" style={{ color: INK + "99" }}>
-        Cierra en (horas, opcional)
-        <input
-          type="number"
-          value={closesInHours}
-          onChange={(e) => setClosesInHours(e.target.value)}
-          placeholder="sin límite"
-          className="dp-mono w-20 rounded-lg px-2 py-1 outline-none"
-          style={{ background: BLUE_SOFT, color: INK }}
-        />
-      </label>
+      <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
+        Límite de tiempo{isSegundaVuelta ? " por ronda" : " para responder"}:
+      </div>
+      <div className="flex gap-1.5 mb-2">
+        <button onClick={() => setUseLimit(false)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={!useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>No</button>
+        <button onClick={() => setUseLimit(true)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>Sí</button>
+      </div>
+      {useLimit && (
+        <div className="flex gap-2 mb-1">
+          <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
+            Días <input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+          </label>
+          <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
+            Horas <input type="number" min="0" max="23" value={hours} onChange={(e) => setHours(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+          </label>
+          <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
+            Min <input type="number" min="0" max="59" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+          </label>
+        </div>
+      )}
+      {isSegundaVuelta && (
+        <div className="dp-body text-[10px] mb-3" style={{ color: INK + "77" }}>
+          {useLimit ? "al pasar el tiempo, la ronda se cierra sola y avanza." : "sin límite: tú cierras cada ronda a mano."}
+        </div>
+      )}
+      {!isSegundaVuelta && <div className="mb-3" />}
 
       {error && <div className="dp-body text-[12px] mb-2" style={{ color: CORAL }}>{error}</div>}
 
@@ -904,6 +1106,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
     </div>
   );
 }
+
 
 function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
   const [group, setGroup] = useState(null);
@@ -1071,7 +1274,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
       )}
 
       {group.questions.map((q) => (
-        <QuestionRunner key={q.id} backendUrl={backendUrl} groupCode={groupCode} memberId={memberId} question={q} />
+        <QuestionRunner key={q.id} backendUrl={backendUrl} groupCode={groupCode} memberId={memberId} question={q} isAdmin={isAdmin} />
       ))}
     </div>
   );
