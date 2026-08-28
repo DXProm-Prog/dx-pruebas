@@ -1555,7 +1555,16 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
   const [categoryThresholdPercent, setCategoryThresholdPercent] = useState(flow.config?.categoryThresholdPercent ?? 10);
   const [quotaTrimPercent, setQuotaTrimPercent] = useState(flow.config?.quotaTrimPercent ?? 10);
   const [savingConfig, setSavingConfig] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(flow.status === "finished");
+  const prevStatus = React.useRef(flow.status);
   const stage = flow.status === "active" ? flow.currentStage : null;
+
+  useEffect(() => {
+    if (prevStatus.current !== "finished" && flow.status === "finished") {
+      setShowCelebration(true);
+    }
+    prevStatus.current = flow.status;
+  }, [flow.status]);
 
   const saveConfig = async () => {
     setSavingConfig(true);
@@ -1696,6 +1705,39 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
       {flow.status === "finished" && (
         <div className="dp-body text-[12px]" style={{ color: GREEN }}>
           ✅ Flujo completo — si dejaste tu correo, ahí te llega el resumen.
+        </div>
+      )}
+
+      {showCelebration && flow.status === "finished" && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: "rgba(32,48,43,0.55)", zIndex: 50 }}>
+          <div className="rounded-2xl p-5 max-w-[320px] w-full shadow-xl" style={{ background: WARM_WHITE }}>
+            <div className="flex justify-end mb-1">
+              <button onClick={() => setShowCelebration(false)} className="dp-body text-sm" style={{ color: INK + "77" }}>✕</button>
+            </div>
+            <div className="text-center mb-3">
+              <div style={{ fontSize: "36px" }}>🎉</div>
+              <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>¡Felicidades!</div>
+              <div className="dp-body text-[13px] mt-1" style={{ color: INK + "99" }}>
+                Llegaron a una decisión colectiva.
+              </div>
+            </div>
+            {(() => {
+              const finalStage = [...flow.stages].reverse().find((s) => s.key === "quotas" || s.key === "singleQuota");
+              if (!finalStage) return null;
+              return (
+                <div className="rounded-lg p-3" style={{ background: BLUE_SOFT }}>
+                  <StageResultView stage={finalStage} />
+                </div>
+              );
+            })()}
+            <button
+              onClick={() => setShowCelebration(false)}
+              className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium"
+              style={{ background: BLUE }}
+            >
+              Ver todo el proceso
+            </button>
+          </div>
         </div>
       )}
     </div>
