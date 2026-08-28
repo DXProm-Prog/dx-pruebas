@@ -6,7 +6,7 @@ const { load, save, generateCode, generateId } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
-const { notifyNewJoinRequest, notifyGroupCreated } = require("./email");
+const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers } = require("./email");
 
 const app = express();
 app.use(cors());
@@ -55,7 +55,7 @@ app.get("/api/groups/:code", async (req, res) => {
 });
 
 app.post("/api/groups/:code/join", async (req, res) => {
-  const { name } = req.body;
+  const { name, email } = req.body;
   if (!name) return res.status(400).json({ error: "Falta el campo: name" });
 
   const db = await load();
@@ -64,10 +64,20 @@ app.post("/api/groups/:code/join", async (req, res) => {
 
   const memberId = generateId();
   const autoApprove = group.requireApproval === false;
-  group.members.push({ id: memberId, name, approved: autoApprove });
+  group.members.push({ id: memberId, name, email: email || null, approved: autoApprove });
   await save(db);
 
   res.json({ memberId, status: autoApprove ? "aprobado" : "pendiente de aprobación" });
+
+  if (email) {
+    notifyMemberJoined({
+      memberEmail: email,
+      memberName: name,
+      groupName: group.name,
+      code: group.code,
+      frontendUrl: process.env.FRONTEND_URL,
+    }).catch((err) => console.error("Error de correo (bienvenida miembro):", err.message));
+  }
 
   if (!autoApprove) {
     notifyNewJoinRequest({
@@ -139,6 +149,16 @@ function computeResultForQuestion(group, question) {
   return { type: "promedio", suggestedMinPercent: suggestedMinPercent(result.n), sortedWithNames, ...result };
 }
 
+function buildResultSummary(question, result) {
+  if (result.type === "promedio") {
+    return `"${question.text}"\nDecisión colectiva: ${result.average.toFixed(2)} (${result.n} propuestas, se recortaron ${result.trimmedCount} de cada extremo).`;
+  }
+  if (result.winner) {
+    return `"${question.text}"\nGanó: ${result.winner}`;
+  }
+  return `"${question.text}"\nTodavía no hay un ganador claro.`;
+}
+
 function closeIfExpired(group, question) {
   if (question.majorityRule === "segunda_vuelta") return false;
   if (question.closed) return false;
@@ -147,6 +167,13 @@ function closeIfExpired(group, question) {
   question.closed = true;
   question.finalResult = computeResultForQuestion(group, question);
   group.results.push({ questionId: question.id, timestamp: new Date().toISOString(), ...question.finalResult });
+  notifyResultsToMembers({
+    group,
+    questionText: question.text,
+    summaryText: buildResultSummary(question, question.finalResult),
+    frontendUrl: process.env.FRONTEND_URL,
+    subjectPrefix: "Ya hay resultado",
+  }).catch((err) => console.error("Error de correo (resultado):", err.message));
   return true;
 }
 
@@ -165,7 +192,6 @@ function closeCurrentRound(group, question) {
 
   let survivors = tally.filter((t) => t.count > 0 && t.percent >= question.eliminationThresholdPercent).map((t) => t.option);
   if (survivors.length === 0) {
-    // Si el umbral eliminaría a todos, nos quedamos con quien tenga más votos.
     const maxCount = Math.max(...tally.map((t) => t.count));
     survivors = tally.filter((t) => t.count === maxCount).map((t) => t.option);
   }
@@ -194,7 +220,6 @@ function closeCurrentRound(group, question) {
     question.currentOptions = survivors;
     question.roundClosesAt = question.roundDurationMinutes ? minutesFromNow(question.roundDurationMinutes) : null;
   } else if (tiedAtTop.length > 1) {
-    // Empate en el primer lugar: ronda extra solo con las empatadas.
     question.currentRound += 1;
     question.currentOptions = tiedAtTop;
     question.roundClosesAt = question.roundDurationMinutes ? minutesFromNow(question.roundDurationMinutes) : null;
@@ -215,6 +240,16 @@ function closeCurrentRound(group, question) {
     finished: question.finished,
     winner: question.winner || null,
   });
+
+  if (question.finished) {
+    notifyResultsToMembers({
+      group,
+      questionText: question.text,
+      summaryText: `"${question.text}"\nGanó: ${question.winner}`,
+      frontendUrl: process.env.FRONTEND_URL,
+      subjectPrefix: "Ya hay resultado",
+    }).catch((err) => console.error("Error de correo (resultado):", err.message));
+  }
 }
 
 function closeRoundIfExpired(question) {
@@ -224,9 +259,7 @@ function closeRoundIfExpired(question) {
 }
 
 // Cierra la ronda de desempate de una pregunta de "rankeado" (se activa
-// cuando el voto ranqueado automático termina en empate). Misma idea que
-// segunda vuelta, pero sin eliminar por umbral: solo revisa si ya hay un
-// ganador claro o si hay que abrir otra ronda de desempate.
+// cuando el voto ranqueado automático termina en empate).
 function closeTieBreakRound(group, question) {
   const tb = question.tieBreak;
   const votes = group.responses
@@ -259,6 +292,16 @@ function closeTieBreakRound(group, question) {
     finished: tb.finished,
     winner: tb.winner || null,
   });
+
+  if (tb.finished) {
+    notifyResultsToMembers({
+      group,
+      questionText: question.text,
+      summaryText: `"${question.text}"\nGanó: ${tb.winner}`,
+      frontendUrl: process.env.FRONTEND_URL,
+      subjectPrefix: "Ya hay resultado",
+    }).catch((err) => console.error("Error de correo (resultado):", err.message));
+  }
 }
 
 app.post("/api/groups/:code/questions", async (req, res) => {
@@ -424,6 +467,13 @@ app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
       if (out.tiedOptions) {
         question.tieBreak = { currentRound: 1, currentOptions: out.tiedOptions, completedRounds: [], finished: false, winner: null, roundClosesAt: null, originalRounds: out.rounds };
         await save(db);
+        notifyResultsToMembers({
+          group,
+          questionText: question.text,
+          summaryText: `"${question.text}"\nHubo un empate entre: ${out.tiedOptions.join(", ")}. Se necesita una ronda de desempate — entra a votar de nuevo.`,
+          frontendUrl: process.env.FRONTEND_URL,
+          subjectPrefix: "Se necesita un desempate",
+        }).catch((err) => console.error("Error de correo (desempate):", err.message));
       }
       return res.json({ question, type: "mayoria", majorityRule: "rankeado", rounds: out.rounds, winner: null, tieBreak: question.tieBreak });
     }

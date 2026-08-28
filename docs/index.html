@@ -948,6 +948,7 @@ function GroupCreatedScreen({ groupName, code, onContinue }) {
 function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined }) {
   const [code, setCode] = useState(initialCode || "");
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -969,7 +970,7 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined }) {
       const res = await fetch(`${backendUrl}/api/groups/${code.trim()}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, email }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo unir al grupo");
@@ -1000,6 +1001,7 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined }) {
         <div className="flex flex-col gap-2.5 mb-3">
           <Field label="Código del grupo" value={code} onChange={setCode} placeholder="ej. MC231G" />
           <Field label="Tu nombre" value={name} onChange={setName} placeholder="ej. Luis" />
+          <Field label="Tu correo (opcional, para recibir resultados)" value={email} onChange={setEmail} placeholder="ej. luis@correo.com" type="email" />
         </div>
         <PrimaryButton onClick={submit} disabled={loading || !code || !name}>
           {loading ? "Enviando…" : "Unirme"}

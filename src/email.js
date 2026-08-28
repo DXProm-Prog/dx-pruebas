@@ -77,4 +77,56 @@ async function notifyGroupCreated({ adminEmail, groupName, code, frontendUrl }) 
   });
 }
 
-module.exports = { notifyNewJoinRequest, notifyGroupCreated, isConfigured };
+// Correo de bienvenida para un miembro (no administrador) que se acaba
+// de unir a un grupo, con la info básica para encontrarlo después.
+async function notifyMemberJoined({ memberEmail, memberName, groupName, code, frontendUrl }) {
+  const link = frontendUrl
+    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}`
+    : null;
+
+  return sendEmail({
+    to: memberEmail,
+    subject: `Te uniste a "${groupName}"`,
+    text: [
+      `Hola ${memberName}, te uniste al grupo "${groupName}" en Democracia por Promedio.`,
+      ``,
+      `Código del grupo: ${code}`,
+      link ? `Link directo: ${link}` : null,
+      ``,
+      `Cuando el administrador te apruebe, vas a poder participar en las preguntas del grupo.`,
+      `Cuando haya resultados, o si alguna pregunta necesita una ronda de desempate, te vamos a avisar aquí también.`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+}
+
+// Avisa a TODOS los miembros con correo registrado que una pregunta ya
+// tiene resultado final (o que necesita una ronda de desempate).
+async function notifyResultsToMembers({ group, questionText, summaryText, frontendUrl, subjectPrefix }) {
+  const link = frontendUrl
+    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${group.code}`
+    : null;
+
+  const recipients = group.members.filter((m) => m.email);
+  const results = await Promise.all(
+    recipients.map((m) =>
+      sendEmail({
+        to: m.email,
+        subject: `${subjectPrefix || "Resultado"}: "${questionText}"`,
+        text: [
+          `En el grupo "${group.name}":`,
+          ``,
+          summaryText,
+          ``,
+          link ? `Entra a la app para ver el proceso completo:\n${link}` : `Entra a la app para ver el proceso completo.`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      })
+    )
+  );
+  return results;
+}
+
+module.exports = { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, isConfigured };
