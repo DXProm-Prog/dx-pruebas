@@ -121,7 +121,10 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
   const [resultError, setResultError] = useState("");
   const [closingRound, setClosingRound] = useState(false);
 
-  const hasValue = isRankeado ? rankOrder.length > 0 : value !== "";
+  const inTieBreak = isRankeado && question.tieBreak && !question.tieBreak.finished;
+  const rankeadoResolved = isRankeado && question.tieBreak && question.tieBreak.finished;
+
+  const hasValue = isRankeado && !inTieBreak ? rankOrder.length > 0 : value !== "";
 
   const toggleRank = (opt) => {
     setRankOrder((prev) => (prev.includes(opt) ? prev.filter((o) => o !== opt) : [...prev, opt]));
@@ -132,7 +135,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
     setSending(true);
     setSendError("");
     try {
-      const sendValue = isRankeado ? rankOrder : question.type === "promedio" ? Number(value) : value;
+      const sendValue = isRankeado && !inTieBreak ? rankOrder : question.type === "promedio" ? Number(value) : value;
       const res = await fetch(
         `${backendUrl}/api/groups/${groupCode}/questions/${question.id}/responses`,
         {
@@ -185,22 +188,25 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
     }
   };
 
-  useEffect(() => {
-    if (isSegundaVuelta) computeResults(true);
-  }, []);
+  const needsLivePolling = isSegundaVuelta || Boolean(question.tieBreak);
 
   useEffect(() => {
-    if (!result && !isSegundaVuelta) return;
+    if (needsLivePolling) computeResults(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsLivePolling]);
+
+  useEffect(() => {
+    if (!result && !needsLivePolling) return;
     const interval = setInterval(() => computeResults(true), 15000);
     return () => clearInterval(interval);
-  }, [Boolean(result), isSegundaVuelta]);
+  }, [Boolean(result), needsLivePolling]);
 
   const ruleLabel = {
     simple: "gana la más votada",
     absoluta: "necesita más del 50%",
     calificada: `necesita más del ${question.qualifiedPct}%`,
     rankeado: "voto ranqueado (automático)",
-    segunda_vuelta: `${question.numRounds} rondas · elimina ${question.elimPerRound}/ronda`,
+    segunda_vuelta: `${question.numRounds} rondas · elimina menos del ${question.eliminationThresholdPercent}%`,
   }[rule];
 
   const currentOptions = isSegundaVuelta && result ? result.currentOptions : question.options;
@@ -210,14 +216,15 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
     <div className="rounded-2xl p-4 mb-4 shadow-sm" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="dp-body text-[15px]" style={{ color: INK }}>{question.text}</div>
-        {!isSegundaVuelta && <CountdownBadge closesAt={question.closesAt} closed={question.closed} />}
+        {!isSegundaVuelta && !inTieBreak && !rankeadoResolved && <CountdownBadge closesAt={question.closesAt} closed={question.closed} />}
         {isSegundaVuelta && result && (
           <CountdownBadge closesAt={result.finished ? null : question.roundClosesAt} closed={result.finished} />
         )}
       </div>
       <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
         {question.type === "promedio" ? `recorte: ${question.trimPercent}%` : ruleLabel}
-        {isSegundaVuelta && result && !result.finished && ` · ronda ${result.currentRound}`}
+        {isSegundaVuelta && result && !result.finished && ` · ronda ${result.currentRound}${result.inTieBreak ? " (desempate)" : ""}`}
+        {inTieBreak && ` · ronda de desempate ${question.tieBreak.currentRound}`}
       </div>
 
       {question.type === "promedio" && (
@@ -266,7 +273,33 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
         </div>
       )}
 
-      {isRankeado && (
+      {isRankeado && inTieBreak && (
+        <div className="flex flex-col gap-1.5 mb-2">
+          <div className="dp-body text-[11px] mb-1" style={{ color: CORAL }}>
+            Hubo empate — vota de nuevo solo entre las opciones empatadas.
+          </div>
+          {question.tieBreak.currentOptions.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => setValue(opt)}
+              className="dp-body text-left text-sm px-3 py-2 rounded-lg"
+              style={value === opt ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+            >
+              {value === opt ? "● " : "○ "}{opt}
+            </button>
+          ))}
+          <button
+            onClick={sendResponse}
+            disabled={sending || !hasValue || !memberId}
+            className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
+            style={{ background: GREEN }}
+          >
+            📤 {sending ? "Enviando…" : "Enviar"}
+          </button>
+        </div>
+      )}
+
+      {isRankeado && !inTieBreak && !rankeadoResolved && (
         <div className="flex flex-col gap-1.5 mb-2">
           <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>toca en orden de preferencia (1ª, 2ª…)</div>
           {question.options.map((opt) => {
@@ -312,8 +345,28 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
           🔒 {closingRound ? "Cerrando…" : "Cerrar ronda y avanzar"}
         </button>
       )}
+      {inTieBreak && isAdmin && (
+        <button
+          onClick={closeRound}
+          disabled={closingRound}
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
+          style={{ background: BLUE }}
+        >
+          🔒 {closingRound ? "Cerrando…" : "Cerrar ronda de desempate"}
+        </button>
+      )}
 
-      {!isSegundaVuelta && !result && (
+      {!isSegundaVuelta && !isRankeado && !result && (
+        <button
+          onClick={() => computeResults(false)}
+          disabled={computing}
+          className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full font-medium disabled:opacity-40"
+          style={{ background: BLUE, color: "#fff" }}
+        >
+          ✨ {computing ? "Calculando…" : "Calcular decisión colectiva"}
+        </button>
+      )}
+      {isRankeado && !question.tieBreak && !result && (
         <button
           onClick={() => computeResults(false)}
           disabled={computing}
@@ -371,22 +424,46 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
         </div>
       )}
 
-      {result && isRankeado && (
+      {result && isRankeado && result.rounds && (
         <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
           {result.rounds.map((rd, i) => (
             <div key={i} className="mb-3">
               <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
-                Ronda {i + 1}{rd.eliminated ? ` · se elimina "${rd.eliminated}"` : ""}
+                Ronda {i + 1}{rd.eliminated ? ` · se elimina "${rd.eliminated}"` : ""}{rd.tie ? " · empate" : ""}
               </div>
               {rd.tally.map((t) => (
                 <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={rd.winner === t.option} />
               ))}
             </div>
           ))}
-          <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
-            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-            <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
-          </div>
+          {result.winner && !question.tieBreak && (
+            <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {question.tieBreak && (
+        <div className="mt-3 rounded-xl p-3.5" style={{ background: CORAL + "12", border: `1px solid ${CORAL}33` }}>
+          <div className="dp-body text-[11px] font-semibold mb-2" style={{ color: CORAL }}>Desempate</div>
+          {question.tieBreak.completedRounds.map((rd, i) => (
+            <div key={i} className="mb-2">
+              <div className="dp-body text-[10px] font-medium mb-1" style={{ color: INK + "99" }}>Ronda de desempate {rd.roundNum}</div>
+              {rd.tally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+              ))}
+            </div>
+          ))}
+          {question.tieBreak.finished ? (
+            <div className="flex items-baseline justify-between pt-2 mt-1" style={{ borderTop: `1px solid ${CORAL}33` }}>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{question.tieBreak.winner}</span>
+            </div>
+          ) : (
+            <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>votación en curso entre: {question.tieBreak.currentOptions.join(", ")}</div>
+          )}
         </div>
       )}
 
@@ -395,7 +472,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
           {result.completedRounds.map((rd) => (
             <div key={rd.roundNum} className="mb-3">
               <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
-                Ronda {rd.roundNum} · se elimina: {rd.eliminated.join(", ")}
+                Ronda {rd.roundNum}{rd.tieBreak ? " (desempate)" : ""} · se elimina: {rd.eliminated.length ? rd.eliminated.join(", ") : "nadie"}
               </div>
               {rd.tally.map((t) => (
                 <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
@@ -421,6 +498,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
     </div>
   );
 }
+
 
 function ExplanationScreen({ onBack }) {
   return (
@@ -866,7 +944,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
   const [majorityRule, setMajorityRule] = useState("absoluta");
   const [qualifiedPct, setQualifiedPct] = useState("66");
   const [numRounds, setNumRounds] = useState("3");
-  const [elimPerRound, setElimPerRound] = useState("1");
+  const [eliminationThresholdPercent, setEliminationThresholdPercent] = useState("10");
   const [showDefs, setShowDefs] = useState(false);
   const [useLimit, setUseLimit] = useState(false);
   const [days, setDays] = useState("0");
@@ -912,7 +990,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         if (majorityRule === "calificada") body.qualifiedPct = Number(qualifiedPct);
         if (majorityRule === "segunda_vuelta") {
           body.numRounds = Number(numRounds);
-          body.elimPerRound = Number(elimPerRound);
+          body.eliminationThresholdPercent = Number(eliminationThresholdPercent);
           if (mins > 0) body.roundDurationMinutes = mins;
         } else if (mins > 0) {
           body.closesInMinutes = mins;
@@ -1043,11 +1121,16 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
             </div>
           )}
           {isSegundaVuelta && (
-            <div className="flex gap-3 mb-3">
+            <div className="flex gap-3 mb-1">
               <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK }}>
-                Eliminadas/ronda
-                <input type="number" min="1" value={elimPerRound} onChange={(e) => setElimPerRound(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+                % mínimo para sobrevivir
+                <input type="number" min="0" max="100" value={eliminationThresholdPercent} onChange={(e) => setEliminationThresholdPercent(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
               </label>
+            </div>
+          )}
+          {isSegundaVuelta && (
+            <div className="dp-body text-[10px] mb-3" style={{ color: INK + "77" }}>
+              en cada ronda se eliminan las opciones sin votos y las que estén por debajo de este %
             </div>
           )}
 

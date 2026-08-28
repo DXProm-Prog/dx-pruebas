@@ -31,7 +31,6 @@ function determineWinner(tally, totalVoters, rule, qualifiedPct) {
   const threshold = rule === "absoluta" ? 50 : rule === "calificada" ? qualifiedPct : null;
 
   if (threshold === null) {
-    // simple
     const tiedWithTop = sorted.filter((t) => t.count === top.count);
     return tiedWithTop.length > 1 ? null : top.option;
   }
@@ -40,18 +39,20 @@ function determineWinner(tally, totalVoters, rule, qualifiedPct) {
 }
 
 // Voto ranqueado (instant-runoff): cada boleta es un array de opciones en
-// orden de preferencia (pueden ser rankings parciales). Elimina la menos
-// votada en cada ronda y reparte esos votos a la siguiente preferencia,
-// hasta que alguien tenga más del 50%.
+// orden de preferencia (rankings parciales permitidos). Elimina la menos
+// votada en cada ronda y reparte esos votos a la siguiente preferencia.
+// IMPORTANTE: si al final quedan 2 (o más) opciones EMPATADAS sin que
+// nadie llegue a mayoría, NO se declara ganador — se devuelve
+// `tiedOptions` para que el caller abra una ronda de desempate real.
 function runInstantRunoff(options, ballots) {
   let remaining = [...options];
   const rounds = [];
   let winner = null;
+  let tiedOptions = null;
 
   while (true) {
     const counts = {};
     remaining.forEach((o) => (counts[o] = 0));
-
     ballots.forEach((ballot) => {
       const top = ballot.find((o) => remaining.includes(o));
       if (top) counts[top] += 1;
@@ -66,21 +67,31 @@ function runInstantRunoff(options, ballots) {
     const sorted = [...tally].sort((a, b) => b.count - a.count);
     const hasMajority = total > 0 && sorted[0].count / total > 0.5;
 
-    let eliminated = null;
-    let roundWinner = null;
-    if (hasMajority || remaining.length <= 2) {
-      roundWinner = sorted[0].option;
-      winner = roundWinner;
-    } else {
-      eliminated = sorted[sorted.length - 1].option;
+    if (hasMajority) {
+      winner = sorted[0].option;
+      rounds.push({ tally, eliminated: null, winner });
+      break;
     }
 
-    rounds.push({ tally, eliminated, winner: roundWinner });
-    if (winner) break;
+    if (remaining.length <= 2) {
+      const topCount = sorted[0].count;
+      const tied = sorted.filter((t) => t.count === topCount).map((t) => t.option);
+      if (tied.length > 1) {
+        tiedOptions = tied;
+        rounds.push({ tally, eliminated: null, winner: null, tie: true });
+      } else {
+        winner = sorted[0].option;
+        rounds.push({ tally, eliminated: null, winner });
+      }
+      break;
+    }
+
+    const eliminated = sorted[sorted.length - 1].option;
+    rounds.push({ tally, eliminated, winner: null });
     remaining = remaining.filter((o) => o !== eliminated);
   }
 
-  return { rounds, winner, totalVoters: ballots.length };
+  return { rounds, winner, tiedOptions, totalVoters: ballots.length };
 }
 
 module.exports = { tallyOptions, determineWinner, runInstantRunoff };
