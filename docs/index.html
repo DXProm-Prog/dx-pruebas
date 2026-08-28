@@ -1552,7 +1552,6 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
   const [closingStage, setClosingStage] = useState(false);
-  const [showConfig, setShowConfig] = useState(false);
   const [categoryThresholdPercent, setCategoryThresholdPercent] = useState(flow.config?.categoryThresholdPercent ?? 10);
   const [quotaTrimPercent, setQuotaTrimPercent] = useState(flow.config?.quotaTrimPercent ?? 10);
   const [savingConfig, setSavingConfig] = useState(false);
@@ -1570,7 +1569,6 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
         }),
       });
       await onAdvance();
-      setShowConfig(false);
     } catch (e) {
       setSendError(e.message);
     } finally {
@@ -1628,18 +1626,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
 
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="dp-body text-xs font-semibold" style={{ color: BLUE }}>
-          Cuotas participativas{flow.status === "finished" ? " · terminado" : ""}
-        </div>
-        {isAdmin && flow.status === "active" && (
-          <button onClick={() => setShowConfig(!showConfig)} className="dp-body text-[10px] font-medium" style={{ color: INK + "77" }}>
-            ⚙️ configurar
-          </button>
-        )}
+      <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
+        Cuotas participativas{flow.status === "finished" ? " · terminado" : ""}
       </div>
 
-      {showConfig && isAdmin && (
+      {isAdmin && flow.status === "active" && (
         <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
           <label className="dp-body flex items-center justify-between text-xs mb-2" style={{ color: INK }}>
             % mínimo de apoyo para que sobreviva una categoría
