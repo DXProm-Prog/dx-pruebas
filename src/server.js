@@ -637,9 +637,9 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
     storedValue = cleaned;
   } else if (stage.type === "seleccion_multiple") {
     const arr = Array.isArray(value) ? value : [value];
-    const valid = arr.every((v) => stage.config.options.includes(v));
-    if (!valid) return res.status(400).json({ error: "value debe ser una o más opciones válidas" });
-    storedValue = arr;
+    const clean = [...new Set(arr.map((v) => String(v).trim()).filter(Boolean))];
+    if (clean.length === 0) return res.status(400).json({ error: "Elige o agrega al menos una categoría" });
+    storedValue = clean;
   } else if (stage.type === "porcentaje_por_categoria") {
     if (typeof value !== "object" || Array.isArray(value) || value === null) {
       return res.status(400).json({ error: "value debe ser un objeto {categoria: número}" });

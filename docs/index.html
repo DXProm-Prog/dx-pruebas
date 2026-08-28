@@ -1420,6 +1420,15 @@ function StageInput({ stage, onSend, sending, disabled }) {
             style={{ background: BLUE_SOFT, color: INK }}
           />
         ))}
+        {!disabled && (
+          <button
+            onClick={() => setTexts([...texts, ""])}
+            className="dp-body text-xs font-medium mb-2"
+            style={{ color: BLUE }}
+          >
+            + agregar recuadro
+          </button>
+        )}
         <button
           onClick={() => onSend(texts.filter((t) => t.trim()))}
           disabled={sending || disabled || texts.every((t) => !t.trim())}

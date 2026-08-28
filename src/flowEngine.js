@@ -99,22 +99,27 @@ function computeStageResult(stage, responses) {
     return { type: "recoleccion_abierta", pool, totalResponses: responses.length };
   }
 
-  // Cada miembro elige varias opciones (checkboxes) de una lista fija.
-  // Se calcula qué % de la gente eligió cada una.
+  // Cada miembro elige varias opciones (checkboxes) de una lista fija —
+  // y también puede agregar categorías nuevas que no estaban ahí.
+  // Se calcula qué % de la gente eligió (o agregó) cada una.
   if (stage.type === "seleccion_multiple") {
     const counts = {};
     stage.config.options.forEach((o) => (counts[o] = 0));
     values.forEach((arr) => {
-      (Array.isArray(arr) ? arr : [arr]).forEach((o) => {
-        if (counts[o] !== undefined) counts[o] += 1;
+      (Array.isArray(arr) ? arr : [arr]).forEach((raw) => {
+        const o = String(raw).trim();
+        if (!o) return;
+        counts[o] = (counts[o] || 0) + 1;
       });
     });
     const totalVoters = values.length;
-    const tally = stage.config.options.map((o) => ({
-      option: o,
-      count: counts[o],
-      percent: totalVoters > 0 ? Math.round((counts[o] / totalVoters) * 1000) / 10 : 0,
-    }));
+    const tally = Object.keys(counts)
+      .map((o) => ({
+        option: o,
+        count: counts[o],
+        percent: totalVoters > 0 ? Math.round((counts[o] / totalVoters) * 1000) / 10 : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
     return { type: "seleccion_multiple", tally, totalVoters };
   }
 
