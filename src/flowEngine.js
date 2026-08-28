@@ -96,7 +96,7 @@ function computeStageResult(stage, responses) {
 
   if (stage.type === "recoleccion_abierta") {
     const pool = poolOpenText(values);
-    return { type: "recoleccion_abierta", pool };
+    return { type: "recoleccion_abierta", pool, totalResponses: responses.length };
   }
 
   if (stage.type === "ranking_multiganador") {

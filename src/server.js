@@ -538,7 +538,8 @@ app.post("/api/groups/:code/flows", async (req, res) => {
     id: generateId(),
     template,
     status: "active",
-    currentStage: TEMPLATES[template].getInitialStage(),
+    config: { ...(TEMPLATES[template].defaultConfig || {}) },
+    currentStage: TEMPLATES[template].getInitialStage(TEMPLATES[template].defaultConfig || {}),
     stages: [],
     createdAt: new Date().toISOString(),
   };
@@ -559,6 +560,25 @@ app.get("/api/groups/:code/flows/:flowId", async (req, res) => {
     liveCount = group.responses.filter((r) => r.flowId === flow.id && r.stageKey === flow.currentStage.key).length;
   }
   res.json({ ...flow, liveCount });
+});
+
+// El administrador ajusta la configuración del flujo (ej. % mínimo de
+// apoyo para que sobreviva una categoría, % de recorte en las cuotas).
+// Solo afecta a las etapas que TODAVÍA no se han calculado.
+app.post("/api/groups/:code/flows/:flowId/config", async (req, res) => {
+  const { memberId, config } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede cambiar la configuración" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
+  if (flow.status !== "active") return res.status(400).json({ error: "Este flujo ya terminó" });
+
+  flow.config = { ...flow.config, ...config };
+  await save(db);
+  res.json(flow);
 });
 
 app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
@@ -641,7 +661,7 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   const result = computeStageResult(stage, responses);
   flow.stages.push({ ...stage, result, closedAt: new Date().toISOString() });
 
-  const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages);
+  const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, flow.config || {});
   if (nextStage) {
     flow.currentStage = nextStage;
   } else {

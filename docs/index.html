@@ -1552,7 +1552,31 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
   const [closingStage, setClosingStage] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+  const [categoryThresholdPercent, setCategoryThresholdPercent] = useState(flow.config?.categoryThresholdPercent ?? 10);
+  const [quotaTrimPercent, setQuotaTrimPercent] = useState(flow.config?.quotaTrimPercent ?? 10);
+  const [savingConfig, setSavingConfig] = useState(false);
   const stage = flow.status === "active" ? flow.currentStage : null;
+
+  const saveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberId,
+          config: { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent) },
+        }),
+      });
+      await onAdvance();
+      setShowConfig(false);
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setSavingConfig(false);
+    }
+  };
 
   useEffect(() => {
     setSent(false);
@@ -1604,9 +1628,50 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
 
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-      <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
-        Cuotas participativas{flow.status === "finished" ? " · terminado" : ""}
+      <div className="flex items-center justify-between mb-3">
+        <div className="dp-body text-xs font-semibold" style={{ color: BLUE }}>
+          Cuotas participativas{flow.status === "finished" ? " · terminado" : ""}
+        </div>
+        {isAdmin && flow.status === "active" && (
+          <button onClick={() => setShowConfig(!showConfig)} className="dp-body text-[10px] font-medium" style={{ color: INK + "77" }}>
+            ⚙️ configurar
+          </button>
+        )}
       </div>
+
+      {showConfig && isAdmin && (
+        <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
+          <label className="dp-body flex items-center justify-between text-xs mb-2" style={{ color: INK }}>
+            % mínimo de apoyo para que sobreviva una categoría
+            <input
+              type="number" min="0" max="100" value={categoryThresholdPercent}
+              onChange={(e) => setCategoryThresholdPercent(e.target.value)}
+              className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none ml-2"
+              style={{ background: "#fff" }}
+            />
+          </label>
+          <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
+            % de recorte (alto y bajo) en las cuotas
+            <input
+              type="number" min="0" max="45" value={quotaTrimPercent}
+              onChange={(e) => setQuotaTrimPercent(e.target.value)}
+              className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none ml-2"
+              style={{ background: "#fff" }}
+            />
+          </label>
+          <div className="dp-body text-[10px] mb-2" style={{ color: INK + "77" }}>
+            Solo afecta las etapas que todavía no se han calculado.
+          </div>
+          <button
+            onClick={saveConfig}
+            disabled={savingConfig}
+            className="dp-body w-full text-xs py-1.5 rounded-full text-white font-medium disabled:opacity-40"
+            style={{ background: BLUE }}
+          >
+            {savingConfig ? "Guardando…" : "Guardar"}
+          </button>
+        </div>
+      )}
 
       {flow.stages.map((s, i) => (
         <div key={i} className="mb-3 pb-3" style={{ borderBottom: `1px dashed ${BLUE}33` }}>
