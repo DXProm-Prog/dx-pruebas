@@ -1735,6 +1735,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
 
   const me = group.members.find((m) => m.id === memberId);
   const isAdmin = group.admin.id === memberId;
+  const cuotasFlow = (group.flows || []).find((f) => f.template === "cuotas");
   const pendingMembers = group.members.filter((m) => !m.approved);
 
   return (
@@ -1803,66 +1804,63 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
         </div>
       )}
 
-      {(() => {
-        const cuotasFlow = (group.flows || []).find((f) => f.template === "cuotas");
-        if (cuotasFlow) {
-          return (
-            <FlowRunner
-              backendUrl={backendUrl}
-              groupCode={groupCode}
-              memberId={memberId}
-              flow={cuotasFlow}
-              isAdmin={isAdmin}
-              groupResponses={group.responses}
-              approvedMemberCount={group.members.filter((m) => m.approved).length}
-              onAdvance={fetchGroup}
-            />
-          );
-        }
-        if (isAdmin) {
-          return (
-            <button
-              onClick={async () => {
-                await fetch(`${backendUrl}/api/groups/${groupCode}/flows`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ template: "cuotas", memberId }),
-                });
-                await fetchGroup();
-              }}
-              className="dp-body w-full text-left rounded-2xl p-4 mb-4 shadow-sm"
-              style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
-            >
-              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>💰 Iniciar Cuotas participativas</div>
-              <div className="text-xs" style={{ color: INK + "88" }}>
-                Un flujo guiado de varias etapas para decidir las cuotas del grupo.
-              </div>
-            </button>
-          );
-        }
-        return null;
-      })()}
-
-      {isAdmin && <NewQuestionForm backendUrl={backendUrl} groupCode={groupCode} onAdded={fetchGroup} />}
-
-      {group.questions.length === 0 && (
-        <div className="dp-body text-xs text-center py-4" style={{ color: INK + "77" }}>
-          Este grupo todavía no tiene preguntas.
-        </div>
-      )}
-
-      {group.questions.map((q) => (
-        <QuestionRunner
-          key={q.id}
+      {cuotasFlow ? (
+        <FlowRunner
           backendUrl={backendUrl}
           groupCode={groupCode}
           memberId={memberId}
-          question={q}
+          flow={cuotasFlow}
           isAdmin={isAdmin}
           groupResponses={group.responses}
           approvedMemberCount={group.members.filter((m) => m.approved).length}
+          onAdvance={fetchGroup}
         />
-      ))}
+      ) : (
+        isAdmin && (
+          <button
+            onClick={async () => {
+              await fetch(`${backendUrl}/api/groups/${groupCode}/flows`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ template: "cuotas", memberId }),
+              });
+              await fetchGroup();
+            }}
+            className="dp-body w-full text-left rounded-2xl p-4 mb-4 shadow-sm"
+            style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
+          >
+            <div className="text-sm font-semibold mb-1" style={{ color: INK }}>💰 Iniciar Cuotas participativas</div>
+            <div className="text-xs" style={{ color: INK + "88" }}>
+              Un flujo guiado de varias etapas para decidir las cuotas del grupo.
+            </div>
+          </button>
+        )
+      )}
+
+      {!cuotasFlow && (
+        <React.Fragment>
+          {isAdmin && <NewQuestionForm backendUrl={backendUrl} groupCode={groupCode} onAdded={fetchGroup} />}
+
+          {group.questions.length === 0 && (
+            <div className="dp-body text-xs text-center py-4" style={{ color: INK + "77" }}>
+              Este grupo todavía no tiene preguntas.
+            </div>
+          )}
+
+          {group.questions.map((q) => (
+            <QuestionRunner
+              key={q.id}
+              backendUrl={backendUrl}
+              groupCode={groupCode}
+              memberId={memberId}
+              question={q}
+              isAdmin={isAdmin}
+              groupResponses={group.responses}
+              approvedMemberCount={group.members.filter((m) => m.approved).length}
+            />
+          ))}
+        </React.Fragment>
+      )}
     </div>
   );
 }

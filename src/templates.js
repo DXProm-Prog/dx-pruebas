@@ -72,7 +72,16 @@ const cuotas = {
       return CUOTAS_APPROVAL_STAGE;
     }
 
-    // "approval" ya cerró — el flujo termina aquí.
+    if (last.key === "approval") {
+      if (last.result.winner === "Sí") {
+        return null; // aprobado — el flujo termina
+      }
+      // No se aprobó (o hubo empate): se repite desde el inicio. Las
+      // etapas del intento anterior se quedan en el historial, así que
+      // sirven de referencia para la siguiente vuelta.
+      return cuotas.getInitialStage();
+    }
+
     return null;
   },
 };
