@@ -422,7 +422,7 @@ app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
         return res.json({ question, type: "mayoria", majorityRule: "rankeado", rounds: out.rounds, winner: out.winner, tieBreak: null });
       }
       if (out.tiedOptions) {
-        question.tieBreak = { currentRound: 1, currentOptions: out.tiedOptions, completedRounds: [], finished: false, winner: null, roundClosesAt: null };
+        question.tieBreak = { currentRound: 1, currentOptions: out.tiedOptions, completedRounds: [], finished: false, winner: null, roundClosesAt: null, originalRounds: out.rounds };
         await save(db);
       }
       return res.json({ question, type: "mayoria", majorityRule: "rankeado", rounds: out.rounds, winner: null, tieBreak: question.tieBreak });
@@ -433,7 +433,7 @@ app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
     }
     const tb = question.tieBreak;
     const liveTally = tb.finished ? null : tallyOptions(tb.currentOptions, group.responses.filter((r) => r.questionId === question.id && r.tieBreakRound === tb.currentRound).map((r) => r.value)).tally;
-    return res.json({ question, type: "mayoria", majorityRule: "rankeado", winner: tb.finished ? tb.winner : null, tieBreak: { ...tb, liveTally } });
+    return res.json({ question, type: "mayoria", majorityRule: "rankeado", rounds: tb.originalRounds, winner: tb.finished ? tb.winner : null, tieBreak: { ...tb, liveTally } });
   }
 
   const justClosed = closeIfExpired(group, question);

@@ -121,8 +121,9 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
   const [resultError, setResultError] = useState("");
   const [closingRound, setClosingRound] = useState(false);
 
-  const inTieBreak = isRankeado && question.tieBreak && !question.tieBreak.finished;
-  const rankeadoResolved = isRankeado && question.tieBreak && question.tieBreak.finished;
+  const freshTieBreak = (result && result.tieBreak) || question.tieBreak;
+  const inTieBreak = isRankeado && freshTieBreak && !freshTieBreak.finished;
+  const rankeadoResolved = isRankeado && freshTieBreak && freshTieBreak.finished;
 
   const hasValue = isRankeado && !inTieBreak ? rankOrder.length > 0 : value !== "";
 
@@ -188,7 +189,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
     }
   };
 
-  const needsLivePolling = isSegundaVuelta || Boolean(question.tieBreak);
+  const needsLivePolling = isSegundaVuelta || Boolean(freshTieBreak);
 
   useEffect(() => {
     if (needsLivePolling) computeResults(true);
@@ -224,7 +225,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
       <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
         {question.type === "promedio" ? `recorte: ${question.trimPercent}%` : ruleLabel}
         {isSegundaVuelta && result && !result.finished && ` · ronda ${result.currentRound}${result.inTieBreak ? " (desempate)" : ""}`}
-        {inTieBreak && ` · ronda de desempate ${question.tieBreak.currentRound}`}
+        {inTieBreak && ` · ronda de desempate ${freshTieBreak.currentRound}`}
       </div>
 
       {question.type === "promedio" && (
@@ -278,7 +279,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
           <div className="dp-body text-[11px] mb-1" style={{ color: CORAL }}>
             Hubo empate — vota de nuevo solo entre las opciones empatadas.
           </div>
-          {question.tieBreak.currentOptions.map((opt) => (
+          {freshTieBreak.currentOptions.map((opt) => (
             <button
               key={opt}
               onClick={() => setValue(opt)}
@@ -366,7 +367,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
           ✨ {computing ? "Calculando…" : "Calcular decisión colectiva"}
         </button>
       )}
-      {isRankeado && !question.tieBreak && !result && (
+      {isRankeado && !freshTieBreak && !result && (
         <button
           onClick={() => computeResults(false)}
           disabled={computing}
@@ -436,7 +437,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
               ))}
             </div>
           ))}
-          {result.winner && !question.tieBreak && (
+          {result.winner && !freshTieBreak && (
             <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
               <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
               <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
@@ -445,10 +446,10 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
         </div>
       )}
 
-      {question.tieBreak && (
+      {freshTieBreak && (
         <div className="mt-3 rounded-xl p-3.5" style={{ background: CORAL + "12", border: `1px solid ${CORAL}33` }}>
           <div className="dp-body text-[11px] font-semibold mb-2" style={{ color: CORAL }}>Desempate</div>
-          {question.tieBreak.completedRounds.map((rd, i) => (
+          {freshTieBreak.completedRounds.map((rd, i) => (
             <div key={i} className="mb-2">
               <div className="dp-body text-[10px] font-medium mb-1" style={{ color: INK + "99" }}>Ronda de desempate {rd.roundNum}</div>
               {rd.tally.map((t) => (
@@ -456,13 +457,13 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
               ))}
             </div>
           ))}
-          {question.tieBreak.finished ? (
+          {freshTieBreak.finished ? (
             <div className="flex items-baseline justify-between pt-2 mt-1" style={{ borderTop: `1px solid ${CORAL}33` }}>
               <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{question.tieBreak.winner}</span>
+              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{freshTieBreak.winner}</span>
             </div>
           ) : (
-            <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>votación en curso entre: {question.tieBreak.currentOptions.join(", ")}</div>
+            <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>votación en curso entre: {freshTieBreak.currentOptions.join(", ")}</div>
           )}
         </div>
       )}
