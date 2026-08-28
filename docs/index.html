@@ -1510,6 +1510,30 @@ function StageInput({ stage, onSend, sending, disabled }) {
   return null;
 }
 
+function BigDecisionDisplay({ stage }) {
+  const r = stage.result;
+  if (stage.key === "singleQuota") {
+    return (
+      <div className="dp-display text-4xl font-extrabold text-center" style={{ color: BLUE }}>
+        {r.average.toFixed(2)}
+      </div>
+    );
+  }
+  if (stage.key === "quotas") {
+    return (
+      <div>
+        {Object.entries(r.categories).map(([cat, cr]) => (
+          <div key={cat} className="flex justify-between items-baseline mb-1.5">
+            <span className="dp-body text-sm" style={{ color: INK }}>{cat}</span>
+            <span className="dp-display text-2xl font-extrabold" style={{ color: BLUE }}>{cr.average.toFixed(2)}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
 function StageResultView({ stage }) {
   const [showDetails, setShowDetails] = useState(true);
   const r = stage.result;
@@ -1776,6 +1800,17 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
         </div>
       ))}
 
+      {flow.status === "finished" && (() => {
+        const finalStage = [...flow.stages].reverse().find((s) => s.key === "quotas" || s.key === "singleQuota");
+        if (!finalStage) return null;
+        return (
+          <div className="rounded-xl p-3.5 mb-3" style={{ background: BLUE_SOFT }}>
+            <div className="dp-display text-lg font-bold mb-2" style={{ color: INK }}>Decisión colectiva:</div>
+            <BigDecisionDisplay stage={finalStage} />
+          </div>
+        );
+      })()}
+
       {stage && (
         <div>
           <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
@@ -1822,7 +1857,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
               if (!finalStage) return null;
               return (
                 <div className="rounded-lg p-3" style={{ background: BLUE_SOFT }}>
-                  <StageResultView stage={finalStage} />
+                  <BigDecisionDisplay stage={finalStage} />
                 </div>
               );
             })()}
