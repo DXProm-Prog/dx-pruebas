@@ -516,6 +516,14 @@ function summarizeStage(s) {
     const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.average.toFixed(2)}`);
     return `${s.text}\n${lines.join("\n")}`;
   }
+  if (s.type === "seleccion_multiple") {
+    const lines = s.result.tally.map((t) => `  - ${t.option}: ${t.percent}%`);
+    return `${s.text}\n${lines.join("\n")}`;
+  }
+  if (s.type === "porcentaje_por_categoria") {
+    const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.normalizedPercent}%`);
+    return `${s.text}\n${lines.join("\n")}`;
+  }
   return s.text;
 }
 
@@ -625,6 +633,22 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
       if (!isNaN(n)) cleaned[cat] = n;
     });
     if (Object.keys(cleaned).length === 0) return res.status(400).json({ error: "Propón al menos una cuota" });
+    storedValue = cleaned;
+  } else if (stage.type === "seleccion_multiple") {
+    const arr = Array.isArray(value) ? value : [value];
+    const valid = arr.every((v) => stage.config.options.includes(v));
+    if (!valid) return res.status(400).json({ error: "value debe ser una o más opciones válidas" });
+    storedValue = arr;
+  } else if (stage.type === "porcentaje_por_categoria") {
+    if (typeof value !== "object" || Array.isArray(value) || value === null) {
+      return res.status(400).json({ error: "value debe ser un objeto {categoria: número}" });
+    }
+    const cleaned = {};
+    stage.config.categories.forEach((cat) => {
+      const n = Number(value[cat]);
+      if (!isNaN(n)) cleaned[cat] = n;
+    });
+    if (Object.keys(cleaned).length === 0) return res.status(400).json({ error: "Asigna al menos un %" });
     storedValue = cleaned;
   } else {
     return res.status(400).json({ error: "Tipo de etapa desconocido" });

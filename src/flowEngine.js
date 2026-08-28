@@ -99,6 +99,44 @@ function computeStageResult(stage, responses) {
     return { type: "recoleccion_abierta", pool, totalResponses: responses.length };
   }
 
+  // Cada miembro elige varias opciones (checkboxes) de una lista fija.
+  // Se calcula qué % de la gente eligió cada una.
+  if (stage.type === "seleccion_multiple") {
+    const counts = {};
+    stage.config.options.forEach((o) => (counts[o] = 0));
+    values.forEach((arr) => {
+      (Array.isArray(arr) ? arr : [arr]).forEach((o) => {
+        if (counts[o] !== undefined) counts[o] += 1;
+      });
+    });
+    const totalVoters = values.length;
+    const tally = stage.config.options.map((o) => ({
+      option: o,
+      count: counts[o],
+      percent: totalVoters > 0 ? Math.round((counts[o] / totalVoters) * 1000) / 10 : 0,
+    }));
+    return { type: "seleccion_multiple", tally, totalVoters };
+  }
+
+  // Cada miembro propone qué % del presupuesto le daría a cada
+  // categoría. Se promedia cada categoría por separado, y si la suma de
+  // los promedios pasa de 100%, se normaliza proporcionalmente para que
+  // quede en 100% exacto.
+  if (stage.type === "porcentaje_por_categoria") {
+    const raw = {};
+    stage.config.categories.forEach((cat) => {
+      const vals = responses.map((r) => r.value && r.value[cat]).filter((v) => typeof v === "number" && !isNaN(v));
+      raw[cat] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    });
+    const sum = Object.values(raw).reduce((a, b) => a + b, 0);
+    const categories = {};
+    stage.config.categories.forEach((cat) => {
+      const normalizedPercent = sum > 100 && sum > 0 ? Math.round(((raw[cat] / sum) * 100) * 10) / 10 : Math.round(raw[cat] * 10) / 10;
+      categories[cat] = { rawAverage: Math.round(raw[cat] * 10) / 10, normalizedPercent };
+    });
+    return { type: "porcentaje_por_categoria", categories, rawSum: Math.round(sum * 10) / 10, wasNormalized: sum > 100 };
+  }
+
   if (stage.type === "ranking_multiganador") {
     const out = rankingMultiWinner(stage.config.options, values, stage.config.winnersCount || 1);
     return { type: "ranking_multiganador", ...out };

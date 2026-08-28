@@ -4,11 +4,11 @@
 // (flow.config), que el administrador puede ajustar — aquí solo se usan
 // los valores, con 10% como default si no se ha configurado nada.
 
-function approvalStage() {
+function approvalStage(label) {
   return {
     key: "approval",
     type: "mayoria",
-    text: "¿Apruebas el resultado colectivo de las cuotas?",
+    text: `¿Apruebas el resultado colectivo de ${label}?`,
     config: { options: ["Sí", "No"], majorityRule: "simple" },
   };
 }
@@ -53,15 +53,13 @@ const cuotas = {
     }
 
     if (last.key === "singleQuota") {
-      return approvalStage();
+      return approvalStage("las cuotas");
     }
 
     if (last.key === "names") {
       const { pool, totalResponses } = last.result;
-      // Se descarta cualquier categoría propuesta por menos del %
-      // mínimo de integrantes (configurable, 10% por default).
       let survivors = pool.filter((p) => totalResponses > 0 && (p.count / totalResponses) * 100 >= thresholdPercent);
-      if (survivors.length === 0) survivors = pool.slice(0, 1); // no dejar la lista vacía
+      if (survivors.length === 0) survivors = pool.slice(0, 1);
       const categoryCount = last.config.categoryCount;
       return {
         key: "ranking",
@@ -82,16 +80,11 @@ const cuotas = {
     }
 
     if (last.key === "quotas") {
-      return approvalStage();
+      return approvalStage("las cuotas");
     }
 
     if (last.key === "approval") {
-      if (last.result.winner === "Sí") {
-        return null; // aprobado — el flujo termina
-      }
-      // No se aprobó (o hubo empate): se repite desde el inicio. Las
-      // etapas del intento anterior se quedan en el historial, así que
-      // sirven de referencia para la siguiente vuelta.
+      if (last.result.winner === "Sí") return null;
       return cuotas.getInitialStage(flowConfig);
     }
 
@@ -99,6 +92,59 @@ const cuotas = {
   },
 };
 
-const TEMPLATES = { cuotas };
+const presupuesto = {
+  defaultConfig: { selectionThresholdPercent: 10 },
+
+  getInitialStage() {
+    return {
+      key: "categories",
+      type: "recoleccion_abierta",
+      text: "Propón categorías de gasto para el presupuesto (una por recuadro).",
+      config: { maxItemsPerPerson: 5 },
+    };
+  },
+
+  getNextStage(stages, flowConfig = {}) {
+    const thresholdPercent = flowConfig.selectionThresholdPercent ?? 10;
+    const last = stages[stages.length - 1];
+
+    if (last.key === "categories") {
+      const allNames = last.result.pool.map((p) => p.text);
+      return {
+        key: "selection",
+        type: "seleccion_multiple",
+        text: `Elige las categorías que te importan (puedes elegir varias). Se descartan las que no lleguen al ${thresholdPercent}% de apoyo.`,
+        config: { options: allNames },
+      };
+    }
+
+    if (last.key === "selection") {
+      let survivors = last.result.tally.filter((t) => t.percent >= thresholdPercent).map((t) => t.option);
+      if (survivors.length === 0) {
+        const sorted = [...last.result.tally].sort((a, b) => b.percent - a.percent);
+        survivors = sorted.slice(0, 1).map((t) => t.option);
+      }
+      return {
+        key: "budget",
+        type: "porcentaje_por_categoria",
+        text: "Asigna el % del presupuesto que crees justo para cada categoría (si la suma pasa de 100%, se ajusta sola).",
+        config: { categories: survivors },
+      };
+    }
+
+    if (last.key === "budget") {
+      return approvalStage("el presupuesto");
+    }
+
+    if (last.key === "approval") {
+      if (last.result.winner === "Sí") return null;
+      return presupuesto.getInitialStage(flowConfig);
+    }
+
+    return null;
+  },
+};
+
+const TEMPLATES = { cuotas, presupuesto };
 
 module.exports = { TEMPLATES };
