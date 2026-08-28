@@ -1511,39 +1511,135 @@ function StageInput({ stage, onSend, sending, disabled }) {
 }
 
 function StageResultView({ stage }) {
+  const [showDetails, setShowDetails] = useState(true);
   const r = stage.result;
+
   if (stage.type === "promedio") {
-    return <div className="dp-mono text-xs" style={{ color: BLUE }}>→ {r.average.toFixed(2)}</div>;
-  }
-  if (stage.type === "mayoria") {
-    return <div className="dp-mono text-xs" style={{ color: r.winner ? GREEN : CORAL }}>→ {r.winner || "sin ganador"}</div>;
-  }
-  if (stage.type === "recoleccion_abierta") {
     return (
-      <div className="flex flex-wrap gap-1">
-        {r.pool.map((p) => (
-          <span key={p.text} className="dp-mono text-[11px] px-2 py-0.5 rounded-md" style={{ background: BLUE_SOFT, color: INK }}>
-            {p.text} ({p.count})
-          </span>
-        ))}
+      <div>
+        <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+        {showDetails && (
+          <React.Fragment>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {r.sorted.map((v, i) => {
+                const isTrimmed = i < r.trimmedCount || i >= r.sorted.length - r.trimmedCount;
+                return (
+                  <span
+                    key={i}
+                    className="dp-mono text-xs px-2 py-1 rounded-md"
+                    style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
+                  >
+                    {v}
+                  </span>
+                );
+              })}
+            </div>
+            <div className="dp-mono text-xs mb-1" style={{ color: INK + "aa" }}>
+              ({r.kept.join(" + ")}) ÷ {r.kept.length} = {r.average.toFixed(2)}
+            </div>
+          </React.Fragment>
+        )}
+        <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>→ {r.average.toFixed(2)}</div>
       </div>
     );
   }
-  if (stage.type === "ranking_multiganador") {
-    return <div className="dp-mono text-xs" style={{ color: GREEN }}>→ elegidas: {r.winners.join(", ")}</div>;
+
+  if (stage.type === "mayoria") {
+    return (
+      <div>
+        <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+        {showDetails && (
+          <div className="mb-1">
+            {r.tally.map((t) => (
+              <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={r.winner === t.option} />
+            ))}
+          </div>
+        )}
+        <div className="dp-mono text-xs font-semibold" style={{ color: r.winner ? GREEN : CORAL }}>→ {r.winner || "sin ganador"}</div>
+      </div>
+    );
   }
+
+  if (stage.type === "recoleccion_abierta") {
+    return (
+      <div>
+        <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+        {showDetails && (
+          <div className="dp-body text-[10px] mb-1.5" style={{ color: INK + "77" }}>
+            {r.totalResponses} persona(s) propusieron {r.pool.length} nombre(s) distintos:
+          </div>
+        )}
+        {showDetails && (
+          <div className="flex flex-wrap gap-1">
+            {r.pool.map((p) => (
+              <span key={p.text} className="dp-mono text-[11px] px-2 py-0.5 rounded-md" style={{ background: BLUE_SOFT, color: INK }}>
+                {p.text} ({p.count})
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (stage.type === "ranking_multiganador") {
+    const maxScore = Math.max(1, ...r.ranked.map((x) => x.score));
+    return (
+      <div>
+        <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+        {showDetails && (
+          <div className="mb-1">
+            {r.ranked.map((x) => (
+              <OptionBar
+                key={x.option}
+                option={x.option}
+                count={x.score}
+                percent={Math.round((x.score / maxScore) * 1000) / 10}
+                highlight={r.winners.includes(x.option)}
+              />
+            ))}
+          </div>
+        )}
+        <div className="dp-mono text-xs font-semibold" style={{ color: GREEN }}>→ elegidas: {r.winners.join(", ")}</div>
+      </div>
+    );
+  }
+
   if (stage.type === "promedio_por_categoria") {
     return (
       <div>
+        <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
         {Object.entries(r.categories).map(([cat, cr]) => (
-          <div key={cat} className="flex justify-between dp-mono text-xs" style={{ color: INK }}>
-            <span>{cat}</span>
-            <b style={{ color: BLUE }}>{cr.average.toFixed(2)}</b>
+          <div key={cat} className="mb-2.5">
+            <div className="dp-body text-[11px] font-medium mb-1" style={{ color: INK }}>{cat}</div>
+            {showDetails && (
+              <React.Fragment>
+                <div className="flex flex-wrap gap-1.5 mb-1">
+                  {cr.sorted.map((v, i) => {
+                    const isTrimmed = i < cr.trimmedCount || i >= cr.sorted.length - cr.trimmedCount;
+                    return (
+                      <span
+                        key={i}
+                        className="dp-mono text-xs px-2 py-0.5 rounded-md"
+                        style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
+                      >
+                        {v}
+                      </span>
+                    );
+                  })}
+                </div>
+                <div className="dp-mono text-[11px] mb-1" style={{ color: INK + "aa" }}>
+                  ({cr.kept.join(" + ")}) ÷ {cr.kept.length} = {cr.average.toFixed(2)}
+                </div>
+              </React.Fragment>
+            )}
+            <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>→ {cr.average.toFixed(2)}</div>
           </div>
         ))}
       </div>
     );
   }
+
   return null;
 }
 
