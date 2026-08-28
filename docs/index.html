@@ -106,6 +106,19 @@ function OptionBar({ option, count, percent, highlight }) {
   );
 }
 
+function DetailsToggle({ show, onToggle, color }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="dp-body flex items-center gap-1 text-[11px] font-medium mb-2"
+      style={{ color: color || INK + "99" }}
+    >
+      <span style={{ display: "inline-block", transform: show ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>▶</span>
+      {show ? "Ocultar proceso" : "Ver proceso"}
+    </button>
+  );
+}
+
 function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) {
   const rule = question.majorityRule;
   const isRankeado = rule === "rankeado";
@@ -120,6 +133,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
   const [computing, setComputing] = useState(false);
   const [resultError, setResultError] = useState("");
   const [closingRound, setClosingRound] = useState(false);
+  const [showDetails, setShowDetails] = useState(true);
 
   const freshTieBreak = (result && result.tieBreak) || question.tieBreak;
   const inTieBreak = isRankeado && freshTieBreak && !freshTieBreak.finished;
@@ -174,6 +188,10 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
   };
 
   const closeRound = async () => {
+    const ok = window.confirm(
+      "¿Seguro que quieres cerrar esta ronda? Nadie más podrá votar en ella después de esto. Esta acción no se puede deshacer."
+    );
+    if (!ok) return;
     setClosingRound(true);
     try {
       await fetch(`${backendUrl}/api/groups/${groupCode}/questions/${question.id}/close-round`, {
@@ -381,28 +399,33 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
 
       {result && question.type === "promedio" && (
         <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          <div className="dp-body text-[11px] font-medium mb-2.5" style={{ color: INK + "99" }}>
-            {result.n} propuestas · {result.trimmedCount} recortadas de cada extremo
-            {result.suggestedMinPercent > question.trimPercent && <> · mínimo sugerido: {result.suggestedMinPercent}%</>}
-          </div>
-          <div className="flex flex-wrap gap-1.5 mb-3">
-            {result.sorted.map((v, i) => {
-              const isTrimmed = i < result.trimmedCount || i >= result.sorted.length - result.trimmedCount;
-              const named = result.sortedWithNames && result.sortedWithNames[i];
-              return (
-                <span
-                  key={i}
-                  className="dp-mono text-xs px-2 py-1 rounded-md"
-                  style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
-                >
-                  {named ? `${named.name}: ${named.value}` : v}
-                </span>
-              );
-            })}
-          </div>
-          <div className="dp-mono text-xs mb-2.5 leading-relaxed" style={{ color: INK + "aa" }}>
-            ({result.kept.join(" + ")}) ÷ {result.kept.length} = {result.average.toFixed(2)}
-          </div>
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && (
+            <React.Fragment>
+              <div className="dp-body text-[11px] font-medium mb-2.5" style={{ color: INK + "99" }}>
+                {result.n} propuestas · {result.trimmedCount} recortadas de cada extremo
+                {result.suggestedMinPercent > question.trimPercent && <> · mínimo sugerido: {result.suggestedMinPercent}%</>}
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {result.sorted.map((v, i) => {
+                  const isTrimmed = i < result.trimmedCount || i >= result.sorted.length - result.trimmedCount;
+                  const named = result.sortedWithNames && result.sortedWithNames[i];
+                  return (
+                    <span
+                      key={i}
+                      className="dp-mono text-xs px-2 py-1 rounded-md"
+                      style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
+                    >
+                      {named ? `${named.name}: ${named.value}` : v}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="dp-mono text-xs mb-2.5 leading-relaxed" style={{ color: INK + "aa" }}>
+                ({result.kept.join(" + ")}) ÷ {result.kept.length} = {result.average.toFixed(2)}
+              </div>
+            </React.Fragment>
+          )}
           <div className="flex items-baseline justify-between pt-2.5" style={{ borderTop: `1px solid ${BLUE}33` }}>
             <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
             <span className="dp-display text-3xl font-bold" style={{ color: BLUE }}>{result.average.toFixed(2)}</span>
@@ -412,10 +435,15 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
 
       {result && (rule === "simple" || rule === "absoluta" || rule === "calificada") && (
         <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>{result.totalVoters} voto(s)</div>
-          {result.tally.map((t) => (
-            <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={result.winner === t.option} />
-          ))}
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && (
+            <React.Fragment>
+              <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>{result.totalVoters} voto(s)</div>
+              {result.tally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={result.winner === t.option} />
+              ))}
+            </React.Fragment>
+          )}
           <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
             <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
             <span className="dp-display text-lg font-bold" style={{ color: result.winner ? GREEN : CORAL }}>
@@ -427,7 +455,8 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
 
       {result && isRankeado && result.rounds && (
         <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          {result.rounds.map((rd, i) => (
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && result.rounds.map((rd, i) => (
             <div key={i} className="mb-3">
               <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
                 Ronda {i + 1}{rd.eliminated ? ` · se elimina "${rd.eliminated}"` : ""}{rd.tie ? " · empate" : ""}
@@ -449,7 +478,8 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
       {freshTieBreak && (
         <div className="mt-3 rounded-xl p-3.5" style={{ background: CORAL + "12", border: `1px solid ${CORAL}33` }}>
           <div className="dp-body text-[11px] font-semibold mb-2" style={{ color: CORAL }}>Desempate</div>
-          {freshTieBreak.completedRounds.map((rd, i) => (
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} color={CORAL} />
+          {showDetails && freshTieBreak.completedRounds.map((rd, i) => (
             <div key={i} className="mb-2">
               <div className="dp-body text-[10px] font-medium mb-1" style={{ color: INK + "99" }}>Ronda de desempate {rd.roundNum}</div>
               {rd.tally.map((t) => (
@@ -470,23 +500,28 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
 
       {isSegundaVuelta && result && (
         <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          {result.completedRounds.map((rd) => (
-            <div key={rd.roundNum} className="mb-3">
-              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
-                Ronda {rd.roundNum}{rd.tieBreak ? " (desempate)" : ""} · se elimina: {rd.eliminated.length ? rd.eliminated.join(", ") : "nadie"}
-              </div>
-              {rd.tally.map((t) => (
-                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && (
+            <React.Fragment>
+              {result.completedRounds.map((rd) => (
+                <div key={rd.roundNum} className="mb-3">
+                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
+                    Ronda {rd.roundNum}{rd.tieBreak ? " (desempate)" : ""} · se elimina: {rd.eliminated.length ? rd.eliminated.join(", ") : "nadie"}
+                  </div>
+                  {rd.tally.map((t) => (
+                    <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+                  ))}
+                </div>
               ))}
-            </div>
-          ))}
-          {!result.finished && result.liveTally && (
-            <div className="mb-2">
-              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>Ronda {result.currentRound} (en curso)</div>
-              {result.liveTally.map((t) => (
-                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
-              ))}
-            </div>
+              {!result.finished && result.liveTally && (
+                <div className="mb-2">
+                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>Ronda {result.currentRound} (en curso)</div>
+                  {result.liveTally.map((t) => (
+                    <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+                  ))}
+                </div>
+              )}
+            </React.Fragment>
           )}
           {result.finished && (
             <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
