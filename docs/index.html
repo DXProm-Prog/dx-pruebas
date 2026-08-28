@@ -712,7 +712,7 @@ function ShareGroup({ groupName, code }) {
   );
 }
 
-function HomeScreen({ onChooseExplain, onChooseCustom }) {
+function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas }) {
   const [soonMsg, setSoonMsg] = useState("");
 
   const showSoon = (label) => {
@@ -743,6 +743,31 @@ function HomeScreen({ onChooseExplain, onChooseCustom }) {
         </div>
       </button>
       <button
+        onClick={onChooseCuotas}
+        className="dp-body text-left rounded-2xl p-4 shadow-sm"
+        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
+      >
+        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>💰 Cuotas participativas</div>
+        <div className="text-xs" style={{ color: INK + "88" }}>
+          Flujo guiado de varias etapas para decidir las cuotas de tu vecindario, condominio o club.
+        </div>
+      </button>
+      <button
+        onClick={() => showSoon("Presupuestos participativos")}
+        className="dp-body text-left rounded-2xl p-4 shadow-sm"
+        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
+      >
+        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>
+          📊 Presupuestos participativos
+          <span className="dp-body text-[9px] font-semibold ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: CORAL + "22", color: CORAL }}>
+            PRÓXIMAMENTE
+          </span>
+        </div>
+        <div className="text-xs" style={{ color: INK + "88" }}>
+          Flujo guiado para decidir en qué se gasta el presupuesto del grupo.
+        </div>
+      </button>
+      <button
         onClick={() => showSoon("Asociaciones, clubes y orgs")}
         className="dp-body text-left rounded-2xl p-4 shadow-sm"
         style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
@@ -754,7 +779,7 @@ function HomeScreen({ onChooseExplain, onChooseCustom }) {
           </span>
         </div>
         <div className="text-xs" style={{ color: INK + "88" }}>
-          Plantilla con cuotas y presupuesto participativo listos para usar.
+          Cuotas y presupuesto participativo, uno después del otro.
         </div>
       </button>
       <button
@@ -1329,6 +1354,298 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 }
 
 
+function StageInput({ stage, onSend, sending, disabled }) {
+  const [numValue, setNumValue] = useState("");
+  const [selected, setSelected] = useState("");
+  const [texts, setTexts] = useState(Array(stage.config.maxItemsPerPerson || 1).fill(""));
+  const [rankOrder, setRankOrder] = useState([]);
+  const [catValues, setCatValues] = useState({});
+
+  if (stage.type === "promedio") {
+    return (
+      <div className="flex items-center gap-2 mb-2">
+        <input
+          type="number"
+          placeholder="tu propuesta"
+          value={numValue}
+          disabled={disabled}
+          onChange={(e) => setNumValue(e.target.value)}
+          className="dp-mono flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none disabled:opacity-50"
+          style={{ background: BLUE_SOFT, color: INK }}
+        />
+        <button
+          onClick={() => onSend(Number(numValue))}
+          disabled={sending || disabled || numValue === ""}
+          className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: GREEN }}
+        >
+          📤 {sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+    );
+  }
+
+  if (stage.type === "mayoria") {
+    return (
+      <div className="flex flex-col gap-1.5 mb-2">
+        {stage.config.options.map((opt) => (
+          <button
+            key={opt}
+            onClick={() => setSelected(opt)}
+            disabled={disabled}
+            className="dp-body text-left text-sm px-3 py-2 rounded-lg disabled:opacity-50"
+            style={selected === opt ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+          >
+            {selected === opt ? "● " : "○ "}{opt}
+          </button>
+        ))}
+        <button
+          onClick={() => onSend(selected)}
+          disabled={sending || disabled || !selected}
+          className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
+          style={{ background: GREEN }}
+        >
+          📤 {sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+    );
+  }
+
+  if (stage.type === "recoleccion_abierta") {
+    return (
+      <div className="mb-2">
+        {texts.map((t, i) => (
+          <input
+            key={i}
+            value={t}
+            disabled={disabled}
+            onChange={(e) => {
+              const arr = [...texts];
+              arr[i] = e.target.value;
+              setTexts(arr);
+            }}
+            placeholder={`Propuesta ${i + 1}`}
+            className="dp-body w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-1.5 disabled:opacity-50"
+            style={{ background: BLUE_SOFT, color: INK }}
+          />
+        ))}
+        <button
+          onClick={() => onSend(texts.filter((t) => t.trim()))}
+          disabled={sending || disabled || texts.every((t) => !t.trim())}
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: GREEN }}
+        >
+          📤 {sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+    );
+  }
+
+  if (stage.type === "ranking_multiganador") {
+    return (
+      <div className="flex flex-col gap-1.5 mb-2">
+        <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>toca en orden de preferencia (1ª, 2ª…)</div>
+        {stage.config.options.map((opt) => {
+          const idx = rankOrder.indexOf(opt);
+          return (
+            <button
+              key={opt}
+              onClick={() => setRankOrder((prev) => (prev.includes(opt) ? prev.filter((o) => o !== opt) : [...prev, opt]))}
+              disabled={disabled}
+              className="dp-body flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg disabled:opacity-50"
+              style={idx >= 0 ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+            >
+              <span className="dp-mono font-semibold" style={{ minWidth: "16px" }}>{idx >= 0 ? idx + 1 : "–"}</span>
+              {opt}
+            </button>
+          );
+        })}
+        <button
+          onClick={() => onSend(rankOrder)}
+          disabled={sending || disabled || rankOrder.length === 0}
+          className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
+          style={{ background: GREEN }}
+        >
+          📤 {sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+    );
+  }
+
+  if (stage.type === "promedio_por_categoria") {
+    return (
+      <div className="mb-2">
+        {stage.config.categories.map((cat) => (
+          <div key={cat} className="flex items-center gap-2 mb-1.5">
+            <span className="dp-body text-xs flex-1" style={{ color: INK }}>{cat}</span>
+            <input
+              type="number"
+              value={catValues[cat] || ""}
+              disabled={disabled}
+              onChange={(e) => setCatValues({ ...catValues, [cat]: e.target.value })}
+              className="dp-mono w-24 rounded-lg px-2 py-1.5 text-sm outline-none disabled:opacity-50"
+              style={{ background: BLUE_SOFT, color: INK }}
+            />
+          </div>
+        ))}
+        <button
+          onClick={() => {
+            const obj = {};
+            Object.entries(catValues).forEach(([k, v]) => {
+              const n = Number(v);
+              if (!isNaN(n)) obj[k] = n;
+            });
+            onSend(obj);
+          }}
+          disabled={sending || disabled}
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: GREEN }}
+        >
+          📤 {sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function StageResultView({ stage }) {
+  const r = stage.result;
+  if (stage.type === "promedio") {
+    return <div className="dp-mono text-xs" style={{ color: BLUE }}>→ {r.average.toFixed(2)}</div>;
+  }
+  if (stage.type === "mayoria") {
+    return <div className="dp-mono text-xs" style={{ color: r.winner ? GREEN : CORAL }}>→ {r.winner || "sin ganador"}</div>;
+  }
+  if (stage.type === "recoleccion_abierta") {
+    return (
+      <div className="flex flex-wrap gap-1">
+        {r.pool.map((p) => (
+          <span key={p.text} className="dp-mono text-[11px] px-2 py-0.5 rounded-md" style={{ background: BLUE_SOFT, color: INK }}>
+            {p.text} ({p.count})
+          </span>
+        ))}
+      </div>
+    );
+  }
+  if (stage.type === "ranking_multiganador") {
+    return <div className="dp-mono text-xs" style={{ color: GREEN }}>→ elegidas: {r.winners.join(", ")}</div>;
+  }
+  if (stage.type === "promedio_por_categoria") {
+    return (
+      <div>
+        {Object.entries(r.categories).map(([cat, cr]) => (
+          <div key={cat} className="flex justify-between dp-mono text-xs" style={{ color: INK }}>
+            <span>{cat}</span>
+            <b style={{ color: BLUE }}>{cr.average.toFixed(2)}</b>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+}
+
+function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupResponses, approvedMemberCount, onAdvance }) {
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [sent, setSent] = useState(false);
+  const [closingStage, setClosingStage] = useState(false);
+  const stage = flow.status === "active" ? flow.currentStage : null;
+
+  useEffect(() => {
+    setSent(false);
+    setSendError("");
+  }, [stage && stage.key]);
+
+  const liveCount = stage
+    ? (groupResponses || []).filter((r) => r.flowId === flow.id && r.stageKey === stage.key).length
+    : 0;
+
+  const sendResponse = async (value) => {
+    setSending(true);
+    setSendError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/responses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al enviar");
+      setSent(true);
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const closeStage = async () => {
+    const ok = window.confirm("¿Seguro que quieres cerrar esta etapa? Nadie más podrá responder después de esto.");
+    if (!ok) return;
+    setClosingStage(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-stage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cerrar la etapa");
+      await onAdvance();
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setClosingStage(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+      <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
+        Cuotas participativas{flow.status === "finished" ? " · terminado" : ""}
+      </div>
+
+      {flow.stages.map((s, i) => (
+        <div key={i} className="mb-3 pb-3" style={{ borderBottom: `1px dashed ${BLUE}33` }}>
+          <div className="dp-body text-[12px] font-medium mb-1" style={{ color: INK }}>{s.text}</div>
+          <StageResultView stage={s} />
+        </div>
+      ))}
+
+      {stage && (
+        <div>
+          <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
+          <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
+            {liveCount} de {approvedMemberCount} miembro(s) han respondido
+          </div>
+          <StageInput stage={stage} onSend={sendResponse} sending={sending} disabled={sent} />
+          {sent && <div className="dp-body text-[11px] mb-2" style={{ color: GREEN }}>✅ Guardado</div>}
+          {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+          {isAdmin && (
+            <button
+              onClick={closeStage}
+              disabled={closingStage}
+              className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+              style={{ background: BLUE }}
+            >
+              🔒 {closingStage ? "Cerrando…" : "Cerrar etapa y avanzar"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {flow.status === "finished" && (
+        <div className="dp-body text-[12px]" style={{ color: GREEN }}>
+          ✅ Flujo completo — si dejaste tu correo, ahí te llega el resumen.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1486,6 +1803,46 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
         </div>
       )}
 
+      {(() => {
+        const cuotasFlow = (group.flows || []).find((f) => f.template === "cuotas");
+        if (cuotasFlow) {
+          return (
+            <FlowRunner
+              backendUrl={backendUrl}
+              groupCode={groupCode}
+              memberId={memberId}
+              flow={cuotasFlow}
+              isAdmin={isAdmin}
+              groupResponses={group.responses}
+              approvedMemberCount={group.members.filter((m) => m.approved).length}
+              onAdvance={fetchGroup}
+            />
+          );
+        }
+        if (isAdmin) {
+          return (
+            <button
+              onClick={async () => {
+                await fetch(`${backendUrl}/api/groups/${groupCode}/flows`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ template: "cuotas", memberId }),
+                });
+                await fetchGroup();
+              }}
+              className="dp-body w-full text-left rounded-2xl p-4 mb-4 shadow-sm"
+              style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
+            >
+              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>💰 Iniciar Cuotas participativas</div>
+              <div className="text-xs" style={{ color: INK + "88" }}>
+                Un flujo guiado de varias etapas para decidir las cuotas del grupo.
+              </div>
+            </button>
+          );
+        }
+        return null;
+      })()}
+
       {isAdmin && <NewQuestionForm backendUrl={backendUrl} groupCode={groupCode} onAdded={fetchGroup} />}
 
       {group.questions.length === 0 && (
@@ -1518,6 +1875,7 @@ function DemocraciaPorPromedioConectada() {
   const [memberId, setMemberId] = useState("");
   const [createdGroupName, setCreatedGroupName] = useState("");
   const [urlCode, setUrlCode] = useState("");
+  const [entryPurpose, setEntryPurpose] = useState(null); // null | "cuotas"
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1568,7 +1926,14 @@ function DemocraciaPorPromedioConectada() {
         {view === "home" && (
           <HomeScreen
             onChooseExplain={() => setView("explain")}
-            onChooseCustom={() => setView("custom")}
+            onChooseCustom={() => {
+              setEntryPurpose(null);
+              setView("custom");
+            }}
+            onChooseCuotas={() => {
+              setEntryPurpose("cuotas");
+              setView("custom");
+            }}
           />
         )}
         {view === "custom" && (
@@ -1584,11 +1949,18 @@ function DemocraciaPorPromedioConectada() {
           <CreateGroupScreen
             backendUrl={backendUrl}
             onBack={() => setView("custom")}
-            onCreated={({ code, memberId, groupName }) => {
+            onCreated={async ({ code, memberId, groupName }) => {
               setGroupCode(code);
               setMemberId(memberId);
               setCreatedGroupName(groupName);
               persistSession(code, memberId);
+              if (entryPurpose === "cuotas") {
+                await fetch(`${backendUrl}/api/groups/${code}/flows`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ template: "cuotas", memberId }),
+                });
+              }
               setView("groupCreated");
             }}
           />
@@ -1633,6 +2005,7 @@ function DemocraciaPorPromedioConectada() {
             onExit={() => {
               setGroupCode("");
               setMemberId("");
+              setEntryPurpose(null);
               clearSession();
               setView("home");
             }}

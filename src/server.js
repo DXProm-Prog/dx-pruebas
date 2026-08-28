@@ -7,6 +7,8 @@ const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
 const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers } = require("./email");
+const { computeStageResult } = require("./flowEngine");
+const { TEMPLATES } = require("./templates");
 
 const app = express();
 app.use(cors());
@@ -34,6 +36,7 @@ app.post("/api/groups", async (req, res) => {
     questions: [],
     responses: [],
     results: [],
+    flows: [],
   };
   await save(db);
 
@@ -493,6 +496,176 @@ app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
 
   res.json({ question: { ...question, finalResult: undefined }, secretResponses: group.secretResponses !== false, ...result });
 });
+
+// ---------- Flujos (Cuotas, Presupuesto, etc) ----------
+
+function summarizeStage(s) {
+  if (s.type === "promedio") {
+    return `${s.text}\n→ ${s.result.average.toFixed(2)}`;
+  }
+  if (s.type === "mayoria") {
+    return `${s.text}\n→ ${s.result.winner || "sin ganador"}`;
+  }
+  if (s.type === "recoleccion_abierta") {
+    return `${s.text}\n→ propuestas: ${s.result.pool.map((p) => `${p.text} (${p.count})`).join(", ")}`;
+  }
+  if (s.type === "ranking_multiganador") {
+    return `${s.text}\n→ elegidas: ${s.result.winners.join(", ")}`;
+  }
+  if (s.type === "promedio_por_categoria") {
+    const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.average.toFixed(2)}`);
+    return `${s.text}\n${lines.join("\n")}`;
+  }
+  return s.text;
+}
+
+const TEMPLATE_LABELS = { cuotas: "Cuotas participativas", presupuesto: "Presupuesto participativo" };
+
+// El administrador inicia un flujo nuevo (ej. "cuotas").
+app.post("/api/groups/:code/flows", async (req, res) => {
+  const { template, memberId } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede iniciar un flujo" });
+  if (!TEMPLATES[template]) return res.status(400).json({ error: "Plantilla desconocida" });
+
+  if (!group.flows) group.flows = [];
+  const alreadyActive = group.flows.find((f) => f.template === template && f.status === "active");
+  if (alreadyActive) return res.status(400).json({ error: "Ya hay un flujo de este tipo en curso" });
+
+  const flow = {
+    id: generateId(),
+    template,
+    status: "active",
+    currentStage: TEMPLATES[template].getInitialStage(),
+    stages: [],
+    createdAt: new Date().toISOString(),
+  };
+  group.flows.push(flow);
+  await save(db);
+  res.json(flow);
+});
+
+app.get("/api/groups/:code/flows/:flowId", async (req, res) => {
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
+
+  let liveCount = 0;
+  if (flow.status === "active") {
+    liveCount = group.responses.filter((r) => r.flowId === flow.id && r.stageKey === flow.currentStage.key).length;
+  }
+  res.json({ ...flow, liveCount });
+});
+
+app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
+  const { memberId, value } = req.body;
+  if (!memberId || value === undefined) return res.status(400).json({ error: "Faltan campos: memberId, value" });
+
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+
+  const member = group.members.find((m) => m.id === memberId && m.approved);
+  if (!member) return res.status(403).json({ error: "Miembro no encontrado o no aprobado" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
+  if (flow.status !== "active") return res.status(403).json({ error: "Este flujo ya terminó" });
+
+  const stage = flow.currentStage;
+  let storedValue;
+
+  if (stage.type === "promedio") {
+    const num = Number(value);
+    if (isNaN(num)) return res.status(400).json({ error: "value debe ser un número" });
+    storedValue = num;
+  } else if (stage.type === "mayoria") {
+    if (!stage.config.options.includes(value)) return res.status(400).json({ error: "value debe ser una opción válida" });
+    storedValue = value;
+  } else if (stage.type === "recoleccion_abierta") {
+    const arr = (Array.isArray(value) ? value : [value]).map((v) => String(v).trim()).filter(Boolean).slice(0, stage.config.maxItemsPerPerson);
+    if (arr.length === 0) return res.status(400).json({ error: "Escribe al menos una propuesta" });
+    storedValue = arr;
+  } else if (stage.type === "ranking_multiganador") {
+    const arr = Array.isArray(value) ? value : [value];
+    const valid = arr.every((v) => stage.config.options.includes(v)) && new Set(arr).size === arr.length;
+    if (!valid || arr.length === 0) return res.status(400).json({ error: "value debe ser un orden de opciones válidas, sin repetir" });
+    storedValue = arr;
+  } else if (stage.type === "promedio_por_categoria") {
+    if (typeof value !== "object" || Array.isArray(value) || value === null) {
+      return res.status(400).json({ error: "value debe ser un objeto {categoria: número}" });
+    }
+    const cleaned = {};
+    stage.config.categories.forEach((cat) => {
+      const n = Number(value[cat]);
+      if (!isNaN(n)) cleaned[cat] = n;
+    });
+    if (Object.keys(cleaned).length === 0) return res.status(400).json({ error: "Propón al menos una cuota" });
+    storedValue = cleaned;
+  } else {
+    return res.status(400).json({ error: "Tipo de etapa desconocido" });
+  }
+
+  group.responses.push({
+    id: generateId(),
+    flowId: flow.id,
+    stageKey: stage.key,
+    memberId: member.id,
+    memberName: member.name,
+    value: storedValue,
+    timestamp: new Date().toISOString(),
+  });
+  await save(db);
+  res.json({ status: "guardado" });
+});
+
+// El administrador cierra la etapa actual del flujo: calcula el
+// resultado, y avanza a la siguiente etapa (o termina el flujo).
+app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede cerrar la etapa" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
+  if (flow.status !== "active") return res.status(400).json({ error: "Este flujo ya terminó" });
+
+  const stage = flow.currentStage;
+  const responses = group.responses.filter((r) => r.flowId === flow.id && r.stageKey === stage.key);
+  const result = computeStageResult(stage, responses);
+  flow.stages.push({ ...stage, result, closedAt: new Date().toISOString() });
+
+  const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages);
+  if (nextStage) {
+    flow.currentStage = nextStage;
+  } else {
+    flow.status = "finished";
+    flow.currentStage = null;
+  }
+
+  await save(db);
+
+  if (flow.status === "finished") {
+    const summary = flow.stages.map(summarizeStage).join("\n\n");
+    notifyResultsToMembers({
+      group,
+      questionText: TEMPLATE_LABELS[flow.template] || flow.template,
+      summaryText: summary,
+      frontendUrl: process.env.FRONTEND_URL,
+      subjectPrefix: "Resultado final",
+    }).catch((err) => console.error("Error de correo (flujo):", err.message));
+  }
+
+  res.json(flow);
+});
+
+
 
 // ---------- Exportar ----------
 
