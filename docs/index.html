@@ -119,7 +119,7 @@ function DetailsToggle({ show, onToggle, color }) {
   );
 }
 
-function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) {
+function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, groupResponses, approvedMemberCount }) {
   const rule = question.majorityRule;
   const isRankeado = rule === "rankeado";
   const isSegundaVuelta = rule === "segunda_vuelta";
@@ -229,6 +229,20 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
   }[rule];
 
   const currentOptions = isSegundaVuelta && result ? result.currentOptions : question.options;
+
+  const liveVoteCount = React.useMemo(() => {
+    if (!groupResponses) return null;
+    if (isSegundaVuelta) {
+      return groupResponses.filter((r) => r.questionId === question.id && r.roundNum === question.currentRound).length;
+    }
+    if (inTieBreak) {
+      return groupResponses.filter((r) => r.questionId === question.id && r.tieBreakRound === freshTieBreak.currentRound).length;
+    }
+    if (isRankeado) {
+      return groupResponses.filter((r) => r.questionId === question.id && !r.tieBreakRound).length;
+    }
+    return groupResponses.filter((r) => r.questionId === question.id).length;
+  }, [groupResponses, question.id, isSegundaVuelta, isRankeado, inTieBreak, question.currentRound, freshTieBreak && freshTieBreak.currentRound]);
   const isClosedForVoting = isSegundaVuelta ? Boolean(result && result.finished) : question.closed;
 
   return (
@@ -245,6 +259,12 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin }) 
         {isSegundaVuelta && result && !result.finished && ` · ronda ${result.currentRound}${result.inTieBreak ? " (desempate)" : ""}`}
         {inTieBreak && ` · ronda de desempate ${freshTieBreak.currentRound}`}
       </div>
+      {liveVoteCount !== null && (
+        <div className="dp-body text-[11px] mb-3 flex items-center gap-1.5" style={{ color: INK + "88" }}>
+          <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: GREEN }} />
+          {liveVoteCount} de {approvedMemberCount} miembro(s) han votado
+        </div>
+      )}
 
       {question.type === "promedio" && (
         <div className="flex items-center gap-2 mb-2">
@@ -564,6 +584,24 @@ function ExplanationScreen({ onBack }) {
           usa solo $800, $820, $900 y $950 → una decisión de <b>$867.50</b>,
           sin que el $3,000 la distorsione.
         </p>
+      </div>
+
+      <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>Ejemplos de las reglas de mayoría</div>
+        <p className="dp-body text-[13px] leading-relaxed mb-3" style={{ color: INK + "aa" }}>
+          Todas parten de lo mismo: cada quien elige una opción (o las ordena, en voto ranqueado). Lo que cambia es cómo se decide quién gana. Con 10 votos repartidos así: <b>A: 5, B: 3, C: 2</b> —
+        </p>
+        <div className="dp-body text-[13px] leading-relaxed space-y-2.5" style={{ color: INK + "aa" }}>
+          <div><b style={{ color: INK }}>Simple:</b> gana A con 5 votos, aunque no llegue a la mitad.</div>
+          <div><b style={{ color: INK }}>Absoluta:</b> A tiene exactamente el 50%, no más — nadie gana todavía, hay que repetir la votación.</div>
+          <div><b style={{ color: INK }}>Calificada (ej. +66%):</b> ni A con 50% se acerca — sin ganador, se repite.</div>
+          <div>
+            <b style={{ color: INK }}>Voto ranqueado:</b> si nadie llega al 50%, se elimina la opción C (la menos votada) y sus 2 votos se reparten según la <i>segunda</i> preferencia de esas 2 personas — si los 2 eligieron A como su segunda opción, A sube a 7 de 10 y gana.
+          </div>
+          <div>
+            <b style={{ color: INK }}>Segunda vuelta electoral:</b> se elimina a quien esté por debajo del % mínimo que definas (ej. menos del 15%) — aquí C con 20% sobrevive la primera ronda, pero si en otra pregunta alguien tuviera solo 1 voto (10%), quedaría fuera antes de la siguiente ronda.
+          </div>
+        </div>
       </div>
 
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
@@ -988,6 +1026,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
   const [minutes, setMinutes] = useState("0");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
   const updateOption = (i, val) => setOptions(options.map((o, idx) => (idx === i ? val : o)));
   const addOption = () => setOptions([...options, ""]);
@@ -1212,6 +1251,67 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
       )}
       {!isSegundaVuelta && <div className="mb-3" />}
 
+      <button
+        type="button"
+        onClick={() => setShowPreview(!showPreview)}
+        className="dp-body w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-full font-medium mb-2"
+        style={{ background: BLUE_SOFT, color: INK }}
+      >
+        👁 {showPreview ? "Ocultar vista previa" : "Vista previa"}
+      </button>
+
+      {showPreview && (
+        <div className="rounded-2xl p-3 mb-3" style={{ background: PAGE_BG, border: `1.5px dashed ${BLUE}55` }}>
+          <div className="dp-body text-[10px] font-semibold mb-2" style={{ color: INK + "77", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+            Así lo verán los participantes
+          </div>
+          <div className="rounded-xl p-3.5" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+            <div className="dp-body text-[15px] mb-1" style={{ color: INK }}>{text || "Escribe tu pregunta arriba…"}</div>
+            <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
+              {type === "promedio"
+                ? `recorte: ${trimPercent || 0}%`
+                : majorityRule === "calificada"
+                ? `necesita más del ${qualifiedPct || 66}%`
+                : majorityRule === "absoluta"
+                ? "necesita más del 50%"
+                : majorityRule === "simple"
+                ? "gana la más votada"
+                : majorityRule === "rankeado"
+                ? "voto ranqueado (automático)"
+                : `${numRounds || 3} rondas · elimina menos del ${eliminationThresholdPercent || 10}%`}
+            </div>
+
+            {type === "promedio" && (
+              <div className="flex items-center gap-2">
+                <div className="flex-1 rounded-lg px-2.5 py-1.5 text-sm dp-mono" style={{ background: BLUE_SOFT, color: INK + "77" }}>tu propuesta</div>
+                <div className="text-xs px-3 py-2 rounded-full text-white font-medium" style={{ background: GREEN, opacity: 0.6 }}>📤 Enviar</div>
+              </div>
+            )}
+
+            {type === "mayoria" && majorityRule !== "rankeado" && (
+              <div className="flex flex-col gap-1.5">
+                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : ["Opción 1", "Opción 2"]).map((opt, i) => (
+                  <div key={i} className="dp-body text-left text-sm px-3 py-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK }}>
+                    ○ {opt}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {type === "mayoria" && majorityRule === "rankeado" && (
+              <div className="flex flex-col gap-1.5">
+                <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>toca en orden de preferencia (1ª, 2ª…)</div>
+                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : ["Opción 1", "Opción 2"]).map((opt, i) => (
+                  <div key={i} className="dp-body flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK }}>
+                    <span className="dp-mono font-semibold" style={{ minWidth: "16px" }}>–</span>{opt}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {error && <div className="dp-body text-[12px] mb-2" style={{ color: CORAL }}>{error}</div>}
 
       <button
@@ -1393,7 +1493,16 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
       )}
 
       {group.questions.map((q) => (
-        <QuestionRunner key={q.id} backendUrl={backendUrl} groupCode={groupCode} memberId={memberId} question={q} isAdmin={isAdmin} />
+        <QuestionRunner
+          key={q.id}
+          backendUrl={backendUrl}
+          groupCode={groupCode}
+          memberId={memberId}
+          question={q}
+          isAdmin={isAdmin}
+          groupResponses={group.responses}
+          approvedMemberCount={group.members.filter((m) => m.approved).length}
+        />
       ))}
     </div>
   );
