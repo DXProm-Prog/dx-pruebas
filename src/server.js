@@ -531,7 +531,7 @@ const TEMPLATE_LABELS = { cuotas: "Cuotas participativas", presupuesto: "Presupu
 
 // El administrador inicia un flujo nuevo (ej. "cuotas").
 app.post("/api/groups/:code/flows", async (req, res) => {
-  const { template, memberId } = req.body;
+  const { template, memberId, chainNext } = req.body;
   const db = await load();
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
@@ -549,6 +549,7 @@ app.post("/api/groups/:code/flows", async (req, res) => {
     config: { ...(TEMPLATES[template].defaultConfig || {}) },
     currentStage: TEMPLATES[template].getInitialStage(TEMPLATES[template].defaultConfig || {}),
     stages: [],
+    chainNext: chainNext || null,
     createdAt: new Date().toISOString(),
   };
   group.flows.push(flow);
@@ -691,6 +692,20 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   } else {
     flow.status = "finished";
     flow.currentStage = null;
+
+    if (flow.chainNext && TEMPLATES[flow.chainNext]) {
+      const nextTemplate = flow.chainNext;
+      group.flows.push({
+        id: generateId(),
+        template: nextTemplate,
+        status: "active",
+        config: { ...(TEMPLATES[nextTemplate].defaultConfig || {}) },
+        currentStage: TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}),
+        stages: [],
+        chainNext: null,
+        createdAt: new Date().toISOString(),
+      });
+    }
   }
 
   await save(db);

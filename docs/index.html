@@ -712,7 +712,7 @@ function ShareGroup({ groupName, code }) {
   );
 }
 
-function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto }) {
+function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones }) {
   const [soonMsg, setSoonMsg] = useState("");
 
   const showSoon = (label) => {
@@ -763,16 +763,11 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
         </div>
       </button>
       <button
-        onClick={() => showSoon("Asociaciones, clubes y orgs")}
+        onClick={onChooseAsociaciones}
         className="dp-body text-left rounded-2xl p-4 shadow-sm"
         style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
       >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>
-          🏘️ Asociaciones, clubes y orgs
-          <span className="dp-body text-[9px] font-semibold ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: CORAL + "22", color: CORAL }}>
-            PRÓXIMAMENTE
-          </span>
-        </div>
+        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🏘️ Asociaciones, clubes y orgs</div>
         <div className="text-xs" style={{ color: INK + "88" }}>
           Cuotas y presupuesto participativo, uno después del otro.
         </div>
@@ -2080,7 +2075,8 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
 
   const me = group.members.find((m) => m.id === memberId);
   const isAdmin = group.admin.id === memberId;
-  const activeFlow = (group.flows || [])[0];
+  const flows = group.flows || [];
+  const activeFlow = [...flows].reverse().find((f) => f.status === "active") || flows[flows.length - 1];
   const pendingMembers = group.members.filter((m) => !m.approved);
 
   return (
@@ -2197,6 +2193,23 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
                 Un flujo guiado para decidir en qué se gasta el presupuesto del grupo.
               </div>
             </button>
+            <button
+              onClick={async () => {
+                await fetch(`${backendUrl}/api/groups/${groupCode}/flows`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ template: "cuotas", memberId, chainNext: "presupuesto" }),
+                });
+                await fetchGroup();
+              }}
+              className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
+              style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
+            >
+              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🏘️ Iniciar Asociaciones (Cuotas + Presupuesto)</div>
+              <div className="text-xs" style={{ color: INK + "88" }}>
+                Corre los dos flujos, uno después del otro.
+              </div>
+            </button>
           </div>
         )
       )}
@@ -2300,6 +2313,10 @@ function DemocraciaPorPromedioConectada() {
               setEntryPurpose("presupuesto");
               setView("custom");
             }}
+            onChooseAsociaciones={() => {
+              setEntryPurpose("asociaciones");
+              setView("custom");
+            }}
           />
         )}
         {view === "custom" && (
@@ -2325,6 +2342,12 @@ function DemocraciaPorPromedioConectada() {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: entryPurpose, memberId }),
+                });
+              } else if (entryPurpose === "asociaciones") {
+                await fetch(`${backendUrl}/api/groups/${code}/flows`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ template: "cuotas", memberId, chainNext: "presupuesto" }),
                 });
               }
               setView("groupCreated");
