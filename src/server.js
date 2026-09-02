@@ -521,7 +521,7 @@ function summarizeStage(s) {
     return `${s.text}\n${lines.join("\n")}`;
   }
   if (s.type === "porcentaje_por_categoria") {
-    const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.normalizedPercent}%`);
+    const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.normalizedPercent}%${r.amount !== undefined ? ` ($${r.amount})` : ""}`);
     return `${s.text}\n${lines.join("\n")}`;
   }
   return s.text;

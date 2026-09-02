@@ -128,7 +128,7 @@ const presupuesto = {
         key: "budget",
         type: "porcentaje_por_categoria",
         text: "Asigna el % del presupuesto que crees justo para cada categoría (si la suma pasa de 100%, se ajusta sola).",
-        config: { categories: survivors },
+        config: { categories: survivors, totalBudget: flowConfig.totalBudget || null },
       };
     }
 

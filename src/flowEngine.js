@@ -134,12 +134,16 @@ function computeStageResult(stage, responses) {
       raw[cat] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     });
     const sum = Object.values(raw).reduce((a, b) => a + b, 0);
+    const totalBudget = stage.config.totalBudget || null;
     const categories = {};
     stage.config.categories.forEach((cat) => {
       const normalizedPercent = sum > 100 && sum > 0 ? Math.round(((raw[cat] / sum) * 100) * 10) / 10 : Math.round(raw[cat] * 10) / 10;
       categories[cat] = { rawAverage: Math.round(raw[cat] * 10) / 10, normalizedPercent };
+      if (totalBudget) {
+        categories[cat].amount = Math.round((normalizedPercent / 100) * totalBudget * 100) / 100;
+      }
     });
-    return { type: "porcentaje_por_categoria", categories, rawSum: Math.round(sum * 10) / 10, wasNormalized: sum > 100 };
+    return { type: "porcentaje_por_categoria", categories, rawSum: Math.round(sum * 10) / 10, wasNormalized: sum > 100, totalBudget };
   }
 
   if (stage.type === "ranking_multiganador") {

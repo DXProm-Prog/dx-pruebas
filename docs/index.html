@@ -92,6 +92,10 @@ function CountdownBadge({ closesAt, closed }) {
   );
 }
 
+function formatMoney(n) {
+  return "$" + Math.round(n).toLocaleString("es-MX");
+}
+
 function OptionBar({ option, count, percent, highlight }) {
   return (
     <div className="mb-2.5">
@@ -1538,6 +1542,7 @@ function StageInput({ stage, onSend, sending, disabled }) {
 
   if (stage.type === "porcentaje_por_categoria") {
     const total = Object.values(catValues).reduce((a, v) => a + (Number(v) || 0), 0);
+    const totalBudget = stage.config.totalBudget;
     return (
       <div className="mb-2">
         {stage.config.categories.map((cat) => (
@@ -1552,10 +1557,16 @@ function StageInput({ stage, onSend, sending, disabled }) {
               style={{ background: BLUE_SOFT, color: INK }}
             />
             <span className="dp-mono text-xs" style={{ color: INK + "77" }}>%</span>
+            {totalBudget > 0 && (
+              <span className="dp-mono text-[11px]" style={{ color: INK + "77" }}>
+                = {formatMoney(((Number(catValues[cat]) || 0) / 100) * totalBudget)}
+              </span>
+            )}
           </div>
         ))}
         <div className="dp-mono text-[11px] mb-2" style={{ color: total > 100 ? CORAL : INK + "88" }}>
-          asignado: {total}% de 100%{total > 100 ? " — pasa del tope" : ""}
+          asignado: {total}% de 100%{totalBudget > 0 ? ` (${formatMoney((total / 100) * totalBudget)} de ${formatMoney(totalBudget)})` : ""}
+          {total > 100 ? " — pasa del tope" : ""}
         </div>
         <button
           onClick={() => {
@@ -1606,7 +1617,12 @@ function BigDecisionDisplay({ stage }) {
         {Object.entries(r.categories).map(([cat, cr]) => (
           <div key={cat} className="flex justify-between items-baseline mb-1.5">
             <span className="dp-body text-sm" style={{ color: INK }}>{cat}</span>
-            <span className="dp-display text-2xl font-extrabold" style={{ color: BLUE }}>{cr.normalizedPercent}%</span>
+            <span className="text-right">
+              <span className="dp-display text-2xl font-extrabold" style={{ color: BLUE }}>{cr.normalizedPercent}%</span>
+              {cr.amount !== undefined && (
+                <div className="dp-mono text-xs" style={{ color: INK + "88" }}>{formatMoney(cr.amount)}</div>
+              )}
+            </span>
           </div>
         ))}
       </div>
@@ -1772,7 +1788,10 @@ function StageResultView({ stage }) {
         {Object.entries(r.categories).map(([cat, cr]) => (
           <div key={cat} className="flex justify-between dp-mono text-xs mb-1" style={{ color: INK }}>
             <span>{cat}</span>
-            <b style={{ color: BLUE }}>{cr.normalizedPercent}%</b>
+            <span>
+              <b style={{ color: BLUE }}>{cr.normalizedPercent}%</b>
+              {cr.amount !== undefined && <span style={{ color: INK + "77" }}> · {formatMoney(cr.amount)}</span>}
+            </span>
           </div>
         ))}
       </div>
@@ -1791,6 +1810,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
     flow.config?.categoryThresholdPercent ?? flow.config?.selectionThresholdPercent ?? 10
   );
   const [quotaTrimPercent, setQuotaTrimPercent] = useState(flow.config?.quotaTrimPercent ?? 10);
+  const [totalBudget, setTotalBudget] = useState(flow.config?.totalBudget ?? "");
   const [savingConfig, setSavingConfig] = useState(false);
   const [showCelebration, setShowCelebration] = useState(flow.status === "finished");
   const prevStatus = React.useRef(flow.status);
@@ -1809,7 +1829,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
       const config =
         flow.template === "cuotas"
           ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent) }
-          : { selectionThresholdPercent: Number(categoryThresholdPercent) };
+          : { selectionThresholdPercent: Number(categoryThresholdPercent), totalBudget: totalBudget === "" ? null : Number(totalBudget) };
       await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/config`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1895,6 +1915,18 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
                 type="number" min="0" max="45" value={quotaTrimPercent}
                 onChange={(e) => setQuotaTrimPercent(e.target.value)}
                 className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                style={{ background: "#fff" }}
+              />
+            </label>
+          )}
+          {flow.template === "presupuesto" && (
+            <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
+              Presupuesto total (opcional, para ver $)
+              <input
+                type="number" min="0" value={totalBudget}
+                onChange={(e) => setTotalBudget(e.target.value)}
+                placeholder="ej. 20000"
+                className="dp-mono w-24 rounded-lg px-2 py-1 text-center outline-none ml-2"
                 style={{ background: "#fff" }}
               />
             </label>
