@@ -1348,7 +1348,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 }
 
 
-function StageInput({ stage, onSend, sending, disabled }) {
+function StageInput({ stage, onSend, sending, disabled, flowConfig }) {
   const [numValue, setNumValue] = useState("");
   const [selected, setSelected] = useState("");
   const [texts, setTexts] = useState(Array(stage.config.maxItemsPerPerson || 1).fill(""));
@@ -1542,7 +1542,7 @@ function StageInput({ stage, onSend, sending, disabled }) {
 
   if (stage.type === "porcentaje_por_categoria") {
     const total = Object.values(catValues).reduce((a, v) => a + (Number(v) || 0), 0);
-    const totalBudget = stage.config.totalBudget;
+    const totalBudget = flowConfig?.totalBudget ?? stage.config.totalBudget;
     return (
       <div className="mb-2">
         {stage.config.categories.map((cat) => (
@@ -1969,7 +1969,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
             {liveCount} de {approvedMemberCount} miembro(s) han respondido
           </div>
-          <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} />
+          <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={flow.config} />
           {sent && <div className="dp-body text-[11px] mb-2" style={{ color: GREEN }}>✅ Guardado</div>}
           {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
           {isAdmin && (

@@ -683,7 +683,7 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
 
   const stage = flow.currentStage;
   const responses = group.responses.filter((r) => r.flowId === flow.id && r.stageKey === stage.key);
-  const result = computeStageResult(stage, responses);
+  const result = computeStageResult(stage, responses, flow.config || {});
   flow.stages.push({ ...stage, result, closedAt: new Date().toISOString() });
 
   const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, flow.config || {});

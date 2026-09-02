@@ -66,7 +66,7 @@ function rankingMultiWinner(options, ballots, winnersCount) {
 
 // Calcula el resultado de la etapa ACTUAL de un flujo, según su tipo.
 // `responses` ya viene filtrado: solo las respuestas de esta etapa.
-function computeStageResult(stage, responses) {
+function computeStageResult(stage, responses, flowConfig = {}) {
   const values = responses.map((r) => r.value);
 
   if (stage.type === "promedio") {
@@ -134,7 +134,7 @@ function computeStageResult(stage, responses) {
       raw[cat] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     });
     const sum = Object.values(raw).reduce((a, b) => a + b, 0);
-    const totalBudget = stage.config.totalBudget || null;
+    const totalBudget = flowConfig.totalBudget || stage.config.totalBudget || null;
     const categories = {};
     stage.config.categories.forEach((cat) => {
       const normalizedPercent = sum > 100 && sum > 0 ? Math.round(((raw[cat] / sum) * 100) * 10) / 10 : Math.round(raw[cat] * 10) / 10;
