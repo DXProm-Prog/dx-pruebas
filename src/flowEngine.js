@@ -71,7 +71,17 @@ function computeStageResult(stage, responses, flowConfig = {}) {
 
   if (stage.type === "promedio") {
     const result = computeTrimmedMean(values, stage.config.trimPercent || 0);
-    return { type: "promedio", ...result };
+    const output = { type: "promedio", ...result };
+    // Solo la etapa de "cuota única" usa número de miembros (la etapa
+    // "count", que también es tipo promedio, no aplica aquí).
+    if (stage.key === "singleQuota") {
+      const memberCount = flowConfig.memberCounts && flowConfig.memberCounts.single;
+      if (memberCount) {
+        output.memberCount = memberCount;
+        output.totalCollected = Math.round(result.average * memberCount * 100) / 100;
+      }
+    }
+    return output;
   }
 
   if (stage.type === "mayoria") {
@@ -83,15 +93,30 @@ function computeStageResult(stage, responses, flowConfig = {}) {
   // Igual que "promedio", pero cada respuesta trae un número POR
   // CATEGORÍA (ej. { "Residentes": 620, "Locales comerciales": 1450 }),
   // y cada categoría se promedia por separado (con su propio recorte).
+  // Si el administrador dio el número de miembros por categoría, también
+  // se calcula cuánto se recaudaría de cada una, y el total general.
   if (stage.type === "promedio_por_categoria") {
     const categories = {};
+    let totalCollected = 0;
+    let hasMemberCounts = false;
     stage.config.categories.forEach((cat) => {
       const catValues = responses
         .map((r) => r.value && r.value[cat])
         .filter((v) => typeof v === "number" && !isNaN(v));
       categories[cat] = computeTrimmedMean(catValues, stage.config.trimPercent || 0);
+      const memberCount = flowConfig.memberCounts && flowConfig.memberCounts[cat];
+      if (memberCount) {
+        hasMemberCounts = true;
+        categories[cat].memberCount = memberCount;
+        categories[cat].collected = Math.round(categories[cat].average * memberCount * 100) / 100;
+        totalCollected += categories[cat].collected;
+      }
     });
-    return { type: "promedio_por_categoria", categories };
+    return {
+      type: "promedio_por_categoria",
+      categories,
+      totalCollected: hasMemberCounts ? Math.round(totalCollected * 100) / 100 : null,
+    };
   }
 
   if (stage.type === "recoleccion_abierta") {

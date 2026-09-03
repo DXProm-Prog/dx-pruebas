@@ -1357,25 +1357,33 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig }) {
   const [selectedMulti, setSelectedMulti] = useState([]);
 
   if (stage.type === "promedio") {
+    const singleMemberCount = stage.key === "singleQuota" ? flowConfig?.memberCounts?.single : null;
     return (
-      <div className="flex items-center gap-2 mb-2">
-        <input
-          type="number"
-          placeholder="tu propuesta"
-          value={numValue}
-          disabled={disabled}
-          onChange={(e) => setNumValue(e.target.value)}
-          className="dp-mono flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none disabled:opacity-50"
-          style={{ background: BLUE_SOFT, color: INK }}
-        />
-        <button
-          onClick={() => onSend(Number(numValue))}
-          disabled={sending || disabled || numValue === ""}
-          className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
-          style={{ background: GREEN }}
-        >
-          📤 {sending ? "Enviando…" : "Enviar"}
-        </button>
+      <div className="mb-2">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            placeholder="tu propuesta"
+            value={numValue}
+            disabled={disabled}
+            onChange={(e) => setNumValue(e.target.value)}
+            className="dp-mono flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none disabled:opacity-50"
+            style={{ background: BLUE_SOFT, color: INK }}
+          />
+          <button
+            onClick={() => onSend(Number(numValue))}
+            disabled={sending || disabled || numValue === ""}
+            className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+            style={{ background: GREEN }}
+          >
+            📤 {sending ? "Enviando…" : "Enviar"}
+          </button>
+        </div>
+        {singleMemberCount > 0 && numValue !== "" && (
+          <div className="dp-mono text-[11px] mt-1" style={{ color: INK + "77" }}>
+            {singleMemberCount} miembros × {numValue} = {formatMoney(singleMemberCount * Number(numValue))} recaudados
+          </div>
+        )}
       </div>
     );
   }
@@ -1477,21 +1485,43 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig }) {
   }
 
   if (stage.type === "promedio_por_categoria") {
+    const memberCounts = flowConfig?.memberCounts || {};
+    const hasAnyMemberCount = stage.config.categories.some((cat) => memberCounts[cat] > 0);
+    const liveTotal = stage.config.categories.reduce((sum, cat) => {
+      const mc = memberCounts[cat];
+      const v = Number(catValues[cat]);
+      return mc > 0 && !isNaN(v) ? sum + mc * v : sum;
+    }, 0);
     return (
       <div className="mb-2">
-        {stage.config.categories.map((cat) => (
-          <div key={cat} className="flex items-center gap-2 mb-1.5">
-            <span className="dp-body text-xs flex-1" style={{ color: INK }}>{cat}</span>
-            <input
-              type="number"
-              value={catValues[cat] || ""}
-              disabled={disabled}
-              onChange={(e) => setCatValues({ ...catValues, [cat]: e.target.value })}
-              className="dp-mono w-24 rounded-lg px-2 py-1.5 text-sm outline-none disabled:opacity-50"
-              style={{ background: BLUE_SOFT, color: INK }}
-            />
+        {stage.config.categories.map((cat) => {
+          const mc = memberCounts[cat];
+          return (
+            <div key={cat} className="mb-1.5">
+              <div className="flex items-center gap-2">
+                <span className="dp-body text-xs flex-1" style={{ color: INK }}>{cat}</span>
+                <input
+                  type="number"
+                  value={catValues[cat] || ""}
+                  disabled={disabled}
+                  onChange={(e) => setCatValues({ ...catValues, [cat]: e.target.value })}
+                  className="dp-mono w-24 rounded-lg px-2 py-1.5 text-sm outline-none disabled:opacity-50"
+                  style={{ background: BLUE_SOFT, color: INK }}
+                />
+              </div>
+              {mc > 0 && catValues[cat] !== undefined && catValues[cat] !== "" && (
+                <div className="dp-mono text-[10px] text-right" style={{ color: INK + "77" }}>
+                  {mc} miembros × {catValues[cat]} = {formatMoney(mc * Number(catValues[cat]))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {hasAnyMemberCount && (
+          <div className="dp-mono text-[11px] mb-2" style={{ color: INK + "88" }}>
+            total recaudado con estos números: {formatMoney(liveTotal)}
           </div>
-        ))}
+        )}
         <button
           onClick={() => {
             const obj = {};
@@ -1594,8 +1624,15 @@ function BigDecisionDisplay({ stage }) {
   const r = stage.result;
   if (stage.key === "singleQuota") {
     return (
-      <div className="dp-display text-4xl font-extrabold text-center" style={{ color: BLUE }}>
-        {r.average.toFixed(2)}
+      <div className="text-center">
+        <div className="dp-display text-4xl font-extrabold" style={{ color: BLUE }}>
+          {r.average.toFixed(2)}
+        </div>
+        {r.totalCollected !== undefined && (
+          <div className="dp-mono text-sm mt-1" style={{ color: GREEN }}>
+            {r.memberCount} miembros → {formatMoney(r.totalCollected)} recaudados
+          </div>
+        )}
       </div>
     );
   }
@@ -1605,9 +1642,20 @@ function BigDecisionDisplay({ stage }) {
         {Object.entries(r.categories).map(([cat, cr]) => (
           <div key={cat} className="flex justify-between items-baseline mb-1.5">
             <span className="dp-body text-sm" style={{ color: INK }}>{cat}</span>
-            <span className="dp-display text-2xl font-extrabold" style={{ color: BLUE }}>{cr.average.toFixed(2)}</span>
+            <span className="text-right">
+              <span className="dp-display text-2xl font-extrabold" style={{ color: BLUE }}>{cr.average.toFixed(2)}</span>
+              {cr.collected !== undefined && (
+                <div className="dp-mono text-xs" style={{ color: GREEN }}>{formatMoney(cr.collected)}</div>
+              )}
+            </span>
           </div>
         ))}
+        {r.totalCollected !== undefined && r.totalCollected !== null && (
+          <div className="flex justify-between pt-2 mt-2" style={{ borderTop: `2px solid ${BLUE}33` }}>
+            <span className="dp-body text-sm font-semibold" style={{ color: INK }}>TOTAL RECAUDADO</span>
+            <span className="dp-display text-xl font-extrabold" style={{ color: GREEN }}>{formatMoney(r.totalCollected)}</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -1661,6 +1709,11 @@ function StageResultView({ stage }) {
           </React.Fragment>
         )}
         <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>→ {r.average.toFixed(2)}</div>
+        {r.totalCollected !== undefined && (
+          <div className="dp-mono text-[11px] mt-1" style={{ color: GREEN }}>
+            {r.memberCount} miembros × {r.average.toFixed(2)} = {formatMoney(r.totalCollected)} recaudados
+          </div>
+        )}
       </div>
     );
   }
@@ -1755,8 +1808,19 @@ function StageResultView({ stage }) {
               </React.Fragment>
             )}
             <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>→ {cr.average.toFixed(2)}</div>
+            {cr.collected !== undefined && (
+              <div className="dp-mono text-[11px]" style={{ color: GREEN }}>
+                {cr.memberCount} miembros × {cr.average.toFixed(2)} = {formatMoney(cr.collected)}
+              </div>
+            )}
           </div>
         ))}
+        {r.totalCollected !== undefined && r.totalCollected !== null && (
+          <div className="flex justify-between pt-2 mt-1 dp-mono text-xs font-semibold" style={{ borderTop: `1px solid ${BLUE}33`, color: GREEN }}>
+            <span>TOTAL RECAUDADO</span>
+            <span>{formatMoney(r.totalCollected)}</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -1801,7 +1865,7 @@ function StageResultView({ stage }) {
   return null;
 }
 
-function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupResponses, approvedMemberCount, onAdvance }) {
+function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, onAdvance }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
@@ -1811,10 +1875,21 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
   );
   const [quotaTrimPercent, setQuotaTrimPercent] = useState(flow.config?.quotaTrimPercent ?? 10);
   const [totalBudget, setTotalBudget] = useState(flow.config?.totalBudget ?? "");
+  const [extraAmount, setExtraAmount] = useState(flow.config?.extraAmount ?? "");
+  const [memberCounts, setMemberCounts] = useState(flow.config?.memberCounts || {});
   const [savingConfig, setSavingConfig] = useState(false);
   const [showCelebration, setShowCelebration] = useState(flow.status === "finished");
   const prevStatus = React.useRef(flow.status);
   const stage = flow.status === "active" ? flow.currentStage : null;
+
+  // Si este presupuesto viene encadenado de un flujo de cuotas ya
+  // terminado (Asociaciones), y esa etapa de cuotas calculó cuánto se
+  // recauda, el presupuesto total sale solo de ahí + el monto extra.
+  const cuotasFlow = flow.chainedFromFlowId ? (allFlows || []).find((f) => f.id === flow.chainedFromFlowId) : null;
+  const cuotasFinalStage = cuotasFlow ? [...cuotasFlow.stages].reverse().find((s) => s.key === "quotas" || s.key === "singleQuota") : null;
+  const cuotasTotal = cuotasFinalStage && cuotasFinalStage.result.totalCollected ? cuotasFinalStage.result.totalCollected : null;
+  const isChainedBudget = flow.template === "presupuesto" && cuotasTotal !== null;
+  const effectiveTotalBudget = isChainedBudget ? Math.round((cuotasTotal + (Number(extraAmount) || 0)) * 100) / 100 : (totalBudget === "" ? null : Number(totalBudget));
 
   useEffect(() => {
     if (prevStatus.current !== "finished" && flow.status === "finished") {
@@ -1828,7 +1903,9 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
     try {
       const config =
         flow.template === "cuotas"
-          ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent) }
+          ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent), memberCounts }
+          : isChainedBudget
+          ? { selectionThresholdPercent: Number(categoryThresholdPercent), extraAmount: extraAmount === "" ? 0 : Number(extraAmount) }
           : { selectionThresholdPercent: Number(categoryThresholdPercent), totalBudget: totalBudget === "" ? null : Number(totalBudget) };
       await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/config`, {
         method: "POST",
@@ -1849,7 +1926,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
   }, [stage && stage.key]);
 
   const liveCount = stage
-    ? (groupResponses || []).filter((r) => r.flowId === flow.id && r.stageKey === stage.key).length
+    ? (groupResponses || []).filter((r) => r.flowId === flow.id && r.stageInstanceIndex === stage.instanceIndex).length
     : 0;
 
   const sendResponse = async (value) => {
@@ -1919,7 +1996,55 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
               />
             </label>
           )}
-          {flow.template === "presupuesto" && (
+          {flow.template === "cuotas" && stage && stage.key === "singleQuota" && (
+            <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
+              Número de miembros (opcional, para ver cuánto se recauda)
+              <input
+                type="number" min="0" value={memberCounts.single ?? ""}
+                onChange={(e) => setMemberCounts({ ...memberCounts, single: e.target.value === "" ? undefined : Number(e.target.value) })}
+                className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                style={{ background: "#fff" }}
+              />
+            </label>
+          )}
+          {flow.template === "cuotas" && stage && stage.key === "quotas" && (
+            <div className="mb-3">
+              <div className="dp-body text-xs mb-1.5" style={{ color: INK }}>Número de miembros por categoría (opcional, para ver cuánto se recauda)</div>
+              {stage.config.categories.map((cat) => (
+                <label key={cat} className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK + "cc" }}>
+                  {cat}
+                  <input
+                    type="number" min="0" value={memberCounts[cat] ?? ""}
+                    onChange={(e) => setMemberCounts({ ...memberCounts, [cat]: e.target.value === "" ? undefined : Number(e.target.value) })}
+                    className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                    style={{ background: "#fff" }}
+                  />
+                </label>
+              ))}
+            </div>
+          )}
+          {flow.template === "presupuesto" && isChainedBudget && (
+            <div className="mb-3">
+              <div className="dp-body text-xs mb-1.5" style={{ color: INK }}>Presupuesto total (de Cuotas + extra)</div>
+              <div className="dp-mono text-[11px] mb-1.5" style={{ color: INK + "99" }}>
+                De cuotas: {formatMoney(cuotasTotal)}
+              </div>
+              <label className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
+                Monto extra (ahorros, otros ingresos)
+                <input
+                  type="number" min="0" value={extraAmount}
+                  onChange={(e) => setExtraAmount(e.target.value)}
+                  placeholder="0"
+                  className="dp-mono w-24 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                  style={{ background: "#fff" }}
+                />
+              </label>
+              <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>
+                Total: {formatMoney(effectiveTotalBudget)}
+              </div>
+            </div>
+          )}
+          {flow.template === "presupuesto" && !isChainedBudget && (
             <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
               Presupuesto total (opcional, para ver $)
               <input
@@ -1969,7 +2094,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, isAdmin, groupRespo
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
             {liveCount} de {approvedMemberCount} miembro(s) han respondido
           </div>
-          <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={flow.config} />
+          <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={{ ...flow.config, totalBudget: effectiveTotalBudget }} />
           {sent && <div className="dp-body text-[11px] mb-2" style={{ color: GREEN }}>✅ Guardado</div>}
           {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
           {isAdmin && (
@@ -2192,6 +2317,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
           groupCode={groupCode}
           memberId={memberId}
           flow={activeFlow}
+          allFlows={flows}
           isAdmin={isAdmin}
           groupResponses={group.responses}
           approvedMemberCount={group.members.filter((m) => m.approved).length}

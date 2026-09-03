@@ -499,9 +499,35 @@ app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
 
 // ---------- Flujos (Cuotas, Presupuesto, etc) ----------
 
+// Si este flujo de presupuesto viene encadenado de un flujo de cuotas ya
+// terminado (Asociaciones), y ese flujo de cuotas calculó cuánto se
+// recauda (porque el admin puso número de miembros), el presupuesto
+// total se calcula solo: lo recaudado en cuotas + el monto extra que el
+// admin haya puesto (ahorros, otros ingresos). Si no hay flujo de cuotas
+// encadenado con ese cálculo, se usa el "totalBudget" que el admin haya
+// escrito a mano (comportamiento normal de Presupuesto suelto).
+function getEffectiveFlowConfig(group, flow) {
+  const config = { ...flow.config };
+  if (flow.template === "presupuesto" && flow.chainedFromFlowId) {
+    const cuotasFlow = (group.flows || []).find((f) => f.id === flow.chainedFromFlowId);
+    if (cuotasFlow) {
+      const finalStage = [...cuotasFlow.stages].reverse().find((s) => s.key === "quotas" || s.key === "singleQuota");
+      if (finalStage && finalStage.result.totalCollected) {
+        config.cuotasTotal = finalStage.result.totalCollected;
+        config.totalBudget = Math.round((finalStage.result.totalCollected + (config.extraAmount || 0)) * 100) / 100;
+      }
+    }
+  }
+  return config;
+}
+
 function summarizeStage(s) {
   if (s.type === "promedio") {
-    return `${s.text}\n→ ${s.result.average.toFixed(2)}`;
+    let line = `${s.text}\n→ ${s.result.average.toFixed(2)}`;
+    if (s.result.totalCollected !== undefined) {
+      line += ` (${s.result.memberCount} miembros × ${s.result.average.toFixed(2)} = $${s.result.totalCollected} recaudados)`;
+    }
+    return line;
   }
   if (s.type === "mayoria") {
     return `${s.text}\n→ ${s.result.winner || "sin ganador"}`;
@@ -513,8 +539,10 @@ function summarizeStage(s) {
     return `${s.text}\n→ elegidas: ${s.result.winners.join(", ")}`;
   }
   if (s.type === "promedio_por_categoria") {
-    const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.average.toFixed(2)}`);
-    return `${s.text}\n${lines.join("\n")}`;
+    const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.average.toFixed(2)}${r.collected !== undefined ? ` (${r.memberCount} miembros = $${r.collected})` : ""}`);
+    let text = `${s.text}\n${lines.join("\n")}`;
+    if (s.result.totalCollected) text += `\n  TOTAL RECAUDADO: $${s.result.totalCollected}`;
+    return text;
   }
   if (s.type === "seleccion_multiple") {
     const lines = s.result.tally.map((t) => `  - ${t.option}: ${t.percent}%`);
@@ -547,7 +575,7 @@ app.post("/api/groups/:code/flows", async (req, res) => {
     template,
     status: "active",
     config: { ...(TEMPLATES[template].defaultConfig || {}) },
-    currentStage: TEMPLATES[template].getInitialStage(TEMPLATES[template].defaultConfig || {}),
+    currentStage: { ...TEMPLATES[template].getInitialStage(TEMPLATES[template].defaultConfig || {}), instanceIndex: 0 },
     stages: [],
     chainNext: chainNext || null,
     createdAt: new Date().toISOString(),
@@ -566,7 +594,7 @@ app.get("/api/groups/:code/flows/:flowId", async (req, res) => {
 
   let liveCount = 0;
   if (flow.status === "active") {
-    liveCount = group.responses.filter((r) => r.flowId === flow.id && r.stageKey === flow.currentStage.key).length;
+    liveCount = group.responses.filter((r) => r.flowId === flow.id && r.stageInstanceIndex === flow.currentStage.instanceIndex).length;
   }
   res.json({ ...flow, liveCount });
 });
@@ -659,6 +687,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
     id: generateId(),
     flowId: flow.id,
     stageKey: stage.key,
+    stageInstanceIndex: stage.instanceIndex,
     memberId: member.id,
     memberName: member.name,
     value: storedValue,
@@ -682,13 +711,14 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   if (flow.status !== "active") return res.status(400).json({ error: "Este flujo ya terminó" });
 
   const stage = flow.currentStage;
-  const responses = group.responses.filter((r) => r.flowId === flow.id && r.stageKey === stage.key);
-  const result = computeStageResult(stage, responses, flow.config || {});
+  const responses = group.responses.filter((r) => r.flowId === flow.id && r.stageInstanceIndex === stage.instanceIndex);
+  const effectiveConfig = getEffectiveFlowConfig(group, flow);
+  const result = computeStageResult(stage, responses, effectiveConfig);
   flow.stages.push({ ...stage, result, closedAt: new Date().toISOString() });
 
-  const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, flow.config || {});
+  const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, effectiveConfig);
   if (nextStage) {
-    flow.currentStage = nextStage;
+    flow.currentStage = { ...nextStage, instanceIndex: flow.stages.length };
   } else {
     flow.status = "finished";
     flow.currentStage = null;
@@ -700,9 +730,10 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
         template: nextTemplate,
         status: "active",
         config: { ...(TEMPLATES[nextTemplate].defaultConfig || {}) },
-        currentStage: TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}),
+        currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}), instanceIndex: 0 },
         stages: [],
         chainNext: null,
+        chainedFromFlowId: flow.template === "cuotas" ? flow.id : null,
         createdAt: new Date().toISOString(),
       });
     }
