@@ -2413,6 +2413,8 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const prevApproved = React.useRef(justApproved);
   const prevStatus = React.useRef(flow.status);
   const stage = flow.status === "active" ? flow.currentStage : null;
+  const TEMPLATE_LABELS = { cuotas: "Cuotas participativas", presupuesto: "Presupuesto participativo" };
+  const nextStepLabel = stage ? stage.text : flow.chainNext ? TEMPLATE_LABELS[flow.chainNext] || flow.chainNext : null;
 
   // Si este presupuesto viene encadenado de un flujo de cuotas ya
   // terminado (Asociaciones), y esa etapa de cuotas calculó cuánto se
@@ -2776,17 +2778,12 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 </div>
               );
             })()}
-            {stage && (
-              <div className="dp-body text-[12px] mt-3 pt-3 text-center" style={{ borderTop: `1px solid ${BLUE}22`, color: INK + "99" }}>
-                A continuación: <b style={{ color: INK }}>{stage.text}</b>
-              </div>
-            )}
             <button
               onClick={() => setShowCelebration(false)}
-              className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium"
+              className="dp-body w-full mt-3 text-xs py-2.5 rounded-full text-white font-medium"
               style={{ background: BLUE }}
             >
-              {stage ? "Continuar" : "Ver todo el proceso"}
+              {nextStepLabel ? `Continuar hacia: ${nextStepLabel}` : "Ver todo el proceso"}
             </button>
           </div>
         </div>
