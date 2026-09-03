@@ -1850,12 +1850,29 @@ function StageResultView({ stage }) {
           </div>
         )}
         {Object.entries(r.categories).map(([cat, cr]) => (
-          <div key={cat} className="flex justify-between dp-mono text-xs mb-1" style={{ color: INK }}>
-            <span>{cat}</span>
-            <span>
-              <b style={{ color: BLUE }}>{cr.normalizedPercent}%</b>
-              {cr.amount !== undefined && <span style={{ color: INK + "77" }}> · {formatMoney(cr.amount)}</span>}
-            </span>
+          <div key={cat} className="mb-2">
+            {showDetails && (
+              <React.Fragment>
+                <div className="dp-body text-[11px] font-medium mb-1" style={{ color: INK }}>{cat}</div>
+                <div className="flex flex-wrap gap-1.5 mb-1">
+                  {(cr.values || []).map((v, i) => (
+                    <span key={i} className="dp-mono text-xs px-2 py-0.5 rounded-md" style={{ background: "#fff", color: INK }}>
+                      {v}%
+                    </span>
+                  ))}
+                </div>
+                <div className="dp-mono text-[11px] mb-1" style={{ color: INK + "aa" }}>
+                  ({(cr.values || []).join(" + ")}) ÷ {(cr.values || []).length} = {cr.rawAverage}%{r.wasNormalized ? ` → normalizado a ${cr.normalizedPercent}%` : ""}
+                </div>
+              </React.Fragment>
+            )}
+            <div className="flex justify-between dp-mono text-xs" style={{ color: INK }}>
+              <span>{!showDetails ? cat : ""}</span>
+              <span>
+                <b style={{ color: BLUE }}>{cr.normalizedPercent}%</b>
+                {cr.amount !== undefined && <span style={{ color: INK + "77" }}> · {formatMoney(cr.amount)}</span>}
+              </span>
+            </div>
           </div>
         ))}
       </div>
@@ -1968,6 +1985,36 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
     }
   };
 
+  const confirmSetup = async () => {
+    setSavingConfig(true);
+    setSendError("");
+    try {
+      const config =
+        flow.template === "cuotas"
+          ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent), memberCounts }
+          : isChainedBudget
+          ? { selectionThresholdPercent: Number(categoryThresholdPercent), extraAmount: extraAmount === "" ? 0 : Number(extraAmount) }
+          : { selectionThresholdPercent: Number(categoryThresholdPercent), totalBudget: totalBudget === "" ? null : Number(totalBudget) };
+      await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, config }),
+      });
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/confirm-setup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al continuar");
+      await onAdvance();
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
@@ -1995,33 +2042,6 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 style={{ background: "#fff" }}
               />
             </label>
-          )}
-          {flow.template === "cuotas" && stage && stage.key === "singleQuota" && (
-            <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
-              Número de miembros (opcional, para ver cuánto se recauda)
-              <input
-                type="number" min="0" value={memberCounts.single ?? ""}
-                onChange={(e) => setMemberCounts({ ...memberCounts, single: e.target.value === "" ? undefined : Number(e.target.value) })}
-                className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
-                style={{ background: "#fff" }}
-              />
-            </label>
-          )}
-          {flow.template === "cuotas" && stage && stage.key === "quotas" && (
-            <div className="mb-3">
-              <div className="dp-body text-xs mb-1.5" style={{ color: INK }}>Número de miembros por categoría (opcional, para ver cuánto se recauda)</div>
-              {stage.config.categories.map((cat) => (
-                <label key={cat} className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK + "cc" }}>
-                  {cat}
-                  <input
-                    type="number" min="0" value={memberCounts[cat] ?? ""}
-                    onChange={(e) => setMemberCounts({ ...memberCounts, [cat]: e.target.value === "" ? undefined : Number(e.target.value) })}
-                    className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
-                    style={{ background: "#fff" }}
-                  />
-                </label>
-              ))}
-            </div>
           )}
           {flow.template === "presupuesto" && isChainedBudget && (
             <div className="mb-3">
@@ -2071,8 +2091,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       )}
 
       {flow.stages.map((s, i) => (
-        <div key={i} className="mb-3 pb-3" style={{ borderBottom: `1px dashed ${BLUE}33` }}>
-          <div className="dp-body text-[12px] font-medium mb-1" style={{ color: INK }}>{s.text}</div>
+        <div key={i} className="mb-3 pb-3" style={{ borderBottom: `1px dashed ${BLUE}33`, opacity: 0.55 }}>
+          <div className="dp-body text-[12px] font-medium mb-1 flex items-center gap-1.5" style={{ color: INK }}>
+            <span>🔒</span>
+            <span>{s.text}</span>
+          </div>
           <StageResultView stage={s} />
         </div>
       ))}
@@ -2088,7 +2111,54 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         );
       })()}
 
-      {stage && (
+      {stage && stage.awaitingSetup && (
+        <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          {isAdmin ? (
+            <React.Fragment>
+              <div className="dp-body text-[13px] mb-2" style={{ color: INK }}>
+                Antes de pedirle a todos la cuota, puedes (opcional) indicar cuántos miembros hay en cada categoría, para ver cuánto se recaudaría.
+              </div>
+              {stage.key === "singleQuota" && (
+                <label className="dp-body flex items-center justify-between text-xs mb-2" style={{ color: INK }}>
+                  Número de miembros
+                  <input
+                    type="number" min="0" value={memberCounts.single ?? ""}
+                    onChange={(e) => setMemberCounts({ ...memberCounts, single: e.target.value === "" ? undefined : Number(e.target.value) })}
+                    className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                    style={{ background: "#fff" }}
+                  />
+                </label>
+              )}
+              {stage.key === "quotas" && stage.config.categories.map((cat) => (
+                <label key={cat} className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
+                  {cat}
+                  <input
+                    type="number" min="0" value={memberCounts[cat] ?? ""}
+                    onChange={(e) => setMemberCounts({ ...memberCounts, [cat]: e.target.value === "" ? undefined : Number(e.target.value) })}
+                    className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                    style={{ background: "#fff" }}
+                  />
+                </label>
+              ))}
+              {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+              <button
+                onClick={confirmSetup}
+                disabled={savingConfig}
+                className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
+                style={{ background: BLUE }}
+              >
+                {savingConfig ? "Guardando…" : "Continuar"}
+              </button>
+            </React.Fragment>
+          ) : (
+            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>
+              ⏳ El administrador está configurando esta etapa (número de miembros por categoría)…
+            </div>
+          )}
+        </div>
+      )}
+
+      {stage && !stage.awaitingSetup && (
         <div>
           <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>

@@ -618,6 +618,27 @@ app.post("/api/groups/:code/flows/:flowId/config", async (req, res) => {
   res.json(flow);
 });
 
+// El administrador confirma que ya terminó de configurar la etapa
+// actual (ej. número de miembros por categoría) y la abre para que
+// todos puedan responder.
+app.post("/api/groups/:code/flows/:flowId/confirm-setup", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede continuar" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
+  if (!flow.currentStage || !flow.currentStage.awaitingSetup) {
+    return res.status(400).json({ error: "Esta etapa no está esperando configuración" });
+  }
+
+  flow.currentStage.awaitingSetup = false;
+  await save(db);
+  res.json(flow);
+});
+
 app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
   const { memberId, value } = req.body;
   if (!memberId || value === undefined) return res.status(400).json({ error: "Faltan campos: memberId, value" });
@@ -719,6 +740,9 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, effectiveConfig);
   if (nextStage) {
     flow.currentStage = { ...nextStage, instanceIndex: flow.stages.length };
+    if (flow.currentStage.key === "quotas" || flow.currentStage.key === "singleQuota") {
+      flow.currentStage.awaitingSetup = true;
+    }
   } else {
     flow.status = "finished";
     flow.currentStage = null;

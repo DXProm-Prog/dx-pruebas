@@ -154,8 +154,10 @@ function computeStageResult(stage, responses, flowConfig = {}) {
   // quede en 100% exacto.
   if (stage.type === "porcentaje_por_categoria") {
     const raw = {};
+    const individualValues = {};
     stage.config.categories.forEach((cat) => {
       const vals = responses.map((r) => r.value && r.value[cat]).filter((v) => typeof v === "number" && !isNaN(v));
+      individualValues[cat] = vals;
       raw[cat] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     });
     const sum = Object.values(raw).reduce((a, b) => a + b, 0);
@@ -163,7 +165,7 @@ function computeStageResult(stage, responses, flowConfig = {}) {
     const categories = {};
     stage.config.categories.forEach((cat) => {
       const normalizedPercent = sum > 100 && sum > 0 ? Math.round(((raw[cat] / sum) * 100) * 10) / 10 : Math.round(raw[cat] * 10) / 10;
-      categories[cat] = { rawAverage: Math.round(raw[cat] * 10) / 10, normalizedPercent };
+      categories[cat] = { rawAverage: Math.round(raw[cat] * 10) / 10, normalizedPercent, values: individualValues[cat] };
       if (totalBudget) {
         categories[cat].amount = Math.round((normalizedPercent / 100) * totalBudget * 100) / 100;
       }
