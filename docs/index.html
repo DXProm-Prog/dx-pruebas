@@ -8,6 +8,7 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css" rel="stylesheet" />
 <style>
   body { margin: 0; }
   .dp-display { font-family: 'Sora', sans-serif; }
@@ -769,6 +770,31 @@ function ShareGroup({ groupName, code }) {
   );
 }
 
+function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="dp-body text-left rounded-2xl p-4 shadow-sm flex items-start gap-3"
+      style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}33` }}
+    >
+      <div style={{ width: "36px", height: "36px", borderRadius: "10px", background: BLUE_SOFT, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <i className={`ti ${icon}`} style={{ fontSize: "18px", color: BLUE }}></i>
+      </div>
+      <div className="flex-1">
+        <div className="text-sm font-semibold mb-0.5" style={{ color: INK }}>
+          {title}
+          {badge && (
+            <span className="dp-body text-[9px] font-semibold ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: CORAL + "22", color: CORAL }}>
+              {badge}
+            </span>
+          )}
+        </div>
+        <div className="text-xs" style={{ color: INK + "88" }}>{subtitle}</div>
+      </div>
+    </button>
+  );
+}
+
 function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones }) {
   const [soonMsg, setSoonMsg] = useState("");
 
@@ -779,71 +805,43 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
 
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
-      <button
+      <HomeIconButton
+        icon="ti-book-2"
+        title="Explicación y ejemplos"
+        subtitle="Cómo funciona la democracia por promedio y la app."
         onClick={onChooseExplain}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>📖 Explicación y ejemplos</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Cómo funciona la democracia por promedio y la app.
-        </div>
-      </button>
-      <button
-        onClick={onChooseCustom}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>✏️ Crea tu grupo y tus propias preguntas</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Arma tu propio grupo, preguntas y reglas, sin plantilla.
-        </div>
-      </button>
-      <button
+      />
+      <HomeIconButton
+        icon="ti-coin"
+        title="Cuotas participativas"
+        subtitle="Flujo guiado de varias etapas para decidir las cuotas de tu vecindario, condominio o club."
         onClick={onChooseCuotas}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>💰 Cuotas participativas</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Flujo guiado de varias etapas para decidir las cuotas de tu vecindario, condominio o club.
-        </div>
-      </button>
-      <button
+      />
+      <HomeIconButton
+        icon="ti-chart-pie"
+        title="Presupuestos participativos"
+        subtitle="Flujo guiado para decidir en qué se gasta el presupuesto del grupo."
         onClick={onChoosePresupuesto}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>📊 Presupuestos participativos</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Flujo guiado para decidir en qué se gasta el presupuesto del grupo.
-        </div>
-      </button>
-      <button
+      />
+      <HomeIconButton
+        icon="ti-building-community"
+        title="Asociaciones, clubes y orgs"
+        subtitle="Cuotas y presupuesto participativo, uno después del otro."
         onClick={onChooseAsociaciones}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🏘️ Asociaciones, clubes y orgs</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Cuotas y presupuesto participativo, uno después del otro.
-        </div>
-      </button>
-      <button
+      />
+      <HomeIconButton
+        icon="ti-pencil"
+        title="Crea tu grupo y tus propias preguntas"
+        subtitle="Arma tu propio grupo, preguntas y reglas, sin plantilla."
+        onClick={onChooseCustom}
+      />
+      <HomeIconButton
+        icon="ti-building-bank"
+        title="Municipios o países"
+        subtitle="Plantilla con impuestos y presupuesto participativo a mayor escala."
+        badge="PRÓXIMAMENTE"
         onClick={() => showSoon("Municipios o países")}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>
-          🏛️ Municipios o países
-          <span className="dp-body text-[9px] font-semibold ml-1.5 px-1.5 py-0.5 rounded-full" style={{ background: CORAL + "22", color: CORAL }}>
-            PRÓXIMAMENTE
-          </span>
-        </div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Plantilla con impuestos y presupuesto participativo a mayor escala.
-        </div>
-      </button>
+      />
       {soonMsg && (
         <div className="dp-body text-xs text-center py-2 rounded-xl" style={{ background: CORAL + "15", color: CORAL }}>
           "{soonMsg}" todavía no está lista — ¡pronto!
@@ -2798,7 +2796,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   );
 }
 
-function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
+function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameChange }) {
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -2824,6 +2822,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Grupo no encontrado");
       setGroup(data);
+      if (onGroupNameChange) onGroupNameChange(data.name);
 
       const isAdminNow = data.admin.id === memberId;
       const pendingCount = data.members.filter((m) => !m.approved).length;
@@ -3078,6 +3077,24 @@ function DemocraciaPorPromedioConectada() {
   const [createdGroupName, setCreatedGroupName] = useState("");
   const [urlCode, setUrlCode] = useState("");
   const [entryPurpose, setEntryPurpose] = useState(null); // null | "cuotas"
+  const [selectedOption, setSelectedOption] = useState(null); // null | "explain" | "custom" | "cuotas" | "presupuesto" | "asociaciones"
+  const [connectedGroupName, setConnectedGroupName] = useState("");
+
+  const OPTION_TITLES = {
+    explain: "Explicación y ejemplos",
+    custom: "Crea tu grupo y tus propias preguntas",
+    cuotas: "Cuotas participativas",
+    presupuesto: "Presupuestos participativos",
+    asociaciones: "Asociaciones, clubes y orgs",
+  };
+  const STEP_CHAINS = {
+    default: ["Arma tu grupo", "Escribe las preguntas", "Elige el proceso", "Envía a tu grupo", "¡Decidan juntos!"],
+    cuotas: ["Arma tu grupo", "Decidan las categorías", "Propongan la cuota", "Aprueben el resultado", "¡Cobren juntos!"],
+    presupuesto: ["Arma tu grupo", "Propongan categorías", "Repartan el %", "Aprueben el resultado", "¡Gasten juntos!"],
+    asociaciones: ["Arma tu grupo", "Decidan las cuotas", "Repartan el presupuesto", "Propongan proyectos", "¡Decidan juntos!"],
+  };
+  const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || "Organízate y decide";
+  const headerSteps = STEP_CHAINS[selectedOption] || STEP_CHAINS.default;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -3114,9 +3131,9 @@ function DemocraciaPorPromedioConectada() {
           >
             D×% · DEMOCRACIA POR PROMEDIO
           </div>
-          <h1 className="dp-display text-2xl font-bold leading-tight" style={{ color: INK }}>Organízate y decide</h1>
+          <h1 className="dp-display text-2xl font-bold leading-tight" style={{ color: INK }}>{headerTitle}</h1>
           <div className="dp-body text-[12px] mt-2.5 leading-relaxed" style={{ color: INK + "99" }}>
-            {["Arma tu grupo", "Escribe las preguntas", "Elige el proceso", "Envía a tu grupo", "¡Decidan juntos!"].map((f, i, arr) => (
+            {headerSteps.map((f, i, arr) => (
               <React.Fragment key={i}>
                 <span>{f}</span>
                 {i < arr.length - 1 && <span style={{ color: BLUE, margin: "0 4px" }}>→</span>}
@@ -3127,34 +3144,51 @@ function DemocraciaPorPromedioConectada() {
 
         {view === "home" && (
           <HomeScreen
-            onChooseExplain={() => setView("explain")}
+            onChooseExplain={() => {
+              setSelectedOption("explain");
+              setView("explain");
+            }}
             onChooseCustom={() => {
               setEntryPurpose(null);
+              setSelectedOption("custom");
               setView("custom");
             }}
             onChooseCuotas={() => {
               setEntryPurpose("cuotas");
+              setSelectedOption("cuotas");
               setView("custom");
             }}
             onChoosePresupuesto={() => {
               setEntryPurpose("presupuesto");
+              setSelectedOption("presupuesto");
               setView("custom");
             }}
             onChooseAsociaciones={() => {
               setEntryPurpose("asociaciones");
+              setSelectedOption("asociaciones");
               setView("custom");
             }}
           />
         )}
         {view === "custom" && (
           <CustomEntryScreen
-            onBack={() => setView("home")}
+            onBack={() => {
+              setSelectedOption(null);
+              setView("home");
+            }}
             onChooseCreate={() => setView("create")}
             onChooseAdminReturn={() => setView("adminReturn")}
             onChooseJoin={() => setView("join")}
           />
         )}
-        {view === "explain" && <ExplanationScreen onBack={() => setView("home")} />}
+        {view === "explain" && (
+          <ExplanationScreen
+            onBack={() => {
+              setSelectedOption(null);
+              setView("home");
+            }}
+          />
+        )}
         {view === "create" && (
           <CreateGroupScreen
             backendUrl={backendUrl}
@@ -3218,10 +3252,13 @@ function DemocraciaPorPromedioConectada() {
             backendUrl={backendUrl}
             groupCode={groupCode}
             memberId={memberId}
+            onGroupNameChange={setConnectedGroupName}
             onExit={() => {
               setGroupCode("");
               setMemberId("");
               setEntryPurpose(null);
+              setSelectedOption(null);
+              setConnectedGroupName("");
               clearSession();
               setView("home");
             }}
