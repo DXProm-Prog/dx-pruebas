@@ -2392,7 +2392,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   );
 }
 
-function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, onAdvance }) {
+function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, onAdvance, onSwitchFlow }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
@@ -2779,7 +2779,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               );
             })()}
             <button
-              onClick={() => setShowCelebration(false)}
+              onClick={() => {
+                setShowCelebration(false);
+                if (flow.status === "finished" && flow.chainNext && onSwitchFlow) {
+                  const nextFlow = (allFlows || []).find((f) => f.chainedFromFlowId === flow.id);
+                  if (nextFlow) onSwitchFlow(nextFlow.id);
+                }
+              }}
               className="dp-body w-full mt-3 text-xs py-2.5 rounded-full text-white font-medium"
               style={{ background: BLUE }}
             >
@@ -2797,6 +2803,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [approving, setApproving] = useState("");
+  const [pinnedFlowId, setPinnedFlowId] = useState(null);
   const prevPendingCount = React.useRef(null);
 
   const fetchGroup = async () => {
@@ -2882,7 +2889,15 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
   const me = group.members.find((m) => m.id === memberId);
   const isAdmin = group.admin.id === memberId;
   const flows = group.flows || [];
-  const activeFlow = [...flows].reverse().find((f) => f.status === "active") || flows[flows.length - 1];
+  const latestOrActive = [...flows].reverse().find((f) => f.status === "active") || flows[flows.length - 1];
+  // Se muestra el flujo "fijado" (para que una tarjeta de felicidades o
+  // resultado recién terminado no desaparezca de golpe si se encadena a
+  // otro flujo) — solo se avanza al siguiente cuando el usuario lo pide
+  // explícitamente (ej. el botón "Continuar hacia" de la celebración).
+  const activeFlow = flows.find((f) => f.id === pinnedFlowId) || latestOrActive;
+  React.useEffect(() => {
+    if (!pinnedFlowId && latestOrActive) setPinnedFlowId(latestOrActive.id);
+  }, [Boolean(latestOrActive), pinnedFlowId]);
   const pendingMembers = group.members.filter((m) => !m.approved);
 
   return (
@@ -2962,6 +2977,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
           groupResponses={group.responses}
           approvedMemberCount={group.members.filter((m) => m.approved).length}
           onAdvance={fetchGroup}
+          onSwitchFlow={setPinnedFlowId}
         />
       ) : (
         isAdmin && (
@@ -2973,6 +2989,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: "cuotas", memberId }),
                 });
+                setPinnedFlowId(null);
                 await fetchGroup();
               }}
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
@@ -2990,6 +3007,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: "presupuesto", memberId }),
                 });
+                setPinnedFlowId(null);
                 await fetchGroup();
               }}
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
@@ -3007,6 +3025,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: "cuotas", memberId, chainNext: "presupuesto" }),
                 });
+                setPinnedFlowId(null);
                 await fetchGroup();
               }}
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
