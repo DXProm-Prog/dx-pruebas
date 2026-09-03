@@ -2806,6 +2806,16 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
   const [pinnedFlowId, setPinnedFlowId] = useState(null);
   const prevPendingCount = React.useRef(null);
 
+  const flows = group ? group.flows || [] : [];
+  const latestOrActive = [...flows].reverse().find((f) => f.status === "active") || flows[flows.length - 1];
+  // Se muestra el flujo "fijado" (para que una tarjeta de felicidades o
+  // resultado recién terminado no desaparezca de golpe si se encadena a
+  // otro flujo) — solo se avanza al siguiente cuando el usuario lo pide
+  // explícitamente (ej. el botón "Continuar hacia" de la celebración).
+  React.useEffect(() => {
+    if (!pinnedFlowId && latestOrActive) setPinnedFlowId(latestOrActive.id);
+  }, [latestOrActive ? latestOrActive.id : null, pinnedFlowId]);
+
   const fetchGroup = async () => {
     setLoading(true);
     setError("");
@@ -2888,16 +2898,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit }) {
 
   const me = group.members.find((m) => m.id === memberId);
   const isAdmin = group.admin.id === memberId;
-  const flows = group.flows || [];
-  const latestOrActive = [...flows].reverse().find((f) => f.status === "active") || flows[flows.length - 1];
-  // Se muestra el flujo "fijado" (para que una tarjeta de felicidades o
-  // resultado recién terminado no desaparezca de golpe si se encadena a
-  // otro flujo) — solo se avanza al siguiente cuando el usuario lo pide
-  // explícitamente (ej. el botón "Continuar hacia" de la celebración).
   const activeFlow = flows.find((f) => f.id === pinnedFlowId) || latestOrActive;
-  React.useEffect(() => {
-    if (!pinnedFlowId && latestOrActive) setPinnedFlowId(latestOrActive.id);
-  }, [Boolean(latestOrActive), pinnedFlowId]);
   const pendingMembers = group.members.filter((m) => !m.approved);
 
   return (
