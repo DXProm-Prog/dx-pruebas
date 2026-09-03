@@ -7,6 +7,7 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet" />
 <style>
@@ -18,6 +19,15 @@
 </head>
 <body>
 <div id="root"></div>
+<script>
+  // Llaves públicas de Supabase — seguras de tener aquí, a la vista:
+  // la protección real vive en las reglas de seguridad de las tablas
+  // (RLS), no en mantener esto en secreto.
+  const supabaseClient = supabase.createClient(
+    "https://jhdjsusqphzmbibadull.supabase.co",
+    "sb_publishable_c0DChmkM6ap9Gd997gHZZA_ALDoEq3x"
+  );
+</script>
 <script type="text/babel">
 const { useState, useEffect } = React;
 
@@ -3068,10 +3078,73 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   );
 }
 
+function LoginScreen({ onBack }) {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  const sendLink = async () => {
+    if (!email.trim()) return;
+    setSending(true);
+    setError("");
+    try {
+      const { error: sendError } = await supabaseClient.auth.signInWithOtp({
+        email: email.trim(),
+        options: { emailRedirectTo: window.location.origin + window.location.pathname },
+      });
+      if (sendError) throw sendError;
+      setSent(true);
+    } catch (e) {
+      setError(e.message || "No se pudo enviar el link. Intenta de nuevo.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <div className="px-4 py-6">
+        <div className="rounded-2xl p-5 text-center" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+          <i className="ti ti-mail-opened" style={{ fontSize: "32px", color: BLUE }}></i>
+          <div className="dp-display text-base font-semibold mt-2 mb-1.5" style={{ color: INK }}>Revisa tu correo</div>
+          <div className="dp-body text-[13px] leading-relaxed" style={{ color: INK + "99" }}>
+            Te mandamos un link a<br /><b style={{ color: INK }}>{email}</b><br />ábrelo para entrar — no hace falta contraseña.
+          </div>
+          <div className="rounded-lg p-2.5 mt-3 text-left" style={{ background: CORAL + "15" }}>
+            <span className="dp-body text-[11px]" style={{ color: CORAL }}>
+              ⚠️ Cuida ese link — es tu forma de entrar a tu cuenta. No lo compartas ni lo borres hasta haber entrado.
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-6">
+      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Iniciar sesión</div>
+        <p className="dp-body text-[12px] mb-3" style={{ color: INK + "88" }}>
+          Con tu cuenta vas a poder entrar a todos tus grupos (donde administras o participas) desde un solo lugar, en cualquier dispositivo.
+        </p>
+        <Field label="Tu correo" value={email} onChange={setEmail} placeholder="ej. luis@correo.com" type="email" />
+        <div className="mt-3">
+          <PrimaryButton onClick={sendLink} disabled={sending || !email.trim()}>
+            {sending ? "Enviando…" : "Enviarme un link para entrar"}
+          </PrimaryButton>
+        </div>
+        {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
+      </div>
+    </div>
+  );
+}
+
 function DemocraciaPorPromedioConectada() {
   const [backendUrl, setBackendUrl] = useState("https://democracia-por-promedio.onrender.com");
   const [showSettings, setShowSettings] = useState(false);
-  const [view, setView] = useState("home"); // home | custom | explain | create | groupCreated | adminReturn | join | connected
+  const [view, setView] = useState("home"); // home | login | custom | explain | create | groupCreated | adminReturn | join | connected
   const [groupCode, setGroupCode] = useState("");
   const [memberId, setMemberId] = useState("");
   const [createdGroupName, setCreatedGroupName] = useState("");
@@ -3079,6 +3152,18 @@ function DemocraciaPorPromedioConectada() {
   const [entryPurpose, setEntryPurpose] = useState(null); // null | "cuotas"
   const [selectedOption, setSelectedOption] = useState(null); // null | "explain" | "custom" | "cuotas" | "presupuesto" | "asociaciones"
   const [connectedGroupName, setConnectedGroupName] = useState("");
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    supabaseClient.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: listener } = supabaseClient.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession);
+      if (event === "SIGNED_IN" && window.location.hash.includes("access_token")) {
+        window.history.replaceState({}, "", window.location.pathname + window.location.search);
+      }
+    });
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const OPTION_TITLES = {
     explain: "Explicación y ejemplos",
@@ -3125,11 +3210,24 @@ function DemocraciaPorPromedioConectada() {
     <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
       <div className="w-full max-w-[420px] rounded-[32px] overflow-hidden shadow-xl" style={{ background: PAGE_BG, border: `1px solid ${BLUE}33` }}>
         <div className="px-6 pt-7 pb-5" style={{ background: WARM_WHITE }}>
-          <div
-            className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full mb-2.5"
-            style={{ background: BLUE_SOFT, color: INK + "aa" }}
-          >
-            D×% · DEMOCRACIA POR PROMEDIO
+          <div className="flex items-start justify-between mb-2.5">
+            <div
+              className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full"
+              style={{ background: BLUE_SOFT, color: INK + "aa" }}
+            >
+              D×% · DEMOCRACIA POR PROMEDIO
+            </div>
+            {view === "home" && (
+              session ? (
+                <div className="dp-body text-[10px] font-medium" style={{ color: INK + "88" }}>
+                  <i className="ti ti-user-circle" style={{ marginRight: "3px" }}></i>{session.user.email}
+                </div>
+              ) : (
+                <button onClick={() => setView("login")} className="dp-body text-[10px] font-semibold" style={{ color: BLUE }}>
+                  <i className="ti ti-login" style={{ marginRight: "3px" }}></i>Iniciar sesión
+                </button>
+              )
+            )}
           </div>
           <h1 className="dp-display text-2xl font-bold leading-tight" style={{ color: INK }}>{headerTitle}</h1>
           <div className="dp-body text-[12px] mt-2.5 leading-relaxed" style={{ color: INK + "99" }}>
@@ -3141,6 +3239,8 @@ function DemocraciaPorPromedioConectada() {
             ))}
           </div>
         </div>
+
+        {view === "login" && <LoginScreen onBack={() => setView("home")} />}
 
         {view === "home" && (
           <HomeScreen
