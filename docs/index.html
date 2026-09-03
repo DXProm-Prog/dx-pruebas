@@ -2133,7 +2133,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
                   <div className="dp-body text-sm font-medium" style={{ color: INK }}>{p.name}</div>
                   <div className="dp-body text-[11px]" style={{ color: INK + "77" }}>— {p.memberName}</div>
                   {p.description && <div className="dp-body text-[11px] mt-1" style={{ color: INK + "99" }}>{p.description}</div>}
-                  {p.memberId === memberId && (
+                  {p.memberId === memberId && state.round > 1 && (
                     <button
                       onClick={() => { setEditingId(p.id); setEditValues({ name: p.name, description: p.description, costType: p.costType, costAmount: p.costAmount }); }}
                       className="dp-body text-[11px] font-medium mt-1"
@@ -2271,9 +2271,15 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
         );
       })()}
 
+      {state.status === "tie_final" && (
+        <div className="dp-body text-[12px] p-2 rounded-lg" style={{ background: CORAL + "15", color: CORAL }}>
+          Empate definitivo después de {state.round} rondas — sin ganador claro en esta categoría.
+        </div>
+      )}
+
       {(state.status === "empty" || state.status === "empty_closed") && (
         <div className="dp-body text-[12px] p-2 rounded-lg" style={{ background: INK + "0d", color: INK + "77" }}>
-          {state.status === "empty" ? "Sin propuestas por ahora — se vuelve a intentar cuando terminen las demás categorías." : "Sin propuestas, aunque se le dio una segunda oportunidad."}
+          {state.status === "empty" ? "Sin propuestas por ahora — el administrador puede reabrirla cuando terminen las demás categorías." : `Sin propuestas después de ${state.round} intento(s).`}
         </div>
       )}
     </div>
@@ -2285,9 +2291,13 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   const categoryNames = Object.keys(lic.categories);
   const [closingVoting, setClosingVoting] = useState(false);
   const [votingError, setVotingError] = useState("");
+  const [reopening, setReopening] = useState(false);
+  const [reopenError, setReopenError] = useState("");
 
   const anyVoting = categoryNames.some((c) => lic.categories[c].status === "voting");
-  const allDone = categoryNames.every((c) => ["resolved", "empty_closed"].includes(lic.categories[c].status));
+  const anyActive = categoryNames.some((c) => ["collecting", "voting"].includes(lic.categories[c].status));
+  const anyReopenableEmpty = !anyActive && categoryNames.some((c) => lic.categories[c].status === "empty");
+  const allDone = categoryNames.every((c) => ["resolved", "empty_closed", "tie_final"].includes(lic.categories[c].status));
 
   const closeVoting = async () => {
     const ok = window.confirm("¿Cerrar la votación de las categorías listas? Se calculan los resultados y nadie más podrá votar en ellas.");
@@ -2306,6 +2316,27 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
       setVotingError(e.message);
     } finally {
       setClosingVoting(false);
+    }
+  };
+
+  const reopenEmpty = async () => {
+    const ok = window.confirm("¿Reabrir las categorías vacías para que reciban propuestas de nuevo?");
+    if (!ok) return;
+    setReopening(true);
+    setReopenError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/reopen-empty`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al reabrir");
+      await onAdvance();
+    } catch (e) {
+      setReopenError(e.message);
+    } finally {
+      setReopening(false);
     }
   };
 
@@ -2334,15 +2365,27 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
       ))}
 
       {votingError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{votingError}</div>}
+      {reopenError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{reopenError}</div>}
 
       {isAdmin && anyVoting && (
         <button
           onClick={closeVoting}
           disabled={closingVoting}
-          className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+          className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
           style={{ background: BLUE }}
         >
           🔒 {closingVoting ? "Cerrando…" : "Cerrar votación de las categorías listas"}
+        </button>
+      )}
+
+      {isAdmin && anyReopenableEmpty && (
+        <button
+          onClick={reopenEmpty}
+          disabled={reopening}
+          className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: CORAL }}
+        >
+          🔁 {reopening ? "Reabriendo…" : "Reabrir categorías vacías"}
         </button>
       )}
     </div>

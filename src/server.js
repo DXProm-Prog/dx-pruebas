@@ -539,15 +539,15 @@ function initLicitacion(flow) {
 // Cierra la recolección de propuestas de UNA categoría específica (sirve
 // tanto para la primera recolección, como para una ronda de desempate,
 // como para la reapertura de una categoría vacía). Si sigue sin
-// propuestas después de haber tenido oportunidad, se marca "empty" (o
-// "empty_closed" si ya se le había dado una segunda oportunidad).
+// propuestas después de haber agotado sus 3 intentos, se marca
+// "empty_closed" en definitiva.
 function closeCategoryCollecting(licitacion, cat) {
   const state = licitacion.categories[cat];
   const hasProposals = licitacion.proposals.some((p) => p.category === cat);
   if (hasProposals) {
     state.status = "voting";
   } else {
-    state.status = state.round > 1 ? "empty_closed" : "empty";
+    state.status = state.round >= 3 ? "empty_closed" : "empty";
   }
   state.closesAt = null;
 }
@@ -578,7 +578,12 @@ function tallyCategory(licitacion, cat) {
 // este momento (sirve tanto para la primera ronda, como para las rondas
 // de desempate que se hayan ido reabriendo). Si una categoría empata, se
 // reabre sola para una ronda extra (con las propuestas que ya había,
-// pero editable/ampliable), con la ventana de tiempo configurada.
+// editable/ampliable solo en esa ronda extra), con la ventana de tiempo
+// configurada — hasta un máximo de 3 rondas en total; si sigue empatada
+// después de la tercera, se deja como empate definitivo (sin ganador).
+// La reapertura de categorías VACÍAS no pasa aquí automáticamente — el
+// administrador la dispara aparte, una vez que ya no quede nada más
+// pendiente.
 function closeLicitacionVoting(licitacion, config) {
   const winners = []; // { category, proposal }
   Object.entries(licitacion.categories).forEach(([cat, state]) => {
@@ -590,36 +595,36 @@ function closeLicitacionVoting(licitacion, config) {
       state.status = "resolved";
       state.winner = tiedTop[0][0];
       winners.push({ category: cat, proposal: licitacion.proposals.find((p) => p.id === tiedTop[0][0]) });
-    } else {
+    } else if (state.round < 3) {
       // Empate: se reabre esta categoría sola, con una ventana de tiempo
       // para editar propuestas existentes o agregar nuevas.
       state.status = "collecting";
       state.round += 1;
       state.closesAt = config.tieRoundMinutes ? minutesFromNow(config.tieRoundMinutes) : null;
+    } else {
+      // Ya se usaron las 3 rondas y sigue empatada: se deja así.
+      state.status = "tie_final";
     }
   });
-  maybeReopenEmptyCategories(licitacion, config);
   return winners;
 }
 
-// Una vez que ya no queda ninguna categoría "viva" (recolectando o
-// votando) entre las que sí tuvieron propuestas, si alguna categoría se
-// quedó vacía se le da UNA oportunidad más, reabriendo su recolección.
-// Si ya se le había dado esa oportunidad y sigue vacía, se deja así
-// (para no reabrir para siempre).
-function maybeReopenEmptyCategories(licitacion, config) {
+// El administrador dispara esto a propósito (no es automático) cuando
+// ya no queda ninguna categoría recolectando o votando entre las que sí
+// tuvieron propuestas: le da una oportunidad más a cada categoría que se
+// quedó vacía, hasta un máximo de 3 intentos en total.
+function reopenEmptyCategories(licitacion, config) {
   const states = Object.values(licitacion.categories);
   const stillActive = states.some((s) => s.status === "collecting" || s.status === "voting");
-  if (stillActive) return;
+  if (stillActive) return { reopened: [] };
 
-  const stillEmpty = Object.entries(licitacion.categories).filter(([, s]) => s.status === "empty");
-  if (stillEmpty.length > 0) {
-    stillEmpty.forEach(([cat, s]) => {
-      s.status = "collecting";
-      s.round += 1;
-      s.closesAt = config.reopenEmptyMinutes ? minutesFromNow(config.reopenEmptyMinutes) : null;
-    });
-  }
+  const stillEmpty = Object.entries(licitacion.categories).filter(([, s]) => s.status === "empty" && s.round < 3);
+  stillEmpty.forEach(([cat, s]) => {
+    s.status = "collecting";
+    s.round += 1;
+    s.closesAt = config.reopenEmptyMinutes ? minutesFromNow(config.reopenEmptyMinutes) : null;
+  });
+  return { reopened: stillEmpty.map(([cat]) => cat) };
 }
 
 // Revisa si alguna categoría con ventana de tiempo ya se venció, y si es
@@ -633,12 +638,11 @@ function checkLicitacionTimers(licitacion, config) {
       changed = true;
     }
   });
-  if (changed) maybeReopenEmptyCategories(licitacion, config);
   return changed;
 }
 
 function licitacionAllDone(licitacion) {
-  return Object.values(licitacion.categories).every((s) => s.status === "resolved" || s.status === "empty_closed");
+  return Object.values(licitacion.categories).every((s) => ["resolved", "empty_closed", "tie_final"].includes(s.status));
 }
 
 // Si este flujo de presupuesto viene encadenado de un flujo de cuotas ya
@@ -1038,9 +1042,29 @@ app.post("/api/groups/:code/flows/:flowId/close-collecting", async (req, res) =>
     if (!catState) return res.status(400).json({ error: "Categoría inválida" });
     if (catState.status !== "collecting") return res.status(400).json({ error: "Esta categoría no está recibiendo propuestas" });
     closeCategoryCollecting(flow.licitacion, category);
-    maybeReopenEmptyCategories(flow.licitacion, flow.config || {});
   } else {
     closeLicitacionCollecting(flow.licitacion);
+  }
+  await save(db);
+  res.json(flow);
+});
+
+// El administrador reabre a propósito las categorías que se quedaron
+// vacías, una vez que ya no queda nada más pendiente entre las que sí
+// tuvieron propuestas (hasta un máximo de 3 intentos por categoría).
+app.post("/api/groups/:code/flows/:flowId/reopen-empty", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede reabrir categorías" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow || !flow.licitacion) return res.status(404).json({ error: "No hay proceso de propuestas activo" });
+
+  const { reopened } = reopenEmptyCategories(flow.licitacion, flow.config || {});
+  if (reopened.length === 0) {
+    return res.status(400).json({ error: "No hay categorías vacías para reabrir en este momento" });
   }
   await save(db);
   res.json(flow);
