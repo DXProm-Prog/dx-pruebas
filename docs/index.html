@@ -7,10 +7,10 @@
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   body { margin: 0; }
-  .dp-display { font-family: 'Space Grotesk', sans-serif; }
+  .dp-display { font-family: 'Sora', sans-serif; }
   .dp-body { font-family: 'Inter', sans-serif; }
   .dp-mono { font-family: 'JetBrains Mono', monospace; }
 </style>
@@ -20,13 +20,13 @@
 <script type="text/babel">
 const { useState, useEffect } = React;
 
-const INK = "#20302B";
-const BLUE = "#1F6E63";
-const BLUE_SOFT = "#E3EFEC";
-const WARM_WHITE = "#FBFAF7";
-const PAGE_BG = "#EDEAE2";
-const CORAL = "#A85332";
-const GREEN = "#4C7A3D";
+const INK = "#14213D";
+const BLUE = "#3A6EA5";
+const BLUE_SOFT = "#E8EDFB";
+const WARM_WHITE = "#FFFFFF";
+const PAGE_BG = "#F5F5F7";
+const CORAL = "#D64550";
+const GREEN = "#2E8B57";
 
 function Field({ label, value, onChange, placeholder, type = "text" }) {
   return (
@@ -96,23 +96,46 @@ function formatMoney(n) {
   return "$" + Math.round(n).toLocaleString("es-MX");
 }
 
-const PIE_COLORS = ["#1F6E63", "#C9922E", "#8B5A8F", "#4C7A3D", "#A85332", "#6B8CAE", "#B5533C", "#5C7A99"];
+const PIE_COLORS = ["#3A6EA5", "#E0A458", "#8B5A8F", "#4C9F70", "#D64550", "#6B4E9E", "#5C8A99", "#B5533C"];
 
 function PieChart({ data, size }) {
-  // data: [{ label, value }]
+  // data: [{ label, value }] — anillo segmentado, con espacio entre cada
+  // categoría y puntas redondeadas (estilo dashboard moderno).
   const total = data.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
-  let acc = 0;
-  const stops = data.map((d, i) => {
-    const pct = total > 0 ? ((Number(d.value) || 0) / total) * 100 : 0;
-    const stop = `${PIE_COLORS[i % PIE_COLORS.length]} ${acc}% ${acc + pct}%`;
-    acc += pct;
-    return stop;
-  });
-  const gradient = total > 0 ? `conic-gradient(${stops.join(",")})` : "#EDEAE2";
   const px = size || 88;
+  const r = 38;
+  const thickness = px < 100 ? 9 : 12;
+  const gap = 5;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
+  const segments = data.map((d, i) => {
+    const frac = total > 0 ? (Number(d.value) || 0) / total : 0;
+    const segLen = Math.max(0, frac * circumference - gap);
+    const seg = { color: PIE_COLORS[i % PIE_COLORS.length], segLen, offset };
+    offset += frac * circumference;
+    return seg;
+  });
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-      <div style={{ width: px, height: px, borderRadius: "50%", background: gradient, flexShrink: 0, border: `1px solid ${BLUE}22` }} />
+      <svg width={px} height={px} viewBox="0 0 100 100" style={{ flexShrink: 0 }}>
+        {total > 0 ? (
+          segments.map((s, i) => (
+            <circle
+              key={i}
+              cx="50" cy="50" r={r}
+              fill="none"
+              stroke={s.color}
+              strokeWidth={thickness}
+              strokeDasharray={`${s.segLen} ${circumference - s.segLen}`}
+              strokeDashoffset={-s.offset}
+              strokeLinecap="round"
+              transform="rotate(-90 50 50)"
+            />
+          ))
+        ) : (
+          <circle cx="50" cy="50" r={r} fill="none" stroke={PAGE_BG} strokeWidth={thickness} />
+        )}
+      </svg>
       <div style={{ flex: 1 }}>
         {data.map((d, i) => (
           <div key={d.label} className="dp-body flex items-center gap-1.5 text-[11px] mb-0.5" style={{ color: INK + "cc" }}>
