@@ -1946,6 +1946,335 @@ function StageResultView({ stage }) {
   return null;
 }
 
+function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdvance }) {
+  const lic = flow.licitacion;
+  const categoryNames = Object.keys(lic.categories);
+  const [category, setCategory] = useState(categoryNames[0] || "");
+  const [name, setName] = useState("");
+  const [costType, setCostType] = useState("mensual");
+  const [costAmount, setCostAmount] = useState("");
+  const [description, setDescription] = useState("");
+  const [links, setLinks] = useState([""]);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const [sentCount, setSentCount] = useState(0);
+  const [closingPhase, setClosingPhase] = useState(false);
+  const [votedCategories, setVotedCategories] = useState({});
+  const [votingSending, setVotingSending] = useState(false);
+  const [votingError, setVotingError] = useState("");
+
+  const catState = lic.categories[category];
+  const monthlyBudget = catState ? catState.monthlyBudget : null;
+  const costNum = Number(costAmount) || 0;
+  const overMonthlyCap = costType === "mensual" && monthlyBudget > 0 && costNum > monthlyBudget;
+  const monthsPreview = costType === "total" && monthlyBudget > 0 && costNum > monthlyBudget ? Math.ceil(costNum / monthlyBudget) : null;
+
+  const submitProposal = async () => {
+    setSending(true);
+    setSendError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/proposals`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memberId,
+          category,
+          name,
+          costType,
+          costAmount: costNum,
+          description,
+          links: links.map((l) => l.trim()).filter(Boolean),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al enviar");
+      setName("");
+      setCostAmount("");
+      setDescription("");
+      setLinks([""]);
+      setSentCount(sentCount + 1);
+      await onAdvance();
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const closeCollecting = async () => {
+    const ok = window.confirm("¿Cerrar la recepción de propuestas? Nadie más podrá mandar propuestas después de esto, y todas se revelan a todos.");
+    if (!ok) return;
+    setClosingPhase(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-collecting`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cerrar");
+      await onAdvance();
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setClosingPhase(false);
+    }
+  };
+
+  const submitVote = async (cat, proposalId) => {
+    setVotingSending(true);
+    setVotingError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/bid-vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, category: cat, proposalId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al votar");
+      setVotedCategories({ ...votedCategories, [cat]: true });
+    } catch (e) {
+      setVotingError(e.message);
+    } finally {
+      setVotingSending(false);
+    }
+  };
+
+  const closeVoting = async () => {
+    const ok = window.confirm("¿Cerrar la votación? Se calculan los resultados y nadie más podrá votar.");
+    if (!ok) return;
+    setClosingPhase(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-voting`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cerrar");
+      await onAdvance();
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setClosingPhase(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+      <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
+        Propuestas para el presupuesto{lic.phase === "done" ? " · terminado" : ""}
+      </div>
+
+      {lic.phase === "collecting" && (
+        <div>
+          <div className="dp-body text-[12px] mb-3" style={{ color: INK + "99" }}>
+            Manda tantas propuestas como quieras, para la categoría que elijas. Las propuestas de los demás se revelan todas juntas cuando se cierre esta etapa.
+            {sentCount > 0 && <span style={{ color: GREEN }}> Ya mandaste {sentCount}.</span>}
+          </div>
+
+          <label className="dp-body block text-xs mb-1" style={{ color: INK }}>Categoría</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="dp-body w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-2"
+            style={{ background: BLUE_SOFT, color: INK }}
+          >
+            {categoryNames.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Nombre de la propuesta"
+            className="dp-body w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-2"
+            style={{ background: BLUE_SOFT, color: INK }}
+          />
+
+          <div className="flex gap-1.5 mb-2">
+            {[{ key: "mensual", label: "Costo mensual" }, { key: "total", label: "Costo total" }].map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setCostType(t.key)}
+                className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1"
+                style={costType === t.key ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <input
+            type="number"
+            value={costAmount}
+            onChange={(e) => setCostAmount(e.target.value)}
+            placeholder={costType === "mensual" ? "Costo mensual" : "Costo total del proyecto"}
+            className="dp-mono w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-1"
+            style={{ background: BLUE_SOFT, color: INK }}
+          />
+          {monthlyBudget > 0 && (
+            <div className="dp-body text-[10px] mb-2" style={{ color: INK + "77" }}>
+              Presupuesto mensual de "{category}": {formatMoney(monthlyBudget)}
+            </div>
+          )}
+          {overMonthlyCap && (
+            <div className="dp-body text-[11px] mb-2 p-2 rounded-lg" style={{ background: CORAL + "15", color: CORAL }}>
+              El costo mensual no puede ser mayor a lo asignado a esta categoría ({formatMoney(monthlyBudget)}/mes). Si tu proyecto cuesta más, usa "Costo total" en vez de "Costo mensual".
+            </div>
+          )}
+          {monthsPreview && (
+            <div className="dp-body text-[11px] mb-2 p-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK + "cc" }}>
+              Como el costo total ({formatMoney(costNum)}) pasa del presupuesto mensual de esta categoría ({formatMoney(monthlyBudget)}/mes), tomaría aproximadamente <b>{monthsPreview} mes(es)</b> pagarlo con ese presupuesto.
+            </div>
+          )}
+
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Resumen de la propuesta (opcional)"
+            rows={2}
+            className="dp-body w-full resize-none rounded-lg px-2.5 py-1.5 text-sm outline-none mb-2"
+            style={{ background: BLUE_SOFT, color: INK }}
+          />
+
+          <label className="dp-body block text-xs mb-1" style={{ color: INK }}>Links de apoyo (opcional — videos, fotos, facturas, etc.)</label>
+          {links.map((l, i) => (
+            <input
+              key={i}
+              value={l}
+              onChange={(e) => {
+                const arr = [...links];
+                arr[i] = e.target.value;
+                setLinks(arr);
+              }}
+              placeholder="https://…"
+              className="dp-body w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-1.5"
+              style={{ background: BLUE_SOFT, color: INK }}
+            />
+          ))}
+          <button onClick={() => setLinks([...links, ""])} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>
+            + agregar otro link
+          </button>
+
+          {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+
+          <button
+            onClick={submitProposal}
+            disabled={sending || !name.trim() || !costAmount || overMonthlyCap}
+            className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mb-3"
+            style={{ background: GREEN }}
+          >
+            📤 {sending ? "Enviando…" : "Enviar propuesta"}
+          </button>
+
+          {isAdmin && (
+            <button
+              onClick={closeCollecting}
+              disabled={closingPhase}
+              className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+              style={{ background: BLUE }}
+            >
+              🔒 {closingPhase ? "Cerrando…" : "Cerrar recepción y pasar a votación"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {lic.phase === "voting" && (
+        <div>
+          <div className="dp-body text-[12px] mb-3 p-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK + "cc" }}>
+            💬 Recomendación: discutan las propuestas en persona antes de votar, si pueden.
+          </div>
+          {categoryNames.map((cat) => {
+            const state = lic.categories[cat];
+            const props = lic.proposals.filter((p) => p.category === cat);
+            return (
+              <div key={cat} className="mb-4 pb-4" style={{ borderBottom: `1px dashed ${BLUE}33` }}>
+                <div className="dp-body text-sm font-semibold mb-1.5" style={{ color: INK }}>{cat}</div>
+                {state.status === "empty" && (
+                  <div className="dp-body text-[12px] p-2 rounded-lg" style={{ background: CORAL + "15", color: CORAL }}>
+                    Esta categoría no recibió ninguna propuesta. ¡Anímense a proponer algo la próxima vez!
+                  </div>
+                )}
+                {state.status === "voting" && (
+                  <div>
+                    {props.map((p) => (
+                      <div key={p.id} className="rounded-lg p-2.5 mb-1.5" style={{ background: BLUE_SOFT }}>
+                        <button
+                          onClick={() => submitVote(cat, p.id)}
+                          disabled={votedCategories[cat] || votingSending}
+                          className="dp-body text-left text-sm font-medium w-full disabled:opacity-70"
+                          style={{ color: INK }}
+                        >
+                          {votedCategories[cat] ? "○" : "🗳️"} {p.name} <span className="dp-body text-[11px] font-normal" style={{ color: INK + "77" }}>— {p.memberName}</span>
+                        </button>
+                        <div className="dp-mono text-[11px] mt-0.5" style={{ color: INK + "88" }}>
+                          {p.costType === "mensual" ? `${formatMoney(p.costAmount)}/mes` : `${formatMoney(p.costAmount)} total${p.monthsNeeded ? ` (~${p.monthsNeeded} meses)` : ""}`}
+                        </div>
+                        {p.description && <div className="dp-body text-[11px] mt-1" style={{ color: INK + "99" }}>{p.description}</div>}
+                        {p.links.length > 0 && (
+                          <div className="mt-1">
+                            {p.links.map((l, i) => (
+                              <a key={i} href={l} target="_blank" rel="noreferrer" className="dp-body text-[11px] block underline" style={{ color: BLUE }}>
+                                {l}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                    {votedCategories[cat] && <div className="dp-body text-[11px]" style={{ color: GREEN }}>✅ Ya votaste en esta categoría</div>}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {votingError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{votingError}</div>}
+          {isAdmin && (
+            <button
+              onClick={closeVoting}
+              disabled={closingPhase}
+              className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+              style={{ background: BLUE }}
+            >
+              🔒 {closingPhase ? "Cerrando…" : "Cerrar votación"}
+            </button>
+          )}
+        </div>
+      )}
+
+      {lic.phase === "done" && (
+        <div>
+          {categoryNames.map((cat) => {
+            const state = lic.categories[cat];
+            const winnerProposal = state.winner ? lic.proposals.find((p) => p.id === state.winner) : null;
+            return (
+              <div key={cat} className="mb-3 pb-3" style={{ borderBottom: `1px dashed ${BLUE}33` }}>
+                <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>{cat}</div>
+                {state.status === "resolved" && winnerProposal && (
+                  <div className="rounded-lg p-2.5" style={{ background: GREEN + "15" }}>
+                    <div className="dp-body text-sm font-semibold" style={{ color: GREEN }}>🏆 {winnerProposal.name}</div>
+                    <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>propuesto por {winnerProposal.memberName}</div>
+                  </div>
+                )}
+                {state.status === "tie" && (
+                  <div className="dp-body text-[12px] p-2 rounded-lg" style={{ background: CORAL + "15", color: CORAL }}>
+                    Empate — todavía sin ganador claro en esta categoría.
+                  </div>
+                )}
+                {state.status === "empty" && (
+                  <div className="dp-body text-[12px]" style={{ color: INK + "77" }}>Sin propuestas.</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, onAdvance }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
@@ -2255,6 +2584,17 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             </button>
           )}
         </div>
+      )}
+
+      {flow.licitacion && (
+        <LicitacionPanel
+          backendUrl={backendUrl}
+          groupCode={groupCode}
+          memberId={memberId}
+          flow={flow}
+          isAdmin={isAdmin}
+          onAdvance={onAdvance}
+        />
       )}
 
       {flow.status === "finished" && (

@@ -129,4 +129,26 @@ async function notifyResultsToMembers({ group, questionText, summaryText, fronte
   return results;
 }
 
-module.exports = { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, isConfigured };
+// Correo especial para quien propuso el proyecto ganador en una
+// categoría del presupuesto.
+async function notifyProposalWinner({ memberEmail, memberName, groupName, category, proposalName, code, frontendUrl }) {
+  const link = frontendUrl
+    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}`
+    : null;
+
+  return sendEmail({
+    to: memberEmail,
+    subject: `¡Tu propuesta ganó! (${category})`,
+    text: [
+      `¡Felicidades, ${memberName}!`,
+      ``,
+      `Tu propuesta "${proposalName}" ganó la votación de la categoría "${category}" en "${groupName}".`,
+      ``,
+      link ? `Entra a la app para ver el detalle:\n${link}` : `Entra a la app para ver el detalle.`,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+}
+
+module.exports = { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner, isConfigured };

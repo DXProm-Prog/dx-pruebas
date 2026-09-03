@@ -6,7 +6,7 @@ const { load, save, generateCode, generateId } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
-const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers } = require("./email");
+const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner } = require("./email");
 const { computeStageResult } = require("./flowEngine");
 const { TEMPLATES } = require("./templates");
 
@@ -499,6 +499,71 @@ app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
 
 // ---------- Flujos (Cuotas, Presupuesto, etc) ----------
 
+// Arranca el sistema de propuestas y votación ("licitación") de un
+// flujo de presupuesto, usando las categorías ya decididas en su etapa
+// "budget". Cada categoría empieza en "collecting" (recibiendo
+// propuestas). No es una etapa más del flujo — vive aparte, en
+// flow.licitacion, porque varias categorías avanzan de forma
+// independiente entre sí.
+function initLicitacion(flow) {
+  const budgetStage = [...flow.stages].reverse().find((s) => s.key === "budget");
+  const categories = budgetStage ? Object.keys(budgetStage.result.categories) : [];
+  const categoryState = {};
+  categories.forEach((cat) => {
+    categoryState[cat] = {
+      status: "collecting",
+      winner: null,
+      monthlyBudget: budgetStage.result.categories[cat].amount ?? null,
+    };
+  });
+  return {
+    phase: "collecting",
+    round: 1,
+    proposals: [],
+    votes: [],
+    categories: categoryState,
+  };
+}
+
+// Cierra la recolección de propuestas: cada categoría con al menos una
+// propuesta pasa a "voting"; las que se quedaron sin ninguna quedan
+// marcadas "empty".
+function closeLicitacionCollecting(licitacion) {
+  Object.keys(licitacion.categories).forEach((cat) => {
+    const hasProposals = licitacion.proposals.some((p) => p.category === cat);
+    licitacion.categories[cat].status = hasProposals ? "voting" : "empty";
+  });
+  licitacion.phase = "voting";
+}
+
+// Cierra la votación: para cada categoría en "voting", cuenta los
+// votos de esta ronda y decide quién ganó (o si hubo empate).
+function closeLicitacionVoting(licitacion) {
+  const winners = []; // { category, proposal }
+  Object.entries(licitacion.categories).forEach(([cat, state]) => {
+    if (state.status !== "voting") return;
+    const votesHere = licitacion.votes.filter((v) => v.category === cat && v.round === licitacion.round);
+    const counts = {};
+    licitacion.proposals.filter((p) => p.category === cat).forEach((p) => (counts[p.id] = 0));
+    votesHere.forEach((v) => {
+      if (counts[v.proposalId] !== undefined) counts[v.proposalId] += 1;
+    });
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const topCount = sorted[0][1];
+    const tiedTop = sorted.filter(([, c]) => c === topCount);
+    if (topCount > 0 && tiedTop.length === 1) {
+      state.status = "resolved";
+      state.winner = tiedTop[0][0];
+      winners.push({ category: cat, proposal: licitacion.proposals.find((p) => p.id === tiedTop[0][0]) });
+    } else {
+      state.status = "tie";
+    }
+  });
+  const allDone = Object.values(licitacion.categories).every((s) => s.status === "resolved" || s.status === "empty" || s.status === "tie");
+  if (allDone) licitacion.phase = "done";
+  return winners;
+}
+
 // Si este flujo de presupuesto viene encadenado de un flujo de cuotas ya
 // terminado (Asociaciones), y ese flujo de cuotas calculó cuánto se
 // recauda (porque el admin puso número de miembros), el presupuesto
@@ -744,6 +809,9 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, getEffectiveFlowConfig(group, flow));
   if (nextStage) {
     flow.currentStage = { ...nextStage, instanceIndex: flow.stages.length };
+  } else if (stage.key === "openBids" && result.winner === "Sí") {
+    flow.currentStage = null;
+    flow.licitacion = initLicitacion(flow);
   } else {
     flow.status = "finished";
     flow.currentStage = null;
@@ -776,6 +844,153 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
       subjectPrefix: "Resultado final",
     }).catch((err) => console.error("Error de correo (flujo):", err.message));
   }
+
+  res.json(flow);
+});
+
+// Un miembro manda una propuesta para una categoría (puede mandar
+// varias, no solo una).
+app.post("/api/groups/:code/flows/:flowId/proposals", async (req, res) => {
+  const { memberId, category, name, costType, costAmount, description, links } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+
+  const member = group.members.find((m) => m.id === memberId && m.approved);
+  if (!member) return res.status(403).json({ error: "Miembro no encontrado o no aprobado" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow || !flow.licitacion) return res.status(404).json({ error: "No hay proceso de propuestas activo" });
+  if (flow.licitacion.phase !== "collecting") return res.status(403).json({ error: "La recepción de propuestas ya cerró" });
+
+  const catState = flow.licitacion.categories[category];
+  if (!catState) return res.status(400).json({ error: "Categoría inválida" });
+  if (!name || !String(name).trim()) return res.status(400).json({ error: "Falta el nombre de la propuesta" });
+  const cost = Number(costAmount);
+  if (isNaN(cost) || cost <= 0) return res.status(400).json({ error: "El costo debe ser un número mayor a 0" });
+  if (!["mensual", "total"].includes(costType)) return res.status(400).json({ error: "costType debe ser 'mensual' o 'total'" });
+
+  const monthlyBudget = catState.monthlyBudget;
+  let monthsNeeded = null;
+  if (costType === "mensual" && monthlyBudget && cost > monthlyBudget) {
+    return res.status(400).json({ error: `El costo mensual no puede pasar de lo asignado a esta categoría (${monthlyBudget}/mes)` });
+  }
+  if (costType === "total" && monthlyBudget) {
+    monthsNeeded = cost > monthlyBudget ? Math.ceil(cost / monthlyBudget) : 1;
+  }
+
+  const proposal = {
+    id: generateId(),
+    category,
+    memberId: member.id,
+    memberName: member.name,
+    memberEmail: member.email || null,
+    name: String(name).trim(),
+    costType,
+    costAmount: cost,
+    monthlyBudget,
+    monthsNeeded,
+    description: description ? String(description).trim() : "",
+    links: Array.isArray(links) ? links.map((l) => String(l).trim()).filter(Boolean) : [],
+    timestamp: new Date().toISOString(),
+  };
+  flow.licitacion.proposals.push(proposal);
+  await save(db);
+  res.json(proposal);
+});
+
+// El administrador cierra la recolección de propuestas y se abre la
+// votación.
+app.post("/api/groups/:code/flows/:flowId/close-collecting", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede cerrar esta etapa" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow || !flow.licitacion) return res.status(404).json({ error: "No hay proceso de propuestas activo" });
+  if (flow.licitacion.phase !== "collecting") return res.status(400).json({ error: "Esta etapa ya cerró" });
+
+  closeLicitacionCollecting(flow.licitacion);
+  await save(db);
+  res.json(flow);
+});
+
+// Un miembro vota por una propuesta dentro de una categoría (una vez
+// por categoría).
+app.post("/api/groups/:code/flows/:flowId/bid-vote", async (req, res) => {
+  const { memberId, category, proposalId } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+
+  const member = group.members.find((m) => m.id === memberId && m.approved);
+  if (!member) return res.status(403).json({ error: "Miembro no encontrado o no aprobado" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow || !flow.licitacion) return res.status(404).json({ error: "No hay proceso de propuestas activo" });
+  const licitacion = flow.licitacion;
+  if (licitacion.phase !== "voting") return res.status(403).json({ error: "La votación no está abierta" });
+
+  const catState = licitacion.categories[category];
+  if (!catState || catState.status !== "voting") return res.status(400).json({ error: "Esta categoría no está en votación" });
+  if (!licitacion.proposals.find((p) => p.id === proposalId && p.category === category)) {
+    return res.status(400).json({ error: "Propuesta inválida para esta categoría" });
+  }
+
+  const already = licitacion.votes.find((v) => v.category === category && v.memberId === memberId && v.round === licitacion.round);
+  if (already) return res.status(403).json({ error: "Ya votaste en esta categoría" });
+
+  licitacion.votes.push({ category, proposalId, memberId, round: licitacion.round, timestamp: new Date().toISOString() });
+  await save(db);
+  res.json({ status: "guardado" });
+});
+
+// El administrador cierra la votación: se calculan los ganadores por
+// categoría, y se avisa a todos (y en especial a quien haya ganado).
+app.post("/api/groups/:code/flows/:flowId/close-voting", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load();
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede cerrar esta etapa" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow || !flow.licitacion) return res.status(404).json({ error: "No hay proceso de propuestas activo" });
+  if (flow.licitacion.phase !== "voting") return res.status(400).json({ error: "La votación no está abierta" });
+
+  const winners = closeLicitacionVoting(flow.licitacion);
+  await save(db);
+
+  const summaryLines = Object.entries(flow.licitacion.categories).map(([cat, s]) => {
+    if (s.status === "resolved") {
+      const p = flow.licitacion.proposals.find((pp) => pp.id === s.winner);
+      return `${cat}: ganó "${p ? p.name : "?"}"`;
+    }
+    if (s.status === "tie") return `${cat}: empate, sin ganador todavía`;
+    return `${cat}: sin propuestas`;
+  });
+  notifyResultsToMembers({
+    group,
+    questionText: "Resultado de propuestas del presupuesto",
+    summaryText: summaryLines.join("\n"),
+    frontendUrl: process.env.FRONTEND_URL,
+    subjectPrefix: "Resultado de propuestas",
+  }).catch((err) => console.error("Error de correo (propuestas):", err.message));
+
+  winners.forEach(({ category, proposal }) => {
+    if (!proposal || !proposal.memberEmail) return;
+    notifyProposalWinner({
+      memberEmail: proposal.memberEmail,
+      memberName: proposal.memberName,
+      groupName: group.name,
+      category,
+      proposalName: proposal.name,
+      code: group.code,
+      frontendUrl: process.env.FRONTEND_URL,
+    }).catch((err) => console.error("Error de correo (ganador):", err.message));
+  });
 
   res.json(flow);
 });

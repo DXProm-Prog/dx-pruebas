@@ -157,8 +157,22 @@ const presupuesto = {
     }
 
     if (last.key === "approval") {
-      if (last.result.winner === "Sí") return null;
+      if (last.result.winner === "Sí") {
+        return {
+          key: "openBids",
+          type: "mayoria",
+          text: "¿Quieren abrir el proceso de propuestas para hacer uso del presupuesto de cada categoría?",
+          config: { options: ["Sí", "No"], majorityRule: "simple" },
+        };
+      }
       return presupuesto.getInitialStage(flowConfig);
+    }
+
+    // "openBids" siempre termina aquí la secuencia normal de etapas — si
+    // ganó el Sí, server.js arranca por separado el sistema de
+    // propuestas y votación (flow.licitacion), que no es una etapa más.
+    if (last.key === "openBids") {
+      return null;
     }
 
     return null;
