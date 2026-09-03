@@ -74,11 +74,16 @@ const cuotas = {
     }
 
     if (last.key === "ranking") {
+      // Si por alguna razón nadie le dio puntos a ninguna opción (ej.
+      // una prueba sin votos reales), no se deja la lista de categorías
+      // vacía — se usan todas las que se rankearon, para que el flujo
+      // pueda seguir.
+      const categories = last.result.winners.length > 0 ? last.result.winners : last.config.options;
       return {
         key: "memberSetup",
         type: "conteo_miembros",
         text: "¿Cuántos miembros hay en cada categoría? (opcional, solo para ver cuánto se recauda — el administrador puede omitir este paso)",
-        config: { mode: "categories", categories: last.result.winners },
+        config: { mode: "categories", categories },
       };
     }
 
