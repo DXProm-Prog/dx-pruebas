@@ -621,24 +621,6 @@ app.post("/api/groups/:code/flows/:flowId/config", async (req, res) => {
 // El administrador confirma que ya terminó de configurar la etapa
 // actual (ej. número de miembros por categoría) y la abre para que
 // todos puedan responder.
-app.post("/api/groups/:code/flows/:flowId/confirm-setup", async (req, res) => {
-  const { memberId } = req.body;
-  const db = await load();
-  const group = db.groups[req.params.code];
-  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
-  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede continuar" });
-
-  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
-  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
-  if (!flow.currentStage || !flow.currentStage.awaitingSetup) {
-    return res.status(400).json({ error: "Esta etapa no está esperando configuración" });
-  }
-
-  flow.currentStage.awaitingSetup = false;
-  await save(db);
-  res.json(flow);
-});
-
 app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
   const { memberId, value } = req.body;
   if (!memberId || value === undefined) return res.status(400).json({ error: "Faltan campos: memberId, value" });
@@ -655,6 +637,9 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
   if (flow.status !== "active") return res.status(403).json({ error: "Este flujo ya terminó" });
 
   const stage = flow.currentStage;
+  if (stage.type === "conteo_miembros" && group.admin.id !== memberId) {
+    return res.status(403).json({ error: "Solo el administrador responde esta etapa" });
+  }
   let storedValue;
 
   if (stage.type === "promedio") {
@@ -700,6 +685,18 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
     });
     if (Object.keys(cleaned).length === 0) return res.status(400).json({ error: "Asigna al menos un %" });
     storedValue = cleaned;
+  } else if (stage.type === "conteo_miembros") {
+    // value puede venir vacío ({}) si el administrador decidió omitir
+    // este paso — es válido, simplemente no se calculará recaudación.
+    if (typeof value !== "object" || Array.isArray(value) || value === null) {
+      return res.status(400).json({ error: "value debe ser un objeto {categoria: número}" });
+    }
+    const cleaned = {};
+    Object.entries(value).forEach(([k, v]) => {
+      const n = Number(v);
+      if (!isNaN(n) && n > 0) cleaned[k] = n;
+    });
+    storedValue = cleaned;
   } else {
     return res.status(400).json({ error: "Tipo de etapa desconocido" });
   }
@@ -737,12 +734,16 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   const result = computeStageResult(stage, responses, effectiveConfig);
   flow.stages.push({ ...stage, result, closedAt: new Date().toISOString() });
 
-  const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, effectiveConfig);
+  // Si esta etapa era la de "número de miembros", lo que haya puesto el
+  // administrador (o nada, si lo omitió) queda guardado en la
+  // configuración del flujo, para que las siguientes etapas lo usen.
+  if (stage.type === "conteo_miembros") {
+    flow.config.memberCounts = { ...flow.config.memberCounts, ...result.memberCounts };
+  }
+
+  const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, getEffectiveFlowConfig(group, flow));
   if (nextStage) {
     flow.currentStage = { ...nextStage, instanceIndex: flow.stages.length };
-    if (flow.currentStage.key === "quotas" || flow.currentStage.key === "singleQuota") {
-      flow.currentStage.awaitingSetup = true;
-    }
   } else {
     flow.status = "finished";
     flow.currentStage = null;

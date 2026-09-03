@@ -60,7 +60,7 @@ function rankingMultiWinner(options, ballots, winnersCount) {
 
   return {
     ranked,
-    winners: ranked.slice(0, winnersCount).map((r) => r.option),
+    winners: ranked.filter((r) => r.score > 0).slice(0, winnersCount).map((r) => r.option),
   };
 }
 
@@ -117,6 +117,13 @@ function computeStageResult(stage, responses, flowConfig = {}) {
       categories,
       totalCollected: hasMemberCounts ? Math.round(totalCollected * 100) / 100 : null,
     };
+  }
+
+  // Etapa de una sola respuesta (la del administrador): número de
+  // miembros por categoría, o vacío si decidió omitirla.
+  if (stage.type === "conteo_miembros") {
+    const memberCounts = values.length ? values[values.length - 1] : {};
+    return { type: "conteo_miembros", memberCounts, skipped: Object.keys(memberCounts).length === 0 };
   }
 
   if (stage.type === "recoleccion_abierta") {

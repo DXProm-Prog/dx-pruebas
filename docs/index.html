@@ -1683,6 +1683,19 @@ function StageResultView({ stage }) {
   const [showDetails, setShowDetails] = useState(true);
   const r = stage.result;
 
+  if (stage.type === "conteo_miembros") {
+    if (r.skipped) {
+      return <div className="dp-body text-xs" style={{ color: INK + "77" }}>El administrador omitió este paso.</div>;
+    }
+    return (
+      <div className="dp-mono text-xs" style={{ color: INK + "99" }}>
+        {Object.entries(r.memberCounts).map(([k, v]) => (
+          <div key={k}>{k === "single" ? "Miembros" : k}: {v}</div>
+        ))}
+      </div>
+    );
+  }
+
   if (stage.type === "promedio") {
     return (
       <div>
@@ -1985,33 +1998,34 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
     }
   };
 
-  const confirmSetup = async () => {
-    setSavingConfig(true);
+  const submitMemberSetup = async (rawCounts) => {
+    setSending(true);
     setSendError("");
     try {
-      const config =
-        flow.template === "cuotas"
-          ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent), memberCounts }
-          : isChainedBudget
-          ? { selectionThresholdPercent: Number(categoryThresholdPercent), extraAmount: extraAmount === "" ? 0 : Number(extraAmount) }
-          : { selectionThresholdPercent: Number(categoryThresholdPercent), totalBudget: totalBudget === "" ? null : Number(totalBudget) };
-      await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/config`, {
+      const cleaned = {};
+      Object.entries(rawCounts).forEach(([k, v]) => {
+        const n = Number(v);
+        if (!isNaN(n) && n > 0) cleaned[k] = n;
+      });
+      const res1 = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/responses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, config }),
+        body: JSON.stringify({ memberId, value: cleaned }),
       });
-      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/confirm-setup`, {
+      const data1 = await res1.json();
+      if (!res1.ok) throw new Error(data1.error || "Error al guardar");
+      const res2 = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al continuar");
+      const data2 = await res2.json();
+      if (!res2.ok) throw new Error(data2.error || "Error al continuar");
       await onAdvance();
     } catch (e) {
       setSendError(e.message);
     } finally {
-      setSavingConfig(false);
+      setSending(false);
     }
   };
 
@@ -2111,54 +2125,66 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         );
       })()}
 
-      {stage && stage.awaitingSetup && (
+      {stage && stage.type === "conteo_miembros" && (
         <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          {isAdmin ? (
-            <React.Fragment>
-              <div className="dp-body text-[13px] mb-2" style={{ color: INK }}>
-                Antes de pedirle a todos la cuota, puedes (opcional) indicar cuántos miembros hay en cada categoría, para ver cuánto se recaudaría.
-              </div>
-              {stage.key === "singleQuota" && (
-                <label className="dp-body flex items-center justify-between text-xs mb-2" style={{ color: INK }}>
-                  Número de miembros
-                  <input
-                    type="number" min="0" value={memberCounts.single ?? ""}
-                    onChange={(e) => setMemberCounts({ ...memberCounts, single: e.target.value === "" ? undefined : Number(e.target.value) })}
-                    className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
-                    style={{ background: "#fff" }}
-                  />
-                </label>
-              )}
-              {stage.key === "quotas" && stage.config.categories.map((cat) => (
-                <label key={cat} className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
-                  {cat}
-                  <input
-                    type="number" min="0" value={memberCounts[cat] ?? ""}
-                    onChange={(e) => setMemberCounts({ ...memberCounts, [cat]: e.target.value === "" ? undefined : Number(e.target.value) })}
-                    className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
-                    style={{ background: "#fff" }}
-                  />
-                </label>
-              ))}
-              {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
-              <button
-                onClick={confirmSetup}
-                disabled={savingConfig}
-                className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
-                style={{ background: BLUE }}
-              >
-                {savingConfig ? "Guardando…" : "Continuar"}
-              </button>
-            </React.Fragment>
-          ) : (
+          <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
+          {isAdmin ? (() => {
+            const fields = stage.config.mode === "single" ? ["single"] : stage.config.categories;
+            const allFilled = fields.every((k) => memberCounts[k] !== undefined && memberCounts[k] !== "" && Number(memberCounts[k]) > 0);
+            return (
+              <React.Fragment>
+                {stage.config.mode === "single" && (
+                  <label className="dp-body flex items-center justify-between text-xs mb-2" style={{ color: INK }}>
+                    Número de miembros
+                    <input
+                      type="number" min="0" value={memberCounts.single ?? ""}
+                      onChange={(e) => setMemberCounts({ ...memberCounts, single: e.target.value })}
+                      className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                      style={{ background: "#fff" }}
+                    />
+                  </label>
+                )}
+                {stage.config.mode === "categories" && stage.config.categories.map((cat) => (
+                  <label key={cat} className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
+                    {cat}
+                    <input
+                      type="number" min="0" value={memberCounts[cat] ?? ""}
+                      onChange={(e) => setMemberCounts({ ...memberCounts, [cat]: e.target.value })}
+                      className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                      style={{ background: "#fff" }}
+                    />
+                  </label>
+                ))}
+                {sendError && <div className="dp-body text-[11px] mb-2 mt-1" style={{ color: CORAL }}>{sendError}</div>}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => submitMemberSetup(memberCounts)}
+                    disabled={sending || !allFilled}
+                    className="dp-body flex-1 text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+                    style={{ background: GREEN }}
+                  >
+                    {sending ? "Guardando…" : "Guardar y continuar"}
+                  </button>
+                  <button
+                    onClick={() => submitMemberSetup({})}
+                    disabled={sending}
+                    className="dp-body flex-1 text-xs py-2 rounded-full font-medium disabled:opacity-40"
+                    style={{ background: "#fff", color: INK, border: `1px solid ${BLUE}55` }}
+                  >
+                    Omitir, no es necesario
+                  </button>
+                </div>
+              </React.Fragment>
+            );
+          })() : (
             <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>
-              ⏳ El administrador está configurando esta etapa (número de miembros por categoría)…
+              ⏳ El administrador está indicando el número de miembros…
             </div>
           )}
         </div>
       )}
 
-      {stage && !stage.awaitingSetup && (
+      {stage && stage.type !== "conteo_miembros" && (
         <div>
           <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>

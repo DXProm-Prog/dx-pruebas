@@ -4,6 +4,14 @@
 // (flow.config), que el administrador puede ajustar — aquí solo se usan
 // los valores, con 10% como default si no se ha configurado nada.
 
+// Redondea hacia abajo en los empates de .5 (2.5 → 2, no 3), a
+// diferencia de Math.round que siempre sube en los .5. Solo sube si la
+// parte decimal pasa de .5 (ej. 2.51 → 3).
+function roundHalfDown(n) {
+  const floor = Math.floor(n);
+  return n - floor > 0.5 ? floor + 1 : floor;
+}
+
 function approvalStage(label) {
   return {
     key: "approval",
@@ -35,13 +43,13 @@ const cuotas = {
     const last = stages[stages.length - 1];
 
     if (last.key === "count") {
-      const countValue = Math.max(1, Math.round(last.result.average));
+      const countValue = Math.max(1, roundHalfDown(last.result.average));
       if (countValue === 1) {
         return {
-          key: "singleQuota",
-          type: "promedio",
-          text: "¿Cuánto debe ser la cuota?",
-          config: { trimPercent },
+          key: "memberSetup",
+          type: "conteo_miembros",
+          text: "¿Cuántos miembros van a pagar la cuota? (opcional, solo para ver cuánto se recauda — el administrador puede omitir este paso)",
+          config: { mode: "single" },
         };
       }
       return {
@@ -50,10 +58,6 @@ const cuotas = {
         text: `Propón nombres para las ${countValue} categorías de cuota que se necesitan (una por recuadro).`,
         config: { maxItemsPerPerson: countValue, categoryCount: countValue },
       };
-    }
-
-    if (last.key === "singleQuota") {
-      return approvalStage("las cuotas");
     }
 
     if (last.key === "names") {
@@ -70,16 +74,32 @@ const cuotas = {
     }
 
     if (last.key === "ranking") {
-      const categories = last.result.winners;
+      return {
+        key: "memberSetup",
+        type: "conteo_miembros",
+        text: "¿Cuántos miembros hay en cada categoría? (opcional, solo para ver cuánto se recauda — el administrador puede omitir este paso)",
+        config: { mode: "categories", categories: last.result.winners },
+      };
+    }
+
+    if (last.key === "memberSetup") {
+      if (last.config.mode === "single") {
+        return {
+          key: "singleQuota",
+          type: "promedio",
+          text: "¿Cuánto debe ser la cuota?",
+          config: { trimPercent },
+        };
+      }
       return {
         key: "quotas",
         type: "promedio_por_categoria",
         text: "Propón la cuota que crees justa para cada categoría.",
-        config: { categories, trimPercent },
+        config: { categories: last.config.categories, trimPercent },
       };
     }
 
-    if (last.key === "quotas") {
+    if (last.key === "singleQuota" || last.key === "quotas") {
       return approvalStage("las cuotas");
     }
 
