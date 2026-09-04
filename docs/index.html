@@ -208,6 +208,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
   const [resultError, setResultError] = useState("");
   const [closingRound, setClosingRound] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
+  const [showStatusCard, setShowStatusCard] = useState(false);
 
   const freshTieBreak = (result && result.tieBreak) || question.tieBreak;
   const inTieBreak = isRankeado && freshTieBreak && !freshTieBreak.finished;
@@ -319,6 +320,38 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
   }, [groupResponses, question.id, isSegundaVuelta, isRankeado, inTieBreak, question.currentRound, freshTieBreak && freshTieBreak.currentRound]);
   const isClosedForVoting = isSegundaVuelta ? Boolean(result && result.finished) : question.closed;
 
+  // Para la tarjeta de aviso: "resolved" cuando ya hay una decisión
+  // final, "tied" cuando se necesita otra ronda por empate. Se guarda
+  // en una sola variable para poder detectar el MOMENTO en que cambia
+  // (y solo ahí mostrar la tarjeta, no en cada render).
+  const decisionStatus = (() => {
+    if (question.type === "promedio") return result ? "resolved" : null;
+    if (rule === "simple" || rule === "absoluta" || rule === "calificada") {
+      if (!result) return null;
+      return result.winner ? "resolved" : "tied";
+    }
+    if (isRankeado) {
+      if (freshTieBreak) return freshTieBreak.finished ? "resolved" : "tied";
+      if (!result) return null;
+      return result.winner ? "resolved" : null;
+    }
+    if (isSegundaVuelta) {
+      if (!result) return null;
+      if (result.finished) return "resolved";
+      if (result.inTieBreak) return "tied";
+    }
+    return null;
+  })();
+  const decisionLabel = question.type === "promedio" ? (result ? result.average.toFixed(2) : "") : result ? result.winner || "" : "";
+
+  const prevDecisionStatus = React.useRef(null);
+  useEffect(() => {
+    if (decisionStatus && decisionStatus !== prevDecisionStatus.current) {
+      setShowStatusCard(true);
+    }
+    prevDecisionStatus.current = decisionStatus;
+  }, [decisionStatus]);
+
   return (
     <div className="rounded-2xl p-4 mb-4 shadow-sm" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="flex items-start justify-between gap-2 mb-1">
@@ -339,6 +372,145 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           {liveVoteCount} de {approvedMemberCount} miembro(s) han votado
         </div>
       )}
+
+      {/* ---------- Proceso / resultados: siempre arriba ---------- */}
+
+      {result && question.type === "promedio" && (
+        <div className="mb-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && (
+            <React.Fragment>
+              <div className="dp-body text-[11px] font-medium mb-2.5" style={{ color: INK + "99" }}>
+                {result.n} propuestas · {result.trimmedCount} recortadas de cada extremo
+                {result.suggestedMinPercent > question.trimPercent && <> · mínimo sugerido: {result.suggestedMinPercent}%</>}
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {result.sorted.map((v, i) => {
+                  const isTrimmed = i < result.trimmedCount || i >= result.sorted.length - result.trimmedCount;
+                  const named = result.sortedWithNames && result.sortedWithNames[i];
+                  return (
+                    <span
+                      key={i}
+                      className="dp-mono text-xs px-2 py-1 rounded-md"
+                      style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
+                    >
+                      {named ? `${named.name}: ${named.value}` : v}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="dp-mono text-xs mb-2.5 leading-relaxed" style={{ color: INK + "aa" }}>
+                ({result.kept.join(" + ")}) ÷ {result.kept.length} = {result.average.toFixed(2)}
+              </div>
+            </React.Fragment>
+          )}
+          <div className="flex items-baseline justify-between pt-2.5" style={{ borderTop: `1px solid ${BLUE}33` }}>
+            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+            <span className="dp-display text-3xl font-bold" style={{ color: BLUE }}>{result.average.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
+
+      {result && (rule === "simple" || rule === "absoluta" || rule === "calificada") && (
+        <div className="mb-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && (
+            <React.Fragment>
+              <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>{result.totalVoters} voto(s)</div>
+              {result.tally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={result.winner === t.option} />
+              ))}
+            </React.Fragment>
+          )}
+          <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
+            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+            <span className="dp-display text-lg font-bold" style={{ color: result.winner ? GREEN : CORAL }}>
+              {result.winner || "sin ganador todavía"}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {result && isRankeado && result.rounds && (
+        <div className="mb-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && result.rounds.map((rd, i) => (
+            <div key={i} className="mb-3">
+              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
+                Ronda {i + 1}{rd.eliminated ? ` · se elimina "${rd.eliminated}"` : ""}{rd.tie ? " · empate" : ""}
+              </div>
+              {rd.tally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={rd.winner === t.option} />
+              ))}
+            </div>
+          ))}
+          {result.winner && !freshTieBreak && (
+            <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {freshTieBreak && (
+        <div className="mb-4 rounded-xl p-3.5" style={{ background: CORAL + "12", border: `1px solid ${CORAL}33` }}>
+          <div className="dp-body text-[11px] font-semibold mb-2" style={{ color: CORAL }}>Desempate</div>
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} color={CORAL} />
+          {showDetails && freshTieBreak.completedRounds.map((rd, i) => (
+            <div key={i} className="mb-2">
+              <div className="dp-body text-[10px] font-medium mb-1" style={{ color: INK + "99" }}>Ronda de desempate {rd.roundNum}</div>
+              {rd.tally.map((t) => (
+                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+              ))}
+            </div>
+          ))}
+          {freshTieBreak.finished ? (
+            <div className="flex items-baseline justify-between pt-2 mt-1" style={{ borderTop: `1px solid ${CORAL}33` }}>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{freshTieBreak.winner}</span>
+            </div>
+          ) : (
+            <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>votación en curso entre: {freshTieBreak.currentOptions.join(", ")}</div>
+          )}
+        </div>
+      )}
+
+      {isSegundaVuelta && result && (
+        <div className="mb-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+          {showDetails && (
+            <React.Fragment>
+              {result.completedRounds.map((rd) => (
+                <div key={rd.roundNum} className="mb-3">
+                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
+                    Ronda {rd.roundNum}{rd.tieBreak ? " (desempate)" : ""} · se elimina: {rd.eliminated.length ? rd.eliminated.join(", ") : "nadie"}
+                  </div>
+                  {rd.tally.map((t) => (
+                    <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+                  ))}
+                </div>
+              ))}
+              {!result.finished && result.liveTally && (
+                <div className="mb-2">
+                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>Ronda {result.currentRound} (en curso)</div>
+                  {result.liveTally.map((t) => (
+                    <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
+                  ))}
+                </div>
+              )}
+            </React.Fragment>
+          )}
+          {result.finished && (
+            <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ---------- Lo que hay que responder: siempre al final ---------- */}
 
       {question.type === "promedio" && (
         <div className="flex items-center gap-2 mb-2">
@@ -491,138 +663,36 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
       )}
       {resultError && <div className="dp-body text-[11px] mt-2" style={{ color: CORAL }}>{resultError}</div>}
 
-      {result && question.type === "promedio" && (
-        <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
-          {showDetails && (
-            <React.Fragment>
-              <div className="dp-body text-[11px] font-medium mb-2.5" style={{ color: INK + "99" }}>
-                {result.n} propuestas · {result.trimmedCount} recortadas de cada extremo
-                {result.suggestedMinPercent > question.trimPercent && <> · mínimo sugerido: {result.suggestedMinPercent}%</>}
+      {showStatusCard && decisionStatus && (
+        <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: "rgba(20,33,61,0.55)", zIndex: 50 }}>
+          <div className="rounded-2xl p-5 max-w-[320px] w-full shadow-xl" style={{ background: WARM_WHITE }}>
+            <div className="flex justify-end mb-1">
+              <button onClick={() => setShowStatusCard(false)} className="dp-body text-sm" style={{ color: INK + "77" }}>✕</button>
+            </div>
+            <div className="text-center mb-2">
+              <div style={{ fontSize: "36px" }}>{decisionStatus === "resolved" ? "🎉" : "⚖️"}</div>
+              <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>
+                {decisionStatus === "resolved" ? "¡Felicidades!" : "¡Empate!"}
               </div>
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {result.sorted.map((v, i) => {
-                  const isTrimmed = i < result.trimmedCount || i >= result.sorted.length - result.trimmedCount;
-                  const named = result.sortedWithNames && result.sortedWithNames[i];
-                  return (
-                    <span
-                      key={i}
-                      className="dp-mono text-xs px-2 py-1 rounded-md"
-                      style={isTrimmed ? { background: CORAL + "22", color: CORAL, textDecoration: "line-through" } : { background: "#fff", color: INK }}
-                    >
-                      {named ? `${named.name}: ${named.value}` : v}
-                    </span>
-                  );
-                })}
+              <div className="dp-body text-[13px] mt-1" style={{ color: INK + "99" }}>
+                {decisionStatus === "resolved"
+                  ? "Llegaron a una decisión colectiva."
+                  : "Se necesita otra ronda de participación."}
               </div>
-              <div className="dp-mono text-xs mb-2.5 leading-relaxed" style={{ color: INK + "aa" }}>
-                ({result.kept.join(" + ")}) ÷ {result.kept.length} = {result.average.toFixed(2)}
+            </div>
+            {decisionStatus === "resolved" && decisionLabel && (
+              <div className="rounded-lg p-3 text-center" style={{ background: BLUE_SOFT }}>
+                <span className="dp-display text-2xl font-bold" style={{ color: GREEN }}>{decisionLabel}</span>
               </div>
-            </React.Fragment>
-          )}
-          <div className="flex items-baseline justify-between pt-2.5" style={{ borderTop: `1px solid ${BLUE}33` }}>
-            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-            <span className="dp-display text-3xl font-bold" style={{ color: BLUE }}>{result.average.toFixed(2)}</span>
+            )}
+            <button
+              onClick={() => setShowStatusCard(false)}
+              className="dp-body w-full mt-3 text-xs py-2.5 rounded-full text-white font-medium"
+              style={{ background: BLUE }}
+            >
+              {decisionStatus === "resolved" ? "Ver el proceso" : "Votar en la nueva ronda"}
+            </button>
           </div>
-        </div>
-      )}
-
-      {result && (rule === "simple" || rule === "absoluta" || rule === "calificada") && (
-        <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
-          {showDetails && (
-            <React.Fragment>
-              <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>{result.totalVoters} voto(s)</div>
-              {result.tally.map((t) => (
-                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={result.winner === t.option} />
-              ))}
-            </React.Fragment>
-          )}
-          <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
-            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-            <span className="dp-display text-lg font-bold" style={{ color: result.winner ? GREEN : CORAL }}>
-              {result.winner || "sin ganador todavía"}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {result && isRankeado && result.rounds && (
-        <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
-          {showDetails && result.rounds.map((rd, i) => (
-            <div key={i} className="mb-3">
-              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
-                Ronda {i + 1}{rd.eliminated ? ` · se elimina "${rd.eliminated}"` : ""}{rd.tie ? " · empate" : ""}
-              </div>
-              {rd.tally.map((t) => (
-                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={rd.winner === t.option} />
-              ))}
-            </div>
-          ))}
-          {result.winner && !freshTieBreak && (
-            <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
-              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {freshTieBreak && (
-        <div className="mt-3 rounded-xl p-3.5" style={{ background: CORAL + "12", border: `1px solid ${CORAL}33` }}>
-          <div className="dp-body text-[11px] font-semibold mb-2" style={{ color: CORAL }}>Desempate</div>
-          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} color={CORAL} />
-          {showDetails && freshTieBreak.completedRounds.map((rd, i) => (
-            <div key={i} className="mb-2">
-              <div className="dp-body text-[10px] font-medium mb-1" style={{ color: INK + "99" }}>Ronda de desempate {rd.roundNum}</div>
-              {rd.tally.map((t) => (
-                <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
-              ))}
-            </div>
-          ))}
-          {freshTieBreak.finished ? (
-            <div className="flex items-baseline justify-between pt-2 mt-1" style={{ borderTop: `1px solid ${CORAL}33` }}>
-              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{freshTieBreak.winner}</span>
-            </div>
-          ) : (
-            <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>votación en curso entre: {freshTieBreak.currentOptions.join(", ")}</div>
-          )}
-        </div>
-      )}
-
-      {isSegundaVuelta && result && (
-        <div className="mt-4 rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
-          <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
-          {showDetails && (
-            <React.Fragment>
-              {result.completedRounds.map((rd) => (
-                <div key={rd.roundNum} className="mb-3">
-                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
-                    Ronda {rd.roundNum}{rd.tieBreak ? " (desempate)" : ""} · se elimina: {rd.eliminated.length ? rd.eliminated.join(", ") : "nadie"}
-                  </div>
-                  {rd.tally.map((t) => (
-                    <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
-                  ))}
-                </div>
-              ))}
-              {!result.finished && result.liveTally && (
-                <div className="mb-2">
-                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>Ronda {result.currentRound} (en curso)</div>
-                  {result.liveTally.map((t) => (
-                    <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
-                  ))}
-                </div>
-              )}
-            </React.Fragment>
-          )}
-          {result.finished && (
-            <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
-              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
-              <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
-            </div>
-          )}
         </div>
       )}
     </div>
