@@ -905,10 +905,10 @@ function CustomEntryScreen({ onBack, onChooseCreate, onChooseAdminReturn, onChoo
   );
 }
 
-function CreateGroupScreen({ backendUrl, onBack, onCreated }) {
+function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefillEmail }) {
   const [name, setName] = useState("");
-  const [adminName, setAdminName] = useState("");
-  const [adminEmail, setAdminEmail] = useState("");
+  const [adminName, setAdminName] = useState(prefillName || "");
+  const [adminEmail, setAdminEmail] = useState(prefillEmail || "");
   const [requireApproval, setRequireApproval] = useState(true);
   const [secretResponses, setSecretResponses] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -1031,10 +1031,10 @@ function GroupCreatedScreen({ groupName, code, onContinue }) {
   );
 }
 
-function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined }) {
+function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillName, prefillEmail }) {
   const [code, setCode] = useState(initialCode || "");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(prefillName || "");
+  const [email, setEmail] = useState(prefillEmail || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
@@ -3085,19 +3085,23 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
 }
 
 function LoginScreen({ onBack }) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
   const sendLink = async () => {
-    if (!email.trim()) return;
+    if (!email.trim() || !name.trim()) return;
     setSending(true);
     setError("");
     try {
       const { error: sendError } = await supabaseClient.auth.signInWithOtp({
         email: email.trim(),
-        options: { emailRedirectTo: window.location.origin + window.location.pathname },
+        options: {
+          emailRedirectTo: window.location.origin + window.location.pathname,
+          data: { name: name.trim() },
+        },
       });
       if (sendError) throw sendError;
       setSent(true);
@@ -3133,11 +3137,14 @@ function LoginScreen({ onBack }) {
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Iniciar sesión</div>
         <p className="dp-body text-[12px] mb-3" style={{ color: INK + "88" }}>
-          Con tu cuenta vas a poder entrar a todos tus grupos (donde administras o participas) desde un solo lugar, en cualquier dispositivo.
+          Con tu cuenta vas a poder entrar a todos tus grupos (donde administras o participas) desde un solo lugar, en cualquier dispositivo. Cuando crees un grupo o te unas a uno, tu nombre y correo ya van a estar llenos.
         </p>
-        <Field label="Tu correo" value={email} onChange={setEmail} placeholder="ej. luis@correo.com" type="email" />
+        <div className="flex flex-col gap-2.5">
+          <Field label="Tu nombre" value={name} onChange={setName} placeholder="ej. Luis" />
+          <Field label="Tu correo" value={email} onChange={setEmail} placeholder="ej. luis@correo.com" type="email" />
+        </div>
         <div className="mt-3">
-          <PrimaryButton onClick={sendLink} disabled={sending || !email.trim()}>
+          <PrimaryButton onClick={sendLink} disabled={sending || !email.trim() || !name.trim()}>
             {sending ? "Enviando…" : "Enviarme un link para entrar"}
           </PrimaryButton>
         </div>
@@ -3185,6 +3192,8 @@ function DemocraciaPorPromedioConectada() {
     asociaciones: ["Arma tu grupo", "Decidan las cuotas", "Repartan el presupuesto", "Propongan proyectos", "¡Decidan juntos!"],
   };
   const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || "Organízate y decide";
+  const sessionName = session ? (session.user.user_metadata && session.user.user_metadata.name) || "" : "";
+  const sessionEmail = session ? session.user.email : "";
   const headerSteps = STEP_CHAINS[selectedOption] || STEP_CHAINS.default;
 
   useEffect(() => {
@@ -3299,6 +3308,8 @@ function DemocraciaPorPromedioConectada() {
           <CreateGroupScreen
             backendUrl={backendUrl}
             onBack={() => setView("custom")}
+            prefillName={sessionName}
+            prefillEmail={sessionEmail}
             onCreated={async ({ code, memberId, groupName }) => {
               setGroupCode(code);
               setMemberId(memberId);
@@ -3345,6 +3356,8 @@ function DemocraciaPorPromedioConectada() {
             backendUrl={backendUrl}
             initialCode={urlCode}
             onBack={() => setView("custom")}
+            prefillName={sessionName}
+            prefillEmail={sessionEmail}
             onJoined={({ code, memberId }) => {
               setGroupCode(code);
               setMemberId(memberId);
