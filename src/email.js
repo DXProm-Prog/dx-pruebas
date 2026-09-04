@@ -56,9 +56,9 @@ async function notifyNewJoinRequest({ adminEmail, groupName, applicantName, code
   });
 }
 
-async function notifyGroupCreated({ adminEmail, groupName, code, frontendUrl }) {
+async function notifyGroupCreated({ adminEmail, groupName, code, adminId, frontendUrl }) {
   const link = frontendUrl
-    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}`
+    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}&member=${adminId}`
     : null;
 
   return sendEmail({
@@ -79,9 +79,9 @@ async function notifyGroupCreated({ adminEmail, groupName, code, frontendUrl }) 
 
 // Correo de bienvenida para un miembro (no administrador) que se acaba
 // de unir a un grupo, con la info básica para encontrarlo después.
-async function notifyMemberJoined({ memberEmail, memberName, groupName, code, frontendUrl }) {
+async function notifyMemberJoined({ memberEmail, memberName, groupName, code, memberId, frontendUrl }) {
   const link = frontendUrl
-    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}`
+    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}&member=${memberId}`
     : null;
 
   return sendEmail({
@@ -91,7 +91,7 @@ async function notifyMemberJoined({ memberEmail, memberName, groupName, code, fr
       `Hola ${memberName}, te uniste al grupo "${groupName}" en Democracia por Promedio.`,
       ``,
       `Código del grupo: ${code}`,
-      link ? `Link directo: ${link}` : null,
+      link ? `Link directo (te lleva derecho a tu grupo, sin pedirte tus datos otra vez): ${link}` : null,
       ``,
       `Cuando el administrador te apruebe, vas a poder participar en las preguntas del grupo.`,
       `Cuando haya resultados, o si alguna pregunta necesita una ronda de desempate, te vamos a avisar aquí también.`,
@@ -104,14 +104,13 @@ async function notifyMemberJoined({ memberEmail, memberName, groupName, code, fr
 // Avisa a TODOS los miembros con correo registrado que una pregunta ya
 // tiene resultado final (o que necesita una ronda de desempate).
 async function notifyResultsToMembers({ group, questionText, summaryText, frontendUrl, subjectPrefix }) {
-  const link = frontendUrl
-    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${group.code}`
-    : null;
-
   const recipients = group.members.filter((m) => m.email);
   const results = await Promise.all(
-    recipients.map((m) =>
-      sendEmail({
+    recipients.map((m) => {
+      const link = frontendUrl
+        ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${group.code}&member=${m.id}`
+        : null;
+      return sendEmail({
         to: m.email,
         subject: `${subjectPrefix || "Resultado"}: "${questionText}"`,
         text: [
@@ -123,17 +122,17 @@ async function notifyResultsToMembers({ group, questionText, summaryText, fronte
         ]
           .filter(Boolean)
           .join("\n"),
-      })
-    )
+      });
+    })
   );
   return results;
 }
 
 // Correo especial para quien propuso el proyecto ganador en una
 // categoría del presupuesto.
-async function notifyProposalWinner({ memberEmail, memberName, groupName, category, proposalName, code, frontendUrl }) {
+async function notifyProposalWinner({ memberEmail, memberName, groupName, category, proposalName, code, memberId, frontendUrl }) {
   const link = frontendUrl
-    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}`
+    ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}&member=${memberId}`
     : null;
 
   return sendEmail({

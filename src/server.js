@@ -55,6 +55,7 @@ app.post("/api/groups", async (req, res) => {
     adminEmail,
     groupName: name,
     code,
+    adminId,
     frontendUrl: process.env.FRONTEND_URL,
   }).catch((err) => console.error("Error de correo (bienvenida):", err.message));
 });
@@ -111,6 +112,7 @@ app.post("/api/groups/:code/join", async (req, res) => {
       memberName: name,
       groupName: group.name,
       code: group.code,
+      memberId,
       frontendUrl: process.env.FRONTEND_URL,
     }).catch((err) => console.error("Error de correo (bienvenida miembro):", err.message));
   }
@@ -1169,6 +1171,7 @@ app.post("/api/groups/:code/flows/:flowId/close-voting", async (req, res) => {
       category,
       proposalName: proposal.name,
       code: group.code,
+      memberId: proposal.memberId,
       frontendUrl: process.env.FRONTEND_URL,
     }).catch((err) => console.error("Error de correo (ganador):", err.message));
   });
