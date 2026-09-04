@@ -27,17 +27,32 @@ app.use(express.json());
 // petición colgada para siempre, responde con un error 500 claro. Esto
 // se hace una sola vez aquí, así que ninguno de los endpoints de abajo
 // necesita cambiar — todos quedan protegidos automáticamente.
+//
+// Ojo: app.get también se usa por dentro de Express para LEER
+// configuración (ej. app.get('env')), llamándolo con UN SOLO
+// argumento — hay que reenviar exactamente esa misma cantidad de
+// argumentos tal cual, sin agregar un segundo argumento aunque sea
+// "undefined" (Express sí distingue un argumento de dos, y agregar uno
+// de más rompe esas llamadas internas).
 ["get", "post", "put", "delete", "patch"].forEach((method) => {
   const original = app[method].bind(app);
-  app[method] = (path, handler) => {
-    return original(path, (req, res, next) => {
-      Promise.resolve(handler(req, res, next)).catch((err) => {
-        console.error(`Error en ${req.method} ${req.originalUrl}:`, err);
-        if (!res.headersSent) {
-          res.status(500).json({ error: err.message || "Error del servidor, intenta de nuevo." });
-        }
-      });
-    });
+  app[method] = function (...args) {
+    const [path, handler, ...rest] = args;
+    if (args.length < 2 || typeof handler !== "function") {
+      return original.apply(app, args);
+    }
+    return original(
+      path,
+      (req, res, next) => {
+        Promise.resolve(handler(req, res, next)).catch((err) => {
+          console.error(`Error en ${req.method} ${req.originalUrl}:`, err);
+          if (!res.headersSent) {
+            res.status(500).json({ error: err.message || "Error del servidor, intenta de nuevo." });
+          }
+        });
+      },
+      ...rest
+    );
   };
 });
 
