@@ -2061,7 +2061,6 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
   const [links, setLinks] = useState([""]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [closingPhase, setClosingPhase] = useState(false);
   const [votedHere, setVotedHere] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({});
@@ -2118,24 +2117,6 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
     }
   };
 
-  const closeThisCategory = async () => {
-    const ok = window.confirm(`¿Cerrar la recepción de propuestas de "${category}"? Nadie más podrá mandar o editar propuestas de esta categoría después de esto.`);
-    if (!ok) return;
-    setClosingPhase(true);
-    try {
-      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flowId}/close-collecting`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, category }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al cerrar");
-      await onAdvance();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setClosingPhase(false);
-    }
   };
 
   const vote = async (proposalId) => {
@@ -2304,17 +2285,6 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
           </div>
 
           {error && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{error}</div>}
-
-          {isAdmin && (
-            <button
-              onClick={closeThisCategory}
-              disabled={closingPhase}
-              className="dp-body w-full text-xs py-1.5 rounded-full text-white font-medium disabled:opacity-40"
-              style={{ background: BLUE }}
-            >
-              🔒 {closingPhase ? "Cerrando…" : `Cerrar recepción de "${category}"`}
-            </button>
-          )}
         </div>
       )}
 
@@ -2373,15 +2343,39 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
 function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdvance }) {
   const lic = flow.licitacion;
   const categoryNames = Object.keys(lic.categories);
+  const [closingCollecting, setClosingCollecting] = useState(false);
+  const [collectingError, setCollectingError] = useState("");
   const [closingVoting, setClosingVoting] = useState(false);
   const [votingError, setVotingError] = useState("");
   const [reopening, setReopening] = useState(false);
   const [reopenError, setReopenError] = useState("");
 
+  const anyCollecting = categoryNames.some((c) => lic.categories[c].status === "collecting");
   const anyVoting = categoryNames.some((c) => lic.categories[c].status === "voting");
   const anyActive = categoryNames.some((c) => ["collecting", "voting"].includes(lic.categories[c].status));
   const anyReopenableEmpty = !anyActive && categoryNames.some((c) => lic.categories[c].status === "empty");
   const allDone = categoryNames.every((c) => ["resolved", "empty_closed", "tie_final"].includes(lic.categories[c].status));
+
+  const closeCollecting = async () => {
+    const ok = window.confirm("¿Cerrar la recepción de propuestas de todas las categorías? Nadie más podrá mandar o editar propuestas después de esto, y se revelan todas juntas.");
+    if (!ok) return;
+    setClosingCollecting(true);
+    setCollectingError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-collecting`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al cerrar");
+      await onAdvance();
+    } catch (e) {
+      setCollectingError(e.message);
+    } finally {
+      setClosingCollecting(false);
+    }
+  };
 
   const closeVoting = async () => {
     const ok = window.confirm("¿Cerrar la votación de las categorías listas? Se calculan los resultados y nadie más podrá votar en ellas.");
@@ -2448,8 +2442,20 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
         />
       ))}
 
+      {collectingError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{collectingError}</div>}
       {votingError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{votingError}</div>}
       {reopenError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{reopenError}</div>}
+
+      {isAdmin && anyCollecting && (
+        <button
+          onClick={closeCollecting}
+          disabled={closingCollecting}
+          className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
+          style={{ background: BLUE }}
+        >
+          🔒 {closingCollecting ? "Cerrando…" : "Cerrar recepción de propuestas y pasar a votación"}
+        </button>
+      )}
 
       {isAdmin && anyVoting && (
         <button
