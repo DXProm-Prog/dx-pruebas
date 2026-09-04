@@ -21,6 +21,26 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Envuelve automáticamente CADA ruta que se registre de aquí en
+// adelante (get/post/put/delete/patch): si el endpoint lanza un error
+// (por ejemplo, una consulta a Supabase que falla), en vez de dejar la
+// petición colgada para siempre, responde con un error 500 claro. Esto
+// se hace una sola vez aquí, así que ninguno de los endpoints de abajo
+// necesita cambiar — todos quedan protegidos automáticamente.
+["get", "post", "put", "delete", "patch"].forEach((method) => {
+  const original = app[method].bind(app);
+  app[method] = (path, handler) => {
+    return original(path, (req, res, next) => {
+      Promise.resolve(handler(req, res, next)).catch((err) => {
+        console.error(`Error en ${req.method} ${req.originalUrl}:`, err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: err.message || "Error del servidor, intenta de nuevo." });
+        }
+      });
+    });
+  };
+});
+
 // ---------- Grupos ----------
 
 app.post("/api/groups", async (req, res) => {
