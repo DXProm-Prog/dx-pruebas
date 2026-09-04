@@ -219,6 +219,16 @@ async function getGroupsForUser(userId) {
     }));
 }
 
+// Antes de vincular un miembro a una cuenta (user_id), hay que
+// asegurarse de que exista su fila en "profiles" — Supabase ya crea
+// la cuenta en auth.users al iniciar sesión, pero nuestra tabla
+// "profiles" (con el nombre) hay que llenarla nosotros la primera vez.
+async function ensureProfile(userId, name) {
+  if (!userId) return;
+  const { error } = await supabase.from("profiles").upsert({ id: userId, name: name || "Sin nombre" }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) throw new Error(`Supabase (crear perfil): ${error.message}`);
+}
+
 // ---------- Compatibilidad con el resto del código ----------
 //
 // Todo el código existente llama a load(code) / save(db), donde "db"
@@ -245,4 +255,4 @@ function generateId() {
   return crypto.randomUUID();
 }
 
-module.exports = { load, save, generateCode, generateId, getGroupsForUser };
+module.exports = { load, save, generateCode, generateId, getGroupsForUser, ensureProfile };

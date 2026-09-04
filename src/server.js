@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-const { load, save, generateCode, generateId, getGroupsForUser } = require("./store");
+const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
@@ -32,6 +32,8 @@ app.post("/api/groups", async (req, res) => {
   const db = await load(req.params.code);
   const code = generateCode();
   const adminId = generateId();
+
+  if (userId) await ensureProfile(userId, adminName);
 
   db.groups[code] = {
     code,
@@ -93,6 +95,7 @@ app.post("/api/groups/:code/join", async (req, res) => {
 
   const memberId = generateId();
   const autoApprove = group.requireApproval === false;
+  if (userId) await ensureProfile(userId, name);
   group.members.push({ id: memberId, name, email: email || null, approved: autoApprove, userId: userId || null });
   await save(db);
 
