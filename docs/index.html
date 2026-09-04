@@ -23,9 +23,15 @@
   // Llaves públicas de Supabase — seguras de tener aquí, a la vista:
   // la protección real vive en las reglas de seguridad de las tablas
   // (RLS), no en mantener esto en secreto.
+  //
+  // flowType: "implicit" — el link mágico funciona sin importar en qué
+  // navegador o dispositivo se abra (el modo nuevo, "pkce", exige que
+  // sea el mismo navegador donde se pidió el link, lo cual no nos
+  // conviene para una app comunitaria como esta).
   const supabaseClient = supabase.createClient(
     "https://jhdjsusqphzmbibadull.supabase.co",
-    "sb_publishable_c0DChmkM6ap9Gd997gHZZA_ALDoEq3x"
+    "sb_publishable_c0DChmkM6ap9Gd997gHZZA_ALDoEq3x",
+    { auth: { flowType: "implicit", detectSessionInUrl: true } }
   );
 </script>
 <script type="text/babel">
