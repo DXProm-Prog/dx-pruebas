@@ -93,6 +93,10 @@ app.post("/api/groups/:code/join", async (req, res) => {
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
 
+  if (userId && group.members.some((m) => m.userId === userId)) {
+    return res.status(409).json({ error: "Tu cuenta ya es miembro de este grupo." });
+  }
+
   const memberId = generateId();
   const autoApprove = group.requireApproval === false;
   if (userId) await ensureProfile(userId, name);
