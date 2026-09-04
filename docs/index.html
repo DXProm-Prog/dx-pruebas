@@ -2062,6 +2062,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [votedHere, setVotedHere] = useState(false);
+  const [votedProposalId, setVotedProposalId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({});
 
@@ -2129,6 +2130,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al votar");
       setVotedHere(true);
+      setVotedProposalId(proposalId);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -2288,26 +2290,46 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
 
       {state.status === "voting" && (
         <div>
-          {proposals.map((p) => (
-            <div key={p.id} className="rounded-lg p-2.5 mb-1.5" style={{ background: BLUE_SOFT }}>
-              <button
-                onClick={() => vote(p.id)}
-                disabled={votedHere || sending}
-                className="dp-body text-left text-sm font-medium w-full disabled:opacity-70"
-                style={{ color: INK }}
+          {proposals.map((p) => {
+            const isThisVoted = votedProposalId === p.id;
+            return (
+              <div
+                key={p.id}
+                className="rounded-lg p-3 mb-2"
+                style={isThisVoted ? { background: GREEN + "15", border: `1.5px solid ${GREEN}55` } : { background: BLUE_SOFT }}
               >
-                {votedHere ? "○" : "🗳️"} {p.name} <span className="dp-body text-[11px] font-normal" style={{ color: INK + "77" }}>— {p.memberName}</span>
-              </button>
-              <div className="dp-mono text-[11px] mt-0.5" style={{ color: INK + "88" }}>
-                {p.costType === "mensual" ? `${formatMoney(p.costAmount)}/mes` : `${formatMoney(p.costAmount)} total${p.monthsNeeded ? ` (~${p.monthsNeeded} meses)` : ""}`}
+                <div className="dp-body text-sm font-semibold" style={{ color: INK }}>{p.name}</div>
+                <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>propuesto por {p.memberName}</div>
+                <div className="dp-mono text-[11px] mt-0.5" style={{ color: INK + "88" }}>
+                  {p.costType === "mensual" ? `${formatMoney(p.costAmount)}/mes` : `${formatMoney(p.costAmount)} total${p.monthsNeeded ? ` (~${p.monthsNeeded} meses)` : ""}`}
+                </div>
+                {p.description && <div className="dp-body text-[11px] mt-1" style={{ color: INK + "99" }}>{p.description}</div>}
+                {p.links.length > 0 && p.links.map((l, i) => (
+                  <a key={i} href={l} target="_blank" rel="noreferrer" className="dp-body text-[11px] block underline mt-0.5" style={{ color: BLUE }}>{l}</a>
+                ))}
+
+                {isThisVoted ? (
+                  <div className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full font-semibold mt-2.5" style={{ background: GREEN, color: "#fff" }}>
+                    <i className="ti ti-circle-check"></i> Tu voto
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => vote(p.id)}
+                    disabled={votedHere || sending}
+                    className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-semibold disabled:opacity-40 mt-2.5"
+                    style={{ background: BLUE }}
+                  >
+                    <i className="ti ti-thumb-up"></i> Votar por esta propuesta
+                  </button>
+                )}
               </div>
-              {p.description && <div className="dp-body text-[11px] mt-1" style={{ color: INK + "99" }}>{p.description}</div>}
-              {p.links.length > 0 && p.links.map((l, i) => (
-                <a key={i} href={l} target="_blank" rel="noreferrer" className="dp-body text-[11px] block underline" style={{ color: BLUE }}>{l}</a>
-              ))}
+            );
+          })}
+          {votedHere && (
+            <div className="dp-body flex items-center gap-1.5 text-[11px]" style={{ color: GREEN }}>
+              <i className="ti ti-check"></i> Ya votaste en esta categoría
             </div>
-          ))}
-          {votedHere && <div className="dp-body text-[11px]" style={{ color: GREEN }}>✅ Ya votaste en esta categoría</div>}
+          )}
           {error && <div className="dp-body text-[11px]" style={{ color: CORAL }}>{error}</div>}
         </div>
       )}
