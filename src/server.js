@@ -10,6 +10,13 @@ const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResu
 const { computeStageResult } = require("./flowEngine");
 const { TEMPLATES } = require("./templates");
 
+// Si una sola consulta a la base de datos falla (ej. un problema pasajero
+// de red o de configuración), que se quede solo en ESA petición y no
+// tumbe el servidor entero para todos los demás grupos y usuarios.
+process.on("unhandledRejection", (err) => {
+  console.error("Error no manejado (el servidor sigue corriendo):", err);
+});
+
 const app = express();
 app.use(cors());
 app.use(express.json());
