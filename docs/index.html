@@ -905,7 +905,7 @@ function CustomEntryScreen({ onBack, onChooseCreate, onChooseAdminReturn, onChoo
   );
 }
 
-function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefillEmail }) {
+function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefillEmail, userId }) {
   const [name, setName] = useState("");
   const [adminName, setAdminName] = useState(prefillName || "");
   const [adminEmail, setAdminEmail] = useState(prefillEmail || "");
@@ -922,7 +922,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
       const res = await fetch(`${backendUrl}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, adminName, adminEmail, requireApproval, secretResponses }),
+        body: JSON.stringify({ name, adminName, adminEmail, requireApproval, secretResponses, userId: userId || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo crear el grupo");
@@ -1031,7 +1031,7 @@ function GroupCreatedScreen({ groupName, code, onContinue }) {
   );
 }
 
-function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillName, prefillEmail }) {
+function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillName, prefillEmail, userId }) {
   const [code, setCode] = useState(initialCode || "");
   const [name, setName] = useState(prefillName || "");
   const [email, setEmail] = useState(prefillEmail || "");
@@ -1056,7 +1056,7 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
       const res = await fetch(`${backendUrl}/api/groups/${code.trim()}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email }),
+        body: JSON.stringify({ name, email, userId: userId || null }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo unir al grupo");
@@ -3084,6 +3084,71 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   );
 }
 
+function MyGroupsScreen({ backendUrl, userId, onBack, onEnterGroup, onGoJoin, onGoCreate }) {
+  const [groups, setGroups] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch(`${backendUrl}/api/my-groups?userId=${userId}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("No se pudieron cargar tus grupos"))))
+      .then((data) => setGroups(data.groups))
+      .catch((e) => setError(e.message));
+  }, [userId]);
+
+  return (
+    <div className="px-4 py-6">
+      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+
+      {error && <div className="dp-body text-[12px] mb-3" style={{ color: CORAL }}>{error}</div>}
+
+      {groups === null && !error && (
+        <div className="dp-body text-xs text-center py-6" style={{ color: INK + "77" }}>Cargando tus grupos…</div>
+      )}
+
+      {groups && groups.length === 0 && (
+        <div className="dp-body text-xs text-center py-6" style={{ color: INK + "77" }}>
+          Todavía no perteneces a ningún grupo con esta cuenta.
+        </div>
+      )}
+
+      {groups && groups.map((g) => (
+        <button
+          key={g.code}
+          onClick={() => onEnterGroup(g)}
+          className="dp-body w-full text-left rounded-2xl p-3.5 mb-2 flex items-center justify-between"
+          style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}
+        >
+          <div>
+            <div className="text-sm font-semibold" style={{ color: INK }}>{g.name}</div>
+            <div className="dp-mono text-[10px] mt-0.5" style={{ color: INK + "77" }}>{g.code}</div>
+          </div>
+          <span
+            className="dp-body text-[9px] font-semibold px-2 py-1 rounded-full"
+            style={g.isAdmin ? { background: GREEN + "22", color: GREEN } : { background: BLUE_SOFT, color: BLUE }}
+          >
+            {g.isAdmin ? "ADMINISTRAS" : "PARTICIPAS"}
+          </span>
+        </button>
+      ))}
+
+      <button
+        onClick={onGoJoin}
+        className="dp-body w-full text-left rounded-2xl p-3.5 mb-2 mt-2"
+        style={{ background: "none", border: `1.5px dashed ${BLUE}55`, color: BLUE }}
+      >
+        <i className="ti ti-door-enter" style={{ marginRight: "6px" }}></i>Unirme a otro grupo con un código
+      </button>
+      <button
+        onClick={onGoCreate}
+        className="dp-body w-full text-left rounded-2xl p-3.5"
+        style={{ background: "none", border: `1.5px dashed ${BLUE}55`, color: BLUE }}
+      >
+        <i className="ti ti-plus" style={{ marginRight: "6px" }}></i>Crear un grupo nuevo
+      </button>
+    </div>
+  );
+}
+
 function LoginScreen({ onBack }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -3157,7 +3222,7 @@ function LoginScreen({ onBack }) {
 function DemocraciaPorPromedioConectada() {
   const [backendUrl, setBackendUrl] = useState("https://democracia-por-promedio.onrender.com");
   const [showSettings, setShowSettings] = useState(false);
-  const [view, setView] = useState("home"); // home | login | custom | explain | create | groupCreated | adminReturn | join | connected
+  const [view, setView] = useState("home"); // home | login | myGroups | custom | explain | create | groupCreated | adminReturn | join | connected
   const [groupCode, setGroupCode] = useState("");
   const [memberId, setMemberId] = useState("");
   const [createdGroupName, setCreatedGroupName] = useState("");
@@ -3234,9 +3299,9 @@ function DemocraciaPorPromedioConectada() {
             </div>
             {view === "home" && (
               session ? (
-                <div className="dp-body text-[10px] font-medium" style={{ color: INK + "88" }}>
+                <button onClick={() => setView("myGroups")} className="dp-body text-[10px] font-medium" style={{ color: INK + "88" }}>
                   <i className="ti ti-user-circle" style={{ marginRight: "3px" }}></i>{session.user.email}
-                </div>
+                </button>
               ) : (
                 <button onClick={() => setView("login")} className="dp-body text-[10px] font-semibold" style={{ color: BLUE }}>
                   <i className="ti ti-login" style={{ marginRight: "3px" }}></i>Iniciar sesión
@@ -3256,6 +3321,29 @@ function DemocraciaPorPromedioConectada() {
         </div>
 
         {view === "login" && <LoginScreen onBack={() => setView("home")} />}
+
+        {view === "myGroups" && session && (
+          <MyGroupsScreen
+            backendUrl={backendUrl}
+            userId={session.user.id}
+            onBack={() => setView("home")}
+            onEnterGroup={(g) => {
+              setGroupCode(g.code);
+              setMemberId(g.memberId);
+              persistSession(g.code, g.memberId);
+              setView("connected");
+            }}
+            onGoJoin={() => {
+              setSelectedOption("custom");
+              setView("join");
+            }}
+            onGoCreate={() => {
+              setSelectedOption("custom");
+              setEntryPurpose(null);
+              setView("create");
+            }}
+          />
+        )}
 
         {view === "home" && (
           <HomeScreen
@@ -3310,6 +3398,7 @@ function DemocraciaPorPromedioConectada() {
             onBack={() => setView("custom")}
             prefillName={sessionName}
             prefillEmail={sessionEmail}
+            userId={session ? session.user.id : null}
             onCreated={async ({ code, memberId, groupName }) => {
               setGroupCode(code);
               setMemberId(memberId);
@@ -3358,6 +3447,7 @@ function DemocraciaPorPromedioConectada() {
             onBack={() => setView("custom")}
             prefillName={sessionName}
             prefillEmail={sessionEmail}
+            userId={session ? session.user.id : null}
             onJoined={({ code, memberId }) => {
               setGroupCode(code);
               setMemberId(memberId);
