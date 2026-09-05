@@ -833,7 +833,7 @@ function AdminReturnScreen({ backendUrl, onBack, onEntered }) {
           <Field label="Código del grupo" value={code} onChange={setCode} placeholder="ej. MC231G" />
         </div>
         <PrimaryButton onClick={submit} disabled={loading || !code}>
-          {loading ? "Entrando…" : "Entrar como administrador"}
+          {loading ? "Entrando…" : "Entrar como facilitador"}
         </PrimaryButton>
         {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
       </div>
@@ -942,7 +942,7 @@ function OnbMayoriaTypes() {
   const tipos = [
     { t: "Mayoría simple", d: "gana quien tenga más votos, sin importar el %." },
     { t: "Mayoría absoluta", d: "la ganadora necesita más del 50% de los votos." },
-    { t: "Mayoría calificada", d: "el administrador elige el % mínimo de votos que necesita una propuesta para aprobarse (por ejemplo, 66%)." },
+    { t: "Mayoría calificada", d: "el facilitador elige el % mínimo de votos que necesita una propuesta para aprobarse (por ejemplo, 66%)." },
     { t: "Voto rankeado", d: "ordenas las opciones de favorita a menos favorita. Si la más elegida en primer lugar no llega a más del 50%, se elimina la de menos apoyo y esos votos pasan a la segunda preferencia de quienes la eligieron." },
     { t: "Segunda vuelta", d: "todos votan una vez. Si nadie llega a más del 50%, se abre otra ronda solo entre las más votadas." },
   ];
@@ -1062,7 +1062,7 @@ const ONBOARDING_SLIDES = [
   {
     icon: "ti-calculator",
     title: "Democracia por Promedio",
-    text: "Se presenta una pregunta a los miembros del grupo. Todos proponen una cantidad, y las propuestas de todos se promedian para obtener la decisión grupal.\n\nPara evitar abusos, el administrador puede pedir que se eliminen los extremos más altos y más bajos.",
+    text: "Se presenta una pregunta a los miembros del grupo. Todos proponen una cantidad, y las propuestas de todos se promedian para obtener la decisión grupal.\n\nPara evitar abusos, el facilitador puede pedir que se eliminen los extremos más altos y más bajos.",
     example: () => (
       <OnbProposalExample
         question="Pregunta: ¿cuánto debería ser la cuota mensual?"
@@ -1276,7 +1276,7 @@ function CustomEntryScreen({ onBack, onChooseCreate, onChooseAdminReturn, onChoo
       >
         <div className="text-sm font-semibold mb-1" style={{ color: INK }}>➕ Crear un grupo nuevo</div>
         <div className="text-xs" style={{ color: INK + "88" }}>
-          Serás el administrador. Podrás agregar preguntas y aprobar a quienes se unan.
+          Serás el facilitador. Podrás agregar preguntas y aprobar a quienes se unan.
         </div>
       </button>
       <button
@@ -1343,7 +1343,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
         <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>Crear un grupo nuevo</div>
         <div className="flex flex-col gap-2.5 mb-3">
           <Field label="Nombre del grupo" value={name} onChange={setName} placeholder="ej. Condominio Las Flores" />
-          <Field label="Tu nombre (administrador)" value={adminName} onChange={setAdminName} placeholder="ej. Bernardo" />
+          <Field label="Tu nombre (facilitador)" value={adminName} onChange={setAdminName} placeholder="ej. Bernardo" />
           <Field label="Tu correo (para avisarte de solicitudes nuevas)" value={adminEmail} onChange={setAdminEmail} placeholder="ej. bernardo@correo.com" type="email" />
         </div>
 
@@ -2242,7 +2242,7 @@ function StageResultView({ stage }) {
 
   if (stage.type === "conteo_miembros") {
     if (r.skipped) {
-      return <div className="dp-body text-xs" style={{ color: INK + "77" }}>El administrador omitió este paso.</div>;
+      return <div className="dp-body text-xs" style={{ color: INK + "77" }}>El facilitador omitió este paso.</div>;
     }
     return (
       <div className="dp-mono text-xs" style={{ color: INK + "99" }}>
@@ -2755,7 +2755,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
 
       {(state.status === "empty" || state.status === "empty_closed") && (
         <div className="dp-body text-[12px] p-2 rounded-lg" style={{ background: INK + "0d", color: INK + "77" }}>
-          {state.status === "empty" ? "Sin propuestas por ahora — el administrador puede reabrirla cuando terminen las demás categorías." : `Sin propuestas después de ${state.round} intento(s).`}
+          {state.status === "empty" ? "Sin propuestas por ahora — el facilitador puede reabrirla cuando terminen las demás categorías." : `Sin propuestas después de ${state.round} intento(s).`}
         </div>
       )}
     </div>
@@ -3223,7 +3223,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             );
           })() : (
             <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>
-              ⏳ El administrador está indicando el número de miembros…
+              ⏳ El facilitador está indicando el número de miembros…
             </div>
           )}
         </div>
@@ -3426,11 +3426,11 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
         </div>
         <div className="dp-body text-[11px] mt-2" style={{ color: INK + "88" }}>
           {group.members.filter((m) => m.approved).length} miembro(s) aprobado(s)
-          {isAdmin && " · eres el administrador"}
+          {isAdmin && " · eres el facilitador"}
         </div>
         {me && !me.approved && (
           <div className="dp-body text-[12px] mt-2 rounded-lg px-2.5 py-1.5" style={{ background: CORAL + "22", color: CORAL }}>
-            Tu participación está pendiente de aprobación del administrador.
+            Tu participación está pendiente de aprobación del facilitador.
           </div>
         )}
         <div className="flex gap-2 mt-2.5">
