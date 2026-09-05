@@ -1254,5 +1254,5 @@ app.get("/api/groups/:code/export/resultados.csv", async (req, res) => {
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`Servidor de Democracia por Promedio escuchando en http://localhost:${PORT}`);
+  console.log(`Servidor de Organicen y decidan escuchando en http://localhost:${PORT}`);
 });

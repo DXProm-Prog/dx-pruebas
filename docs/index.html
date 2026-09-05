@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8" />
-<title>Democracia por Promedio</title>
+<title>Organicen y decidan</title>
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -704,60 +704,7 @@ function ExplanationScreen({ onBack }) {
   return (
     <div className="px-4 py-6">
       <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
-      <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>¿Qué es la democracia por promedio?</div>
-        <p className="dp-body text-[13px] leading-relaxed" style={{ color: INK + "aa" }}>
-          Es una forma de tomar decisiones en grupo usando números en vez de
-          votos de sí/no. Cada persona propone una cantidad (una cuota, un
-          porcentaje, un presupuesto), y la decisión final es el promedio de
-          todas las propuestas — pero antes de promediar, se descartan las
-          propuestas más extremas para que nadie pueda manipular el
-          resultado con un número absurdo.
-        </p>
-      </div>
-
-      <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>Ejemplo</div>
-        <p className="dp-body text-[13px] leading-relaxed mb-2" style={{ color: INK + "aa" }}>
-          6 vecinos proponen una cuota mensual: $750, $800, $820, $900, $950
-          y $3,000 (este último parece un error o un intento de manipular).
-        </p>
-        <p className="dp-body text-[13px] leading-relaxed mb-2" style={{ color: INK + "aa" }}>
-          Con 6 participantes, la app recorta automáticamente al menos la
-          propuesta más alta y la más baja antes de promediar. El resultado
-          usa solo $800, $820, $900 y $950 → una decisión de <b>$867.50</b>,
-          sin que el $3,000 la distorsione.
-        </p>
-      </div>
-
-      <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>Ejemplos de las reglas de mayoría</div>
-        <p className="dp-body text-[13px] leading-relaxed mb-3" style={{ color: INK + "aa" }}>
-          Todas parten de lo mismo: cada quien elige una opción (o las ordena, en voto ranqueado). Lo que cambia es cómo se decide quién gana. Con 10 votos repartidos así: <b>A: 5, B: 3, C: 2</b> —
-        </p>
-        <div className="dp-body text-[13px] leading-relaxed space-y-2.5" style={{ color: INK + "aa" }}>
-          <div><b style={{ color: INK }}>Simple:</b> gana A con 5 votos, aunque no llegue a la mitad.</div>
-          <div><b style={{ color: INK }}>Absoluta:</b> A tiene exactamente el 50%, no más — nadie gana todavía, hay que repetir la votación.</div>
-          <div><b style={{ color: INK }}>Calificada (ej. +66%):</b> ni A con 50% se acerca — sin ganador, se repite.</div>
-          <div>
-            <b style={{ color: INK }}>Voto ranqueado:</b> si nadie llega al 50%, se elimina la opción C (la menos votada) y sus 2 votos se reparten según la <i>segunda</i> preferencia de esas 2 personas — si los 2 eligieron A como su segunda opción, A sube a 7 de 10 y gana.
-          </div>
-          <div>
-            <b style={{ color: INK }}>Segunda vuelta electoral:</b> se elimina a quien esté por debajo del % mínimo que definas (ej. menos del 15%) — aquí C con 20% sobrevive la primera ronda, pero si en otra pregunta alguien tuviera solo 1 voto (10%), quedaría fuera antes de la siguiente ronda.
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-semibold mb-2" style={{ color: INK }}>Cómo funciona la app</div>
-        <ul className="dp-body text-[13px] leading-relaxed space-y-1.5 list-disc list-outside pl-4" style={{ color: INK + "aa" }}>
-          <li>Un administrador crea un grupo y comparte el código con los demás.</li>
-          <li>Cada persona se une con ese código y espera la aprobación del administrador.</li>
-          <li>El administrador agrega preguntas y define el % de recorte.</li>
-          <li>Cada miembro aprobado envía su propuesta numérica.</li>
-          <li>La app calcula y muestra la decisión colectiva, con la fórmula visible.</li>
-        </ul>
-      </div>
+      <OnboardingCarousel slides={ONBOARDING_SLIDES} onClose={onBack} overlay={false} />
     </div>
   );
 }
@@ -828,7 +775,7 @@ function ShareGroup({ groupName, code }) {
   };
 
   const mailtoHref =
-    `mailto:?subject=${encodeURIComponent(`Invitación a "${groupName}" en Democracia por Promedio`)}` +
+    `mailto:?subject=${encodeURIComponent(`Invitación a "${groupName}" en Organicen y decidan`)}` +
     `&body=${encodeURIComponent(`Únete a nuestro grupo con este código: ${code}\n\nO abre este link directo:\n${link}`)}`;
 
   return (
@@ -855,6 +802,294 @@ function ShareGroup({ groupName, code }) {
     </div>
   );
 }
+
+// ==================== Bienvenida / Explicación ====================
+// Contenido reutilizado en 3 lugares: la tarjeta de bienvenida (primera
+// vez), la pantalla de "Explicación y ejemplos" (siempre disponible), y
+// la versión corta específica de cada proceso al unirse a un grupo.
+
+function OnbIcon({ name }) {
+  return (
+    <div style={{ width: "34px", height: "34px", borderRadius: "10px", background: BLUE_SOFT, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <i className={`ti ${name}`} style={{ fontSize: "18px", color: BLUE }}></i>
+    </div>
+  );
+}
+
+function OnbChipsRow({ items }) {
+  return (
+    <div className="flex gap-2">
+      {items.map((it, i) => (
+        <div key={i} className="flex-1 text-center rounded-lg py-2 px-1" style={{ background: BLUE_SOFT }}>
+          <i className={`ti ${it.icon}`} style={{ fontSize: "16px", color: BLUE, display: "block", marginBottom: "3px" }}></i>
+          <span className="dp-body text-[9px] font-semibold" style={{ color: INK }}>{it.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OnbProposalExample({ question, people, calc, result, closing }) {
+  return (
+    <div className="rounded-lg p-2.5" style={{ background: PAGE_BG }}>
+      <div className="dp-body text-[10px] font-semibold mb-1.5" style={{ color: INK + "99" }}>{question}</div>
+      {people.map((p, i) => (
+        <div key={i} className="flex items-center gap-1.5 py-0.5" style={p.trimmed ? { opacity: 0.4 } : {}}>
+          <div className="rounded-full flex items-center justify-center" style={{ width: "18px", height: "18px", background: BLUE_SOFT, fontSize: "9px", fontWeight: 600, color: BLUE }}>{p.name[0]}</div>
+          <span className="dp-body text-[11px] flex-1" style={{ color: INK }}>{p.name} propone</span>
+          <span className="dp-mono text-[11px] font-semibold" style={{ color: INK, textDecoration: p.trimmed ? "line-through" : "none" }}>{p.amount}</span>
+        </div>
+      ))}
+      {people.some((p) => p.trimmed) && <div className="dp-body text-[9px] my-1" style={{ color: CORAL }}>✕ se recortan el más alto y el más bajo</div>}
+      <div className="dp-mono text-[11px] mt-1 pt-1.5" style={{ color: INK + "cc", borderTop: `1px dashed ${BLUE}33` }}>{calc}</div>
+      <div className="flex items-baseline justify-between mt-1.5">
+        <span className="dp-body text-[10px]" style={{ color: INK + "99" }}>Decisión colectiva</span>
+        <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result}</span>
+      </div>
+      {closing && <div className="dp-body text-[10px] mt-2 pt-1.5" style={{ color: INK + "88", borderTop: `1px solid ${BLUE}22` }}>{closing}</div>}
+    </div>
+  );
+}
+
+function OnbMayoriaTypes() {
+  const tipos = [
+    { t: "Mayoría simple", d: "gana quien tenga más votos, sin importar el %." },
+    { t: "Mayoría absoluta", d: "la ganadora necesita más del 50% de los votos." },
+    { t: "Mayoría calificada", d: "el administrador elige el % mínimo de votos que necesita una propuesta para aprobarse (por ejemplo, 66%)." },
+    { t: "Voto rankeado", d: "ordenas las opciones de favorita a menos favorita. Si la más elegida en primer lugar no llega a más del 50%, se elimina la de menos apoyo y esos votos pasan a la segunda preferencia de quienes la eligieron." },
+    { t: "Segunda vuelta", d: "todos votan una vez. Si nadie llega a más del 50%, se abre otra ronda solo entre las más votadas." },
+  ];
+  return (
+    <div className="rounded-lg p-2.5" style={{ background: PAGE_BG }}>
+      {tipos.map((x, i) => (
+        <div key={i} className={i > 0 ? "pt-1.5 mt-1.5" : ""} style={i > 0 ? { borderTop: `1px solid ${BLUE}22` } : {}}>
+          <div className="dp-body text-[11px] font-semibold" style={{ color: INK }}>{x.t}</div>
+          <div className="dp-body text-[10.5px] leading-snug" style={{ color: INK + "88" }}>{x.d}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OnbSorteoExample() {
+  return (
+    <div className="rounded-lg p-2.5" style={{ background: PAGE_BG }}>
+      <div className="dp-body text-[10px] font-semibold mb-1.5" style={{ color: INK + "99" }}>3 vecinos se ofrecen para representar al grupo en una reunión</div>
+      {["Ana", "Luis", "Sofía"].map((n) => (
+        <div key={n} className="flex items-center gap-1.5 py-0.5">
+          <div className="rounded-full flex items-center justify-center" style={{ width: "18px", height: "18px", background: BLUE_SOFT, fontSize: "9px", fontWeight: 600, color: BLUE }}>{n[0]}</div>
+          <span className="dp-body text-[11px]" style={{ color: INK }}>{n}</span>
+        </div>
+      ))}
+      <div className="dp-body text-[9px] my-1.5" style={{ color: INK + "77" }}>🎲 se elige al azar, con la misma probabilidad para cada quien</div>
+      <div className="flex items-baseline justify-between pt-1.5" style={{ borderTop: `1px dashed ${BLUE}33` }}>
+        <span className="dp-body text-[10px]" style={{ color: INK + "99" }}>Elegido por sorteo</span>
+        <span className="dp-display text-base font-bold" style={{ color: GREEN }}>Luis</span>
+      </div>
+    </div>
+  );
+}
+
+function OnbQuestionsList() {
+  const items = [
+    { icon: "ti-coin", text: "¿Cuánto cobramos de cuota o impuestos?" },
+    { icon: "ti-chart-pie", text: "¿En qué usamos el dinero?" },
+    { icon: "ti-user-shield", text: "¿Quién administra los recursos?" },
+  ];
+  return (
+    <div className="rounded-lg p-2.5" style={{ background: PAGE_BG }}>
+      {items.map((it, i) => (
+        <div key={i} className={`flex gap-2 items-start ${i > 0 ? "mt-2" : ""}`}>
+          <i className={`ti ${it.icon}`} style={{ fontSize: "15px", color: BLUE, marginTop: "1px" }}></i>
+          <span className="dp-body text-[11.5px] leading-snug" style={{ color: INK }}>{it.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function OnbPresupuestoTable() {
+  const cats = ["Filtro de agua", "Recolección de agua", "Iluminación", "Seguridad", "Mant. del jardín"];
+  const marta = [20, 15, 20, 30, 15];
+  const pedro = [10, 25, 10, 40, 15];
+  const totalBudget = 2000;
+  return (
+    <div className="rounded-lg p-2.5" style={{ background: PAGE_BG }}>
+      <table className="w-full" style={{ borderCollapse: "collapse", fontSize: "10px" }}>
+        <thead>
+          <tr style={{ color: INK + "99", fontWeight: 600 }}>
+            <td className="pb-1.5">Categoría</td>
+            <td className="pb-1.5 text-center">Martha<br />propone</td>
+            <td className="pb-1.5 text-center">Pedro<br />propone</td>
+            <td className="pb-1.5 text-center" style={{ color: GREEN }}>Promedio</td>
+          </tr>
+        </thead>
+        <tbody>
+          {cats.map((c, i) => {
+            const prom = Math.round((marta[i] + pedro[i]) / 2);
+            return (
+              <tr key={c} style={{ borderTop: `1px solid ${BLUE}22` }}>
+                <td className="py-1" style={{ color: INK }}>{c}</td>
+                <td className="py-1 text-center dp-mono" style={{ color: INK + "aa" }}>{marta[i]}%</td>
+                <td className="py-1 text-center dp-mono" style={{ color: INK + "aa" }}>{pedro[i]}%</td>
+                <td className="py-1 text-center dp-mono font-bold" style={{ color: GREEN }}>{prom}%</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <div className="dp-body text-[9.5px] mt-2 pt-1.5" style={{ color: INK + "88", borderTop: `1px dashed ${BLUE}33` }}>
+        Así se calcula cada renglón: Iluminación → (20% + 10%) ÷ 2 = <b style={{ color: GREEN }}>15%</b>
+      </div>
+      <div className="dp-body text-[9.5px] mt-1.5" style={{ color: INK + "88" }}>Con un presupuesto total de ${totalBudget}/mes, la decisión final por categoría queda así:</div>
+      <table className="w-full mt-1" style={{ borderCollapse: "collapse", fontSize: "10px" }}>
+        <tbody>
+          {cats.map((c, i) => {
+            const prom = Math.round((marta[i] + pedro[i]) / 2);
+            const dollars = Math.round((totalBudget * prom) / 100);
+            return (
+              <tr key={c}>
+                <td className="py-0.5" style={{ color: INK + "cc" }}>{c}</td>
+                <td className="py-0.5 text-right dp-mono font-semibold" style={{ color: INK }}>${dollars}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const ONBOARDING_SLIDES = [
+  {
+    icon: "ti-scale",
+    title: "¿Qué es la verdadera democracia?",
+    text: "Elegir representantes, o solo poder escoger entre las opciones que quienes ya tienen el poder nos presentan, no es lo mismo que decidir juntos. Esos procesos concentran el poder en pocas manos — y ahí es más fácil que se abuse de ese poder, o que se divida a la sociedad en bandos.\n\nPor eso creamos esta app: para que cualquier grupo tome decisiones de forma horizontal, sin entregarle el poder a una sola persona, y con total transparencia en cómo se llega a cada resultado.",
+  },
+  {
+    icon: "ti-scale",
+    title: "¿Cómo se decide sin darle mucho poder a alguien y sin dividir al grupo?",
+    text: "Existen formas de decidir que sí reparten el poder entre todos por igual. Aquí usamos tres:",
+    example: () => <OnbChipsRow items={[{ icon: "ti-calculator", label: "Promedio" }, { icon: "ti-thumb-up", label: "Mayoría" }, { icon: "ti-dice-5", label: "Sorteo" }]} />,
+  },
+  {
+    icon: "ti-calculator",
+    title: "Democracia por Promedio",
+    text: "Se presenta una pregunta a los miembros del grupo. Todos proponen una cantidad, y las propuestas de todos se promedian para obtener la decisión grupal.\n\nPara evitar abusos, el administrador puede pedir que se eliminen los extremos más altos y más bajos.",
+    example: () => (
+      <OnbProposalExample
+        question="Pregunta: ¿cuánto debería ser la cuota mensual?"
+        people={[{ name: "Ana", amount: "$50", trimmed: true }, { name: "Luis", amount: "$150", trimmed: false }, { name: "Sofía", amount: "$120", trimmed: false }, { name: "Karla", amount: "$500", trimmed: true }, { name: "Diego", amount: "$130", trimmed: false }]}
+        calc="(150 + 120 + 130) ÷ 3 = $133"
+        result="$133"
+      />
+    ),
+  },
+  {
+    icon: "ti-thumb-up",
+    title: "Elección por Mayoría",
+    text: "Cuando hay que elegir entre opciones (no números), cada quien vota, y hay distintas formas de definir quién gana:",
+    example: () => <OnbMayoriaTypes />,
+  },
+  {
+    icon: "ti-dice-5",
+    title: "Elección por Sorteo",
+    text: "En vez de votar, se elige al azar entre las opciones (o personas) que cumplen ciertos requisitos. Así nadie gana por tener más dinero, fama o presión social — todos parten con las mismas posibilidades.\n\nEs una práctica antigua: en la Atenas clásica, muchos cargos públicos se asignaban por sorteo, precisamente para que el poder no se concentrara en quienes tenían más recursos o influencia.",
+    example: () => <OnbSorteoExample />,
+  },
+  {
+    icon: "ti-puzzle",
+    title: "Combinando estos procesos",
+    text: "Promedio, mayoría y sorteo se pueden combinar para organizar decisiones complejas — en un grupo pequeño, como un condominio, o en una sociedad grande, como una ciudad o un país — sin entregarle demasiado poder a una sola persona ni a un grupo reducido.",
+  },
+  {
+    icon: "ti-help-circle",
+    title: "3 preguntas que todo grupo tiene que contestar",
+    text: "Sin importar el tamaño, los grupos y las sociedades suelen enfrentar las mismas preguntas:",
+    example: () => <OnbQuestionsList />,
+  },
+  {
+    icon: "ti-coin",
+    title: "Cuotas participativas",
+    text: "El grupo decide junto cuánto debe aportar cada quien, usando Democracia por Promedio:",
+    example: () => (
+      <OnbProposalExample
+        question="Pregunta: ¿cuánto debería ser la cuota mensual?"
+        people={[{ name: "Ana", amount: "$50", trimmed: true }, { name: "Luis", amount: "$150", trimmed: false }, { name: "Sofía", amount: "$120", trimmed: false }, { name: "Karla", amount: "$500", trimmed: true }, { name: "Diego", amount: "$130", trimmed: false }]}
+        calc="(150 + 120 + 130) ÷ 3 = $133"
+        result="$133"
+        closing="Este mismo proceso lo pueden usar los ciudadanos de una ciudad o un país para decidir sus impuestos."
+      />
+    ),
+  },
+  {
+    icon: "ti-chart-pie",
+    title: "Presupuesto participativo",
+    text: "Cualquier grupo con dinero disponible — ya sea de cuotas, impuestos, ingresos de un negocio o donativos — puede decidir juntos en qué gastarlo, con un presupuesto participativo.\n\nPrimero, cada quien propone categorías en las que le gustaría invertir el dinero. Una vez que todos pueden verlas, cada quien reparte el 100% del presupuesto entre ellas, según lo que le parezca más importante. Los porcentajes que cada persona asignó a cada categoría se promedian, y así se llega a la decisión grupal de cuánto gastar en cada una.",
+    example: () => <OnbPresupuestoTable />,
+  },
+  {
+    icon: "ti-building-community",
+    title: "Asociaciones, clubes y organizaciones",
+    text: 'Une dos procesos en uno: primero, el grupo decide las Cuotas participativas de cada quien; ese dinero recaudado se convierte automáticamente en el Presupuesto participativo a repartir entre categorías.\n\nDespués de decidir colectivamente en qué categorías se va a gastar el dinero, los miembros pueden proponer proyectos específicos que usen los recursos de cada categoría. Por ejemplo, si se decidió que el 30% del presupuesto —unos $2,000— se destinará a iluminación, los integrantes pueden proponer cómo usar ese dinero: alguien puede sugerir tiras de luces LED que cuestan $1,800, otra persona lámparas para las esquinas por $1,000, y así sucesivamente. Después, todos votan para elegir el proyecto ganador en cada categoría.',
+  },
+];
+
+// Índices dentro de ONBOARDING_SLIDES para las versiones cortas
+// específicas de cada plantilla (al unirse a un grupo por invitación).
+const ONBOARDING_GROUP_SLIDES = {
+  cuotas: [2, 7],
+  presupuesto: [2, 8],
+  asociaciones: [2, 7, 8, 9],
+};
+
+function OnboardingCarousel({ slides, onClose, overlay = true }) {
+  const [idx, setIdx] = useState(0);
+  const s = slides[idx];
+
+  const card = (
+    <div className="rounded-2xl p-4.5" style={{ background: overlay ? WARM_WHITE : "transparent", maxWidth: overlay ? "360px" : "none" }}>
+      {overlay && (
+        <div className="flex justify-between items-center mb-1.5">
+          <span className="dp-mono text-[10px]" style={{ color: INK + "66" }}>{idx + 1} / {slides.length}</span>
+          <button onClick={onClose} className="dp-body text-sm" style={{ color: INK + "88" }}>✕</button>
+        </div>
+      )}
+      <div className="mb-2.5"><OnbIcon name={s.icon} /></div>
+      <div className="dp-display text-base font-bold mb-1.5" style={{ color: INK }}>{s.title}</div>
+      <div className="dp-body text-[12.5px] mb-2.5 whitespace-pre-line" style={{ color: INK + "99", lineHeight: 1.55 }}>{s.text}</div>
+      {s.example && <div className="mb-2">{s.example()}</div>}
+      <div className="flex gap-1 justify-center flex-wrap my-3">
+        {slides.map((_, i) => (
+          <span key={i} style={{ width: "6px", height: "6px", borderRadius: "50%", background: i === idx ? BLUE : BLUE + "33" }} />
+        ))}
+      </div>
+      <div className="flex gap-2">
+        {idx > 0 && (
+          <button onClick={() => setIdx(idx - 1)} className="dp-body flex-1 text-xs py-2 rounded-full font-medium" style={{ background: "#fff", color: INK, border: `1.5px solid ${BLUE}55` }}>
+            Atrás
+          </button>
+        )}
+        <button
+          onClick={() => (idx < slides.length - 1 ? setIdx(idx + 1) : onClose())}
+          className="dp-body text-xs py-2 rounded-full text-white font-medium"
+          style={{ background: BLUE, flex: idx > 0 ? 2 : 1 }}
+        >
+          {idx === slides.length - 1 ? "Entendido" : "Siguiente"}
+        </button>
+      </div>
+    </div>
+  );
+
+  if (!overlay) return card;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center p-4" style={{ background: "rgba(20,33,61,0.55)", zIndex: 60 }}>
+      {card}
+    </div>
+  );
+}
+
 
 function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
   return (
@@ -1109,14 +1344,33 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [previewName, setPreviewName] = useState("");
+  const [showGroupWelcome, setShowGroupWelcome] = useState(false);
+  const [groupTemplate, setGroupTemplate] = useState(null);
 
   useEffect(() => {
     if (!initialCode) return;
     fetch(`${backendUrl}/api/groups/${initialCode}`)
       .then((res) => (res.ok ? res.json() : Promise.reject()))
-      .then((data) => setPreviewName(data.name))
+      .then((data) => {
+        setPreviewName(data.name);
+        const flows = data.flows || [];
+        const active = flows.find((f) => f.status === "active") || flows[flows.length - 1];
+        if (!active) return;
+        const template = active.chainNext === "presupuesto" || active.chainedFromFlowId ? "asociaciones" : active.template;
+        if (template && ONBOARDING_GROUP_SLIDES[template]) {
+          setGroupTemplate(template);
+          if (!localStorage.getItem(`org_onboarding_seen_${template}`)) {
+            setShowGroupWelcome(true);
+          }
+        }
+      })
       .catch(() => {});
   }, [initialCode]);
+
+  const closeGroupWelcome = () => {
+    if (groupTemplate) localStorage.setItem(`org_onboarding_seen_${groupTemplate}`, "true");
+    setShowGroupWelcome(false);
+  };
 
   const submit = async () => {
     if (!code || !name) return;
@@ -1164,6 +1418,14 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
         </PrimaryButton>
         {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
       </div>
+
+      {showGroupWelcome && groupTemplate && (
+        <OnboardingCarousel
+          slides={ONBOARDING_GROUP_SLIDES[groupTemplate].map((i) => ONBOARDING_SLIDES[i])}
+          onClose={closeGroupWelcome}
+          overlay={true}
+        />
+      )}
     </div>
   );
 }
@@ -3327,11 +3589,25 @@ function DemocraciaPorPromedioConectada() {
   const [selectedOption, setSelectedOption] = useState(null); // null | "explain" | "custom" | "cuotas" | "presupuesto" | "asociaciones"
   const [connectedGroupName, setConnectedGroupName] = useState("");
   const [session, setSession] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  const closeWelcome = () => {
+    localStorage.setItem("org_onboarding_seen", "true");
+    setShowWelcome(false);
+  };
 
   useEffect(() => {
-    supabaseClient.auth.getSession().then(({ data }) => setSession(data.session));
+    supabaseClient.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      // Solo se muestra la bienvenida si no hay sesión iniciada Y nunca
+      // se ha visto antes en este navegador.
+      if (!data.session && !localStorage.getItem("org_onboarding_seen")) {
+        setShowWelcome(true);
+      }
+    });
     const { data: listener } = supabaseClient.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+      if (newSession) setShowWelcome(false);
       if (event === "SIGNED_IN" && window.location.hash.includes("access_token")) {
         window.history.replaceState({}, "", window.location.pathname + window.location.search);
       }
@@ -3391,7 +3667,7 @@ function DemocraciaPorPromedioConectada() {
               className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full"
               style={{ background: BLUE_SOFT, color: INK + "aa" }}
             >
-              D×% · DEMOCRACIA POR PROMEDIO
+              ORGANICEN Y DECIDAN
             </div>
             {view === "home" && (
               session ? (
@@ -3588,6 +3864,8 @@ function DemocraciaPorPromedioConectada() {
           )}
         </div>
       </div>
+
+      {showWelcome && view === "home" && <OnboardingCarousel slides={ONBOARDING_SLIDES} onClose={closeWelcome} overlay={true} />}
     </div>
   );
 }

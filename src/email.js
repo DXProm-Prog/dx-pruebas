@@ -21,7 +21,7 @@ async function sendEmail({ to, subject, text }) {
       body: JSON.stringify({
         sender: {
           email: process.env.SENDER_EMAIL,
-          name: process.env.SENDER_NAME || "Democracia por Promedio",
+          name: process.env.SENDER_NAME || "Organicen y decidan",
         },
         to: [{ email: to }],
         subject,
@@ -50,7 +50,7 @@ async function notifyNewJoinRequest({ adminEmail, groupName, applicantName, code
     to: adminEmail,
     subject: `Nueva solicitud para unirse a "${groupName}"`,
     text: [
-      `${applicantName} quiere unirse a tu grupo "${groupName}" en Democracia por Promedio.`,
+      `${applicantName} quiere unirse a tu grupo "${groupName}" en Organicen y decidan.`,
       link ? `Entra aquí para aprobar o rechazar la solicitud:\n${link}` : `Entra a la app para aprobar o rechazar la solicitud.`,
     ].join("\n\n"),
   });
@@ -65,7 +65,7 @@ async function notifyGroupCreated({ adminEmail, groupName, code, adminId, fronte
     to: adminEmail,
     subject: `Tu grupo "${groupName}" ya está listo`,
     text: [
-      `Creaste el grupo "${groupName}" en Democracia por Promedio.`,
+      `Creaste el grupo "${groupName}" en Organicen y decidan.`,
       ``,
       `Código para invitar personas: ${code}`,
       link ? `Link directo: ${link}` : null,
@@ -88,7 +88,7 @@ async function notifyMemberJoined({ memberEmail, memberName, groupName, code, me
     to: memberEmail,
     subject: `Te uniste a "${groupName}"`,
     text: [
-      `Hola ${memberName}, te uniste al grupo "${groupName}" en Democracia por Promedio.`,
+      `Hola ${memberName}, te uniste al grupo "${groupName}" en Organicen y decidan.`,
       ``,
       `Código del grupo: ${code}`,
       link ? `Link directo (te lleva derecho a tu grupo, sin pedirte tus datos otra vez): ${link}` : null,
