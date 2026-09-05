@@ -1048,7 +1048,7 @@ function OnboardingCarousel({ slides, onClose, overlay = true }) {
   const s = slides[idx];
 
   const card = (
-    <div className="rounded-2xl p-4.5" style={{ background: overlay ? WARM_WHITE : "transparent", maxWidth: overlay ? "360px" : "none" }}>
+    <div className="rounded-2xl p-5" style={{ background: WARM_WHITE, border: overlay ? "none" : `1px solid ${BLUE}33`, maxWidth: overlay ? "360px" : "none" }}>
       {overlay && (
         <div className="flex justify-between items-center mb-1.5">
           <span className="dp-mono text-[10px]" style={{ color: INK + "66" }}>{idx + 1} / {slides.length}</span>
