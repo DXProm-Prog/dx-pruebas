@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const crypto = require("crypto");
 
 const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
@@ -384,12 +385,15 @@ app.post("/api/groups/:code/questions", async (req, res) => {
   } = req.body;
 
   if (!text || !type) return res.status(400).json({ error: "Faltan campos: text, type" });
-  if (!["promedio", "mayoria"].includes(type)) return res.status(400).json({ error: "type debe ser 'promedio' o 'mayoria'" });
+  if (!["promedio", "mayoria", "sorteo"].includes(type)) return res.status(400).json({ error: "type debe ser 'promedio', 'mayoria' o 'sorteo'" });
   if (type === "mayoria" && (!Array.isArray(options) || options.length < 2)) {
     return res.status(400).json({ error: "Las preguntas de mayoría necesitan al menos 2 opciones" });
   }
   if (type === "mayoria" && !["simple", "absoluta", "calificada", "rankeado", "segunda_vuelta"].includes(majorityRule)) {
     return res.status(400).json({ error: "majorityRule inválido" });
+  }
+  if (type === "sorteo" && (!Array.isArray(options) || options.length < 2)) {
+    return res.status(400).json({ error: "El sorteo necesita al menos 2 candidatos" });
   }
 
   const db = await load(req.params.code);
@@ -402,6 +406,13 @@ app.post("/api/groups/:code/questions", async (req, res) => {
     question.trimPercent = Number(trimPercent) || 0;
     question.closed = false;
     question.closesAt = minutesFromNow(closesInMinutes);
+  } else if (type === "sorteo") {
+    question.options = options.map((o) => String(o).trim()).filter(Boolean);
+    // "excluded": quién ya salió sorteado en el ciclo actual — no puede
+    // volver a salir hasta que todos los demás candidatos hayan
+    // ganado una vez y el ciclo se reinicie solo.
+    question.excluded = [];
+    question.draws = [];
   } else {
     question.options = options.map((o) => String(o).trim()).filter(Boolean);
     question.majorityRule = majorityRule;
@@ -429,6 +440,38 @@ app.post("/api/groups/:code/questions", async (req, res) => {
   group.questions.push(question);
   await save(db);
   res.json(question);
+});
+
+// Sortea un ganador entre los candidatos que todavía no han salido en
+// este ciclo. Si ya salieron todos, el ciclo se reinicia solo (todos
+// vuelven a estar disponibles) antes de sortear.
+app.post("/api/groups/:code/questions/:questionId/draw", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load(req.params.code);
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede sortear" });
+
+  const question = group.questions.find((q) => q.id === req.params.questionId);
+  if (!question) return res.status(404).json({ error: "Pregunta no encontrada" });
+  if (question.type !== "sorteo") return res.status(400).json({ error: "Esta pregunta no es de tipo sorteo" });
+
+  let pool = question.options.filter((o) => !question.excluded.includes(o));
+  if (pool.length === 0) {
+    // Ya salieron todos los candidatos — empieza un ciclo nuevo.
+    question.excluded = [];
+    pool = question.options.slice();
+  }
+
+  // crypto.randomInt es un generador de números aleatorios seguro (a
+  // diferencia de Math.random, que es predecible) — nadie puede
+  // adivinar ni manipular el resultado.
+  const winner = pool[crypto.randomInt(pool.length)];
+  question.excluded.push(winner);
+  question.draws.push({ winner, timestamp: new Date().toISOString() });
+
+  await save(db);
+  res.json({ winner, excluded: question.excluded, draws: question.draws });
 });
 
 app.post("/api/groups/:code/questions/:questionId/responses", async (req, res) => {

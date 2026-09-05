@@ -193,6 +193,93 @@ function DetailsToggle({ show, onToggle, color }) {
   );
 }
 
+function SorteoRunner({ backendUrl, groupCode, memberId, question, isAdmin }) {
+  const [drawing, setDrawing] = useState(false);
+  const [error, setError] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [draws, setDraws] = useState(question.draws || []);
+  const [excluded, setExcluded] = useState(question.excluded || []);
+
+  const lastDraw = draws.length > 0 ? draws[draws.length - 1] : null;
+  const remaining = question.options.filter((o) => !excluded.includes(o));
+  const cycleComplete = remaining.length === 0;
+
+  const draw = async () => {
+    setDrawing(true);
+    setError("");
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/questions/${question.id}/draw`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error al sortear");
+      setDraws(data.draws);
+      setExcluded(data.excluded);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setDrawing(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl p-4 mb-4 shadow-sm" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="dp-body text-[15px]" style={{ color: INK }}>{question.text}</div>
+      </div>
+      <div className="dp-body text-[11px] mb-3 flex items-center gap-1" style={{ color: INK + "77" }}>
+        <i className="ti ti-dice-5"></i> sorteo · nunca repite ganador hasta que todos salgan
+      </div>
+
+      {lastDraw && (
+        <div className="rounded-lg p-3 mb-3 text-center" style={{ background: GREEN + "15" }}>
+          <div className="dp-body text-[10px]" style={{ color: INK + "88" }}>Último resultado</div>
+          <div className="dp-display text-xl font-bold" style={{ color: GREEN }}>{lastDraw.winner}</div>
+        </div>
+      )}
+
+      <div className="mb-2">
+        <button onClick={() => setShowHistory(!showHistory)} className="dp-body text-[11px] font-medium mb-1.5" style={{ color: BLUE }}>
+          {showHistory ? "▼ " : "▶ "}candidatos {cycleComplete ? "(ciclo completo, se reinicia solo)" : `(${remaining.length} sin salir todavía)`}
+        </button>
+        {showHistory && (
+          <div className="flex flex-wrap gap-1.5">
+            {question.options.map((opt) => (
+              <span
+                key={opt}
+                className="dp-body text-[11px] px-2 py-1 rounded-full"
+                style={excluded.includes(opt) && !cycleComplete ? { background: PAGE_BG, color: INK + "66", textDecoration: "line-through" } : { background: BLUE_SOFT, color: INK }}
+              >
+                {opt}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {draws.length > 1 && (
+        <div className="dp-body text-[10.5px] mb-3" style={{ color: INK + "77" }}>
+          Historial: {draws.slice(0, -1).reverse().map((d) => d.winner).join(", ")}
+        </div>
+      )}
+
+      {isAdmin && (
+        <button
+          onClick={draw}
+          disabled={drawing}
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: BLUE }}
+        >
+          <i className="ti ti-dice-5"></i> {drawing ? "Sorteando…" : lastDraw ? "Sortear de nuevo" : "Sortear"}
+        </button>
+      )}
+      {error && <div className="dp-body text-[11px] mt-2" style={{ color: CORAL }}>{error}</div>}
+    </div>
+  );
+}
+
 function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, groupResponses, approvedMemberCount }) {
   const rule = question.majorityRule;
   const isRankeado = rule === "rankeado";
@@ -1116,7 +1203,7 @@ function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
   );
 }
 
-function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones }) {
+function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones, onChooseResponsables }) {
   const [soonMsg, setSoonMsg] = useState("");
 
   const showSoon = (label) => {
@@ -1155,6 +1242,12 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
         title="Crea tu grupo y tus propias preguntas"
         subtitle="Arma tu propio grupo, preguntas y reglas, sin plantilla."
         onClick={onChooseCustom}
+      />
+      <HomeIconButton
+        icon="ti-dice-5"
+        title="Selección de responsables"
+        subtitle="Define cargos (como tesorero) y sortea al azar entre los candidatos de cada uno, sin repetir hasta que todos hayan salido."
+        onClick={onChooseResponsables}
       />
       <HomeIconButton
         icon="ti-building-bank"
@@ -1470,6 +1563,10 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
       setError("Agrega al menos 2 opciones");
       return;
     }
+    if (type === "sorteo" && cleanOptions.length < 2) {
+      setError("Agrega al menos 2 candidatos");
+      return;
+    }
     setAdding(true);
     setError("");
     try {
@@ -1479,6 +1576,8 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
       if (type === "promedio") {
         body.trimPercent = Number(trimPercent);
         if (mins > 0) body.closesInMinutes = mins;
+      } else if (type === "sorteo") {
+        body.options = cleanOptions;
       } else {
         body.options = cleanOptions;
         body.majorityRule = majorityRule;
@@ -1518,7 +1617,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
       <div className="dp-body text-xs font-medium mb-3" style={{ color: INK }}>Nueva pregunta</div>
 
       <div className="flex gap-1.5 mb-3">
-        {[{ key: "promedio", label: "Promedio" }, { key: "mayoria", label: "Mayoría" }].map((t) => (
+        {[{ key: "promedio", label: "Promedio" }, { key: "mayoria", label: "Mayoría" }, { key: "sorteo", label: "Sorteo" }].map((t) => (
           <button
             key={t.key}
             onClick={() => setType(t.key)}
@@ -1544,6 +1643,30 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
           <span style={{ opacity: 0.6 }}>Recorte</span>
           <input type="number" value={trimPercent} onChange={(e) => setTrimPercent(e.target.value)} className="w-9 bg-transparent dp-mono text-center outline-none font-medium" />
           <span style={{ opacity: 0.6 }}>%</span>
+        </div>
+      )}
+
+      {type === "sorteo" && (
+        <div className="mb-3">
+          <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
+            <i className="ti ti-dice-5" style={{ marginRight: "4px" }}></i>
+            Se elige al azar entre estos candidatos. Nunca se repite el mismo ganador hasta que todos los demás hayan salido una vez.
+          </div>
+          {options.map((opt, i) => (
+            <div key={i} className="flex items-center gap-2 mb-1.5">
+              <input
+                value={opt}
+                onChange={(e) => updateOption(i, e.target.value)}
+                placeholder={`Candidato ${i + 1}`}
+                className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
+                style={{ background: BLUE_SOFT, color: INK }}
+              />
+              {options.length > 2 && (
+                <button onClick={() => removeOption(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
+              )}
+            </div>
+          ))}
+          <button onClick={addOption} className="dp-body text-xs font-medium" style={{ color: BLUE }}>+ agregar candidato</button>
         </div>
       )}
 
@@ -1644,32 +1767,36 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         </React.Fragment>
       )}
 
-      <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
-        Límite de tiempo{isSegundaVuelta ? " por ronda" : " para responder"}:
-      </div>
-      <div className="flex gap-1.5 mb-2">
-        <button onClick={() => setUseLimit(false)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={!useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>No</button>
-        <button onClick={() => setUseLimit(true)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>Sí</button>
-      </div>
-      {useLimit && (
-        <div className="flex gap-2 mb-1">
-          <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
-            Días <input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
-          </label>
-          <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
-            Horas <input type="number" min="0" max="23" value={hours} onChange={(e) => setHours(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
-          </label>
-          <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
-            Min <input type="number" min="0" max="59" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
-          </label>
-        </div>
+      {type !== "sorteo" && (
+        <React.Fragment>
+          <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
+            Límite de tiempo{isSegundaVuelta ? " por ronda" : " para responder"}:
+          </div>
+          <div className="flex gap-1.5 mb-2">
+            <button onClick={() => setUseLimit(false)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={!useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>No</button>
+            <button onClick={() => setUseLimit(true)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>Sí</button>
+          </div>
+          {useLimit && (
+            <div className="flex gap-2 mb-1">
+              <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
+                Días <input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+              </label>
+              <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
+                Horas <input type="number" min="0" max="23" value={hours} onChange={(e) => setHours(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+              </label>
+              <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
+                Min <input type="number" min="0" max="59" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+              </label>
+            </div>
+          )}
+          {isSegundaVuelta && (
+            <div className="dp-body text-[10px] mb-3" style={{ color: INK + "77" }}>
+              {useLimit ? "al pasar el tiempo, la ronda se cierra sola y avanza." : "sin límite: tú cierras cada ronda a mano."}
+            </div>
+          )}
+          {!isSegundaVuelta && <div className="mb-3" />}
+        </React.Fragment>
       )}
-      {isSegundaVuelta && (
-        <div className="dp-body text-[10px] mb-3" style={{ color: INK + "77" }}>
-          {useLimit ? "al pasar el tiempo, la ronda se cierra sola y avanza." : "sin límite: tú cierras cada ronda a mano."}
-        </div>
-      )}
-      {!isSegundaVuelta && <div className="mb-3" />}
 
       <button
         type="button"
@@ -1690,6 +1817,8 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
             <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
               {type === "promedio"
                 ? `recorte: ${trimPercent || 0}%`
+                : type === "sorteo"
+                ? "se elige al azar entre los candidatos"
                 : majorityRule === "calificada"
                 ? `necesita más del ${qualifiedPct || 66}%`
                 : majorityRule === "absoluta"
@@ -1705,6 +1834,17 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
               <div className="flex items-center gap-2">
                 <div className="flex-1 rounded-lg px-2.5 py-1.5 text-sm dp-mono" style={{ background: BLUE_SOFT, color: INK + "77" }}>tu propuesta</div>
                 <div className="text-xs px-3 py-2 rounded-full text-white font-medium" style={{ background: GREEN, opacity: 0.6 }}>📤 Enviar</div>
+              </div>
+            )}
+
+            {type === "sorteo" && (
+              <div className="flex flex-col gap-1.5">
+                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : ["Candidato 1", "Candidato 2"]).map((opt, i) => (
+                  <div key={i} className="dp-body text-left text-sm px-3 py-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK }}>
+                    {opt}
+                  </div>
+                ))}
+                <div className="text-xs px-3 py-2 rounded-full text-white font-medium text-center" style={{ background: BLUE, opacity: 0.6 }}>🎲 Sortear</div>
               </div>
             )}
 
@@ -3424,18 +3564,22 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
             </div>
           )}
 
-          {group.questions.map((q) => (
-            <QuestionRunner
-              key={q.id}
-              backendUrl={backendUrl}
-              groupCode={groupCode}
-              memberId={memberId}
-              question={q}
-              isAdmin={isAdmin}
-              groupResponses={group.responses}
-              approvedMemberCount={group.members.filter((m) => m.approved).length}
-            />
-          ))}
+          {group.questions.map((q) =>
+            q.type === "sorteo" ? (
+              <SorteoRunner key={q.id} backendUrl={backendUrl} groupCode={groupCode} memberId={memberId} question={q} isAdmin={isAdmin} />
+            ) : (
+              <QuestionRunner
+                key={q.id}
+                backendUrl={backendUrl}
+                groupCode={groupCode}
+                memberId={memberId}
+                question={q}
+                isAdmin={isAdmin}
+                groupResponses={group.responses}
+                approvedMemberCount={group.members.filter((m) => m.approved).length}
+              />
+            )
+          )}
         </React.Fragment>
       )}
     </div>
@@ -3621,9 +3765,11 @@ function DemocraciaPorPromedioConectada() {
     cuotas: "Cuotas participativas",
     presupuesto: "Presupuestos participativos",
     asociaciones: "Asociaciones, clubes y orgs",
+    responsables: "Selección de responsables",
   };
   const STEP_CHAINS = {
     default: ["Arma tu grupo", "Escribe las preguntas", "Elige el proceso", "Envía a tu grupo", "¡Decidan juntos!"],
+    responsables: ["Arma tu grupo", "Define los cargos", "Agrega candidatos", "Sortea", "¡Responsable elegido!"],
     cuotas: ["Arma tu grupo", "Decidan las categorías", "Propongan la cuota", "Aprueben el resultado", "¡Cobren juntos!"],
     presupuesto: ["Arma tu grupo", "Propongan categorías", "Repartan el %", "Aprueben el resultado", "¡Gasten juntos!"],
     asociaciones: ["Arma tu grupo", "Decidan las cuotas", "Repartan el presupuesto", "Propongan proyectos", "¡Decidan juntos!"],
@@ -3741,6 +3887,11 @@ function DemocraciaPorPromedioConectada() {
             onChooseAsociaciones={() => {
               setEntryPurpose("asociaciones");
               setSelectedOption("asociaciones");
+              setView("custom");
+            }}
+            onChooseResponsables={() => {
+              setEntryPurpose(null);
+              setSelectedOption("responsables");
               setView("custom");
             }}
           />
