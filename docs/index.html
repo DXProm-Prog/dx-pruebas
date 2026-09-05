@@ -3310,7 +3310,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   );
 }
 
-function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameChange }) {
+function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameChange, hideFlowStarters }) {
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -3494,7 +3494,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
           onSwitchFlow={setPinnedFlowId}
         />
       ) : (
-        isAdmin && (
+        isAdmin && !hideFlowStarters && (
           <div className="flex flex-col gap-2 mb-4">
             <button
               onClick={async () => {
@@ -3985,6 +3985,7 @@ function DemocraciaPorPromedioConectada() {
             groupCode={groupCode}
             memberId={memberId}
             onGroupNameChange={setConnectedGroupName}
+            hideFlowStarters={selectedOption === "responsables"}
             onExit={() => {
               setGroupCode("");
               setMemberId("");
