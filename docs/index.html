@@ -1887,7 +1887,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 }
 
 
-function StageInput({ stage, onSend, sending, disabled, flowConfig }) {
+function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemberNames }) {
   const [numValue, setNumValue] = useState("");
   const [selected, setSelected] = useState("");
   const [texts, setTexts] = useState(Array(stage.config.maxItemsPerPerson || 1).fill(""));
@@ -1930,6 +1930,11 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig }) {
   if (stage.type === "mayoria") {
     return (
       <div className="flex flex-col gap-1.5 mb-2">
+        {stage.config.explanation && (
+          <div className="dp-body text-[11px] mb-1 p-2.5 rounded-lg whitespace-pre-line" style={{ background: PAGE_BG, color: INK + "99", lineHeight: 1.5 }}>
+            {stage.config.explanation}
+          </div>
+        )}
         {stage.config.options.map((opt) => (
           <button
             key={opt}
@@ -2249,6 +2254,74 @@ function StageResultView({ stage }) {
         {Object.entries(r.memberCounts).map(([k, v]) => (
           <div key={k}>{k === "single" ? "Miembros" : k}: {v}</div>
         ))}
+      </div>
+    );
+  }
+
+  if (stage.type === "configurar_puestos") {
+    return (
+      <div className="dp-body text-xs" style={{ color: INK + "99" }}>
+        {r.roles.map((role) => (
+          <div key={role.id} className="mb-1">
+            <span className="font-semibold" style={{ color: INK }}>{role.name}</span>
+            {role.description && <span> — {role.description}</span>}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (stage.type === "configurar_candidatos") {
+    return (
+      <div className="dp-body text-xs" style={{ color: INK + "99" }}>
+        Candidatos: {r.candidates.join(", ")}
+      </div>
+    );
+  }
+
+  if (stage.type === "realizar_sorteo") {
+    const roleName = (id) => (r.roles.find((role) => role.id === id) || {}).name || id;
+    if (r.frequency === "once") {
+      return (
+        <div className="rounded-lg p-2.5" style={{ background: GREEN + "15" }}>
+          {r.roles.map((role) => (
+            <div key={role.id} className="flex items-baseline justify-between py-0.5">
+              <span className="dp-body text-xs" style={{ color: INK + "99" }}>{role.name}</span>
+              <span className="dp-display text-sm font-bold" style={{ color: GREEN }}>{r.assignment[role.id] || "—"}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return (
+      <div>
+        <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
+        {showDetails && (
+          <div className="overflow-x-auto -mx-1">
+            <table className="w-full" style={{ borderCollapse: "collapse", fontSize: "11px" }}>
+              <thead>
+                <tr style={{ color: INK + "99" }}>
+                  <td className="pb-1.5 px-1 font-semibold">Mes</td>
+                  {r.roles.map((role) => (
+                    <td key={role.id} className="pb-1.5 px-1 text-center font-semibold">{role.name}</td>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {r.months.map((m) => (
+                  <tr key={m.month} style={{ borderTop: `1px solid ${BLUE}22` }}>
+                    <td className="py-1 px-1 dp-body font-medium" style={{ color: INK }}>{m.month}</td>
+                    {r.roles.map((role) => (
+                      <td key={role.id} className="py-1 px-1 text-center dp-mono font-semibold" style={{ color: GREEN }}>
+                        {m.assignment[role.id] || "—"}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   }
@@ -2904,7 +2977,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   );
 }
 
-function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, onAdvance, onSwitchFlow }) {
+function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, approvedMemberNames, onAdvance, onSwitchFlow }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
@@ -2916,6 +2989,9 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const [totalBudget, setTotalBudget] = useState(flow.config?.totalBudget ?? "");
   const [extraAmount, setExtraAmount] = useState(flow.config?.extraAmount ?? "");
   const [memberCounts, setMemberCounts] = useState(flow.config?.memberCounts || {});
+  const [roleDrafts, setRoleDrafts] = useState(null);
+  const [candidateDrafts, setCandidateDrafts] = useState(null);
+  const [newCandidateName, setNewCandidateName] = useState("");
   const [tieRoundMinutes, setTieRoundMinutes] = useState(flow.config?.tieRoundMinutes ?? "");
   const [reopenEmptyMinutes, setReopenEmptyMinutes] = useState(flow.config?.reopenEmptyMinutes ?? "");
   const [savingConfig, setSavingConfig] = useState(false);
@@ -3016,6 +3092,32 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       setSendError(e.message);
     } finally {
       setClosingStage(false);
+    }
+  };
+
+  const submitAndClose = async (value) => {
+    setSending(true);
+    setSendError("");
+    try {
+      const res1 = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/responses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId, value }),
+      });
+      const data1 = await res1.json();
+      if (!res1.ok) throw new Error(data1.error || "Error al guardar");
+      const res2 = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-stage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId }),
+      });
+      const data2 = await res2.json();
+      if (!res2.ok) throw new Error(data2.error || "Error al continuar");
+      await onAdvance();
+    } catch (e) {
+      setSendError(e.message);
+    } finally {
+      setSending(false);
     }
   };
 
@@ -3229,13 +3331,135 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         </div>
       )}
 
-      {stage && stage.type !== "conteo_miembros" && (
+      {stage && stage.type === "configurar_puestos" && (() => {
+        const currentRoles = roleDrafts !== null ? roleDrafts : (stage.config.suggestedRoles || []).map((r) => ({ ...r }));
+        const updateRole = (i, field, val) => setRoleDrafts(currentRoles.map((r, idx) => (idx === i ? { ...r, [field]: val } : r)));
+        const removeRole = (i) => setRoleDrafts(currentRoles.filter((_, idx) => idx !== i));
+        const addRole = () => setRoleDrafts([...currentRoles, { id: `puesto_${Date.now()}`, name: "", description: "" }]);
+        const canSend = currentRoles.some((r) => r.name.trim());
+        return (
+          <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+            <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
+            {isAdmin ? (
+              <React.Fragment>
+                {currentRoles.map((r, i) => (
+                  <div key={r.id || i} className="rounded-lg p-2.5 mb-2" style={{ background: "#fff" }}>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <input
+                        value={r.name}
+                        onChange={(e) => updateRole(i, "name", e.target.value)}
+                        placeholder="Nombre del puesto"
+                        className="dp-body flex-1 rounded-lg px-2 py-1.5 text-sm outline-none"
+                        style={{ background: BLUE_SOFT, color: INK }}
+                      />
+                      <button onClick={() => removeRole(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
+                    </div>
+                    <textarea
+                      value={r.description}
+                      onChange={(e) => updateRole(i, "description", e.target.value)}
+                      placeholder="¿Qué hace este puesto? (opcional)"
+                      rows={2}
+                      className="dp-body w-full resize-none rounded-lg px-2 py-1.5 text-xs outline-none"
+                      style={{ background: BLUE_SOFT, color: INK }}
+                    />
+                  </div>
+                ))}
+                <button onClick={addRole} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>+ agregar puesto</button>
+                {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+                <button
+                  onClick={() => submitAndClose(currentRoles.filter((r) => r.name.trim()))}
+                  disabled={sending || !canSend}
+                  className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+                  style={{ background: GREEN }}
+                >
+                  {sending ? "Guardando…" : "Guardar y continuar"}
+                </button>
+              </React.Fragment>
+            ) : (
+              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está definiendo los puestos…</div>
+            )}
+          </div>
+        );
+      })()}
+
+      {stage && stage.type === "configurar_candidatos" && (() => {
+        const currentCandidates = candidateDrafts !== null ? candidateDrafts : [...new Set(approvedMemberNames || [])];
+        const removeCandidate = (name) => setCandidateDrafts(currentCandidates.filter((c) => c !== name));
+        const addCandidate = () => {
+          const clean = newCandidateName.trim();
+          if (!clean || currentCandidates.includes(clean)) return;
+          setCandidateDrafts([...currentCandidates, clean]);
+          setNewCandidateName("");
+        };
+        return (
+          <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+            <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
+            {isAdmin ? (
+              <React.Fragment>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {currentCandidates.map((c) => (
+                    <span key={c} className="dp-body text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: "#fff", color: INK }}>
+                      {c}
+                      <button onClick={() => removeCandidate(c)} style={{ color: CORAL }}>✕</button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <input
+                    value={newCandidateName}
+                    onChange={(e) => setNewCandidateName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addCandidate()}
+                    placeholder="Nombre nuevo"
+                    className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
+                    style={{ background: "#fff", color: INK }}
+                  />
+                  <button onClick={addCandidate} className="dp-body text-xs font-medium px-2" style={{ color: BLUE }}>+ agregar</button>
+                </div>
+                {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+                <button
+                  onClick={() => submitAndClose(currentCandidates)}
+                  disabled={sending || currentCandidates.length === 0}
+                  className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+                  style={{ background: GREEN }}
+                >
+                  {sending ? "Guardando…" : "Guardar y mandar a votación"}
+                </button>
+              </React.Fragment>
+            ) : (
+              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está armando la lista de candidatos…</div>
+            )}
+          </div>
+        );
+      })()}
+
+      {stage && stage.type === "realizar_sorteo" && (
+        <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
+          {isAdmin ? (
+            <React.Fragment>
+              {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+              <button
+                onClick={() => submitAndClose({})}
+                disabled={sending}
+                className="dp-body flex items-center justify-center gap-1.5 w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
+                style={{ background: BLUE }}
+              >
+                <i className="ti ti-dice-5"></i> {sending ? "Sorteando…" : "Realizar sorteo"}
+              </button>
+            </React.Fragment>
+          ) : (
+            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador va a realizar el sorteo…</div>
+          )}
+        </div>
+      )}
+
+      {stage && !["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo"].includes(stage.type) && (
         <div>
           <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
             {liveCount} de {approvedMemberCount} miembro(s) han respondido
           </div>
-          <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={{ ...flow.config, totalBudget: effectiveTotalBudget }} />
+          <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={{ ...flow.config, totalBudget: effectiveTotalBudget }} approvedMemberNames={approvedMemberNames} />
           {sent && <div className="dp-body text-[11px] mb-2" style={{ color: GREEN }}>✅ Guardado</div>}
           {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
           {isAdmin && (
@@ -3490,6 +3714,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
           isAdmin={isAdmin}
           groupResponses={group.responses}
           approvedMemberCount={group.members.filter((m) => m.approved).length}
+          approvedMemberNames={group.members.filter((m) => m.approved).map((m) => m.name)}
           onAdvance={fetchGroup}
           onSwitchFlow={setPinnedFlowId}
         />
@@ -3890,7 +4115,7 @@ function DemocraciaPorPromedioConectada() {
               setView("custom");
             }}
             onChooseResponsables={() => {
-              setEntryPurpose(null);
+              setEntryPurpose("responsabilidades");
               setSelectedOption("responsables");
               setView("custom");
             }}
@@ -3927,7 +4152,7 @@ function DemocraciaPorPromedioConectada() {
               setMemberId(memberId);
               setCreatedGroupName(groupName);
               persistSession(code, memberId);
-              if (entryPurpose === "cuotas" || entryPurpose === "presupuesto") {
+              if (entryPurpose === "cuotas" || entryPurpose === "presupuesto" || entryPurpose === "responsabilidades") {
                 await fetch(`${backendUrl}/api/groups/${code}/flows`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },

@@ -184,6 +184,89 @@ const presupuesto = {
   },
 };
 
-const TEMPLATES = { cuotas, presupuesto };
+const responsabilidades = {
+  defaultConfig: {},
+
+  getInitialStage() {
+    return {
+      key: "openRoles",
+      type: "mayoria",
+      text: "¿Quieren asignar puestos y responsabilidades por sorteo?",
+      config: {
+        options: ["Sí", "No"],
+        majorityRule: "absoluta",
+        explanation:
+          "En vez de que el facilitador asigne los puestos a mano, la app elige al azar entre los candidatos, de forma segura e imposible de manipular. Nadie repite el mismo puesto dos veces seguidas, ni tiene dos puestos en el mismo periodo.\n\nEsto solo se activa si más del 50% del grupo vota que sí. Si no se llega a esa mayoría, el grupo sigue como está, sin puestos asignados.",
+      },
+    };
+  },
+
+  getNextStage(stages) {
+    const last = stages[stages.length - 1];
+
+    if (last.key === "openRoles") {
+      if (last.result.winner !== "Sí") return null;
+      return {
+        key: "configurarPuestos",
+        type: "configurar_puestos",
+        text: "Estos son puestos sugeridos para Asociaciones, pero pueden modificarlos por los puestos o responsabilidades que su grupo necesite.",
+        config: {
+          suggestedRoles: [
+            { id: "tesorero", name: "Tesorero", description: "recibe el dinero de las cuotas y lo reparte para los proyectos." },
+            { id: "auditor", name: "Auditor", description: "revisa los proyectos para asegurarse de que sí se estén realizando conforme a las propuestas y de acuerdo al presupuesto." },
+            { id: "facilitador", name: "Facilitador", description: "encargado de organizar las reuniones durante el mes." },
+          ],
+        },
+      };
+    }
+
+    if (last.key === "configurarPuestos") {
+      return {
+        key: "frequencyVote",
+        type: "mayoria",
+        text: "¿Reparten los puestos una sola vez, o arman un calendario rotativo (12 meses)?",
+        config: {
+          options: ["Calendario rotativo", "Una sola vez"],
+          majorityRule: "absoluta",
+          explanation:
+            "Calendario rotativo: se sortea de una sola vez un calendario completo (12 meses) que dice quién tiene cada puesto, mes por mes. Cada quien va saliendo del sorteo conforme le toca un puesto, hasta que todos hayan ocupado alguno — ahí se vuelve a incluir a todos y se sigue repartiendo.\n\nUna sola vez: se sortea una sola vez por puesto (sin calendario), y esa persona se queda de forma indefinida.",
+        },
+      };
+    }
+
+    if (last.key === "frequencyVote") {
+      return {
+        key: "configurarCandidatos",
+        type: "configurar_candidatos",
+        text: "Lista de candidatos para el sorteo — se llena automáticamente con los miembros del grupo.",
+        config: {},
+      };
+    }
+
+    if (last.key === "configurarCandidatos") {
+      const names = last.result.candidates.join(", ");
+      return {
+        key: "approvalVote",
+        type: "mayoria",
+        text: `¿Aprueban esta lista de candidatos para el sorteo de puestos? ${names}`,
+        config: { options: ["Sí", "No"], majorityRule: "absoluta" },
+      };
+    }
+
+    if (last.key === "approvalVote") {
+      if (last.result.winner !== "Sí") return null;
+      return {
+        key: "realizarSorteo",
+        type: "realizar_sorteo",
+        text: "Todo listo — el facilitador puede realizar el sorteo cuando quiera.",
+        config: {},
+      };
+    }
+
+    return null;
+  },
+};
+
+const TEMPLATES = { cuotas, presupuesto, responsabilidades };
 
 module.exports = { TEMPLATES };

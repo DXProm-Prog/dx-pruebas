@@ -12,8 +12,61 @@
 // La lógica de "qué etapa sigue" para cada plantilla (Cuotas, Presupuesto)
 // vive en archivos aparte (ver templates/cuotas.js en la Fase C2), no aquí.
 
+const crypto = require("crypto");
 const { computeTrimmedMean } = require("./trimmedMean");
 const { tallyOptions, determineWinner } = require("./tally");
+
+// Revuelve una lista al azar de forma segura (no usa Math.random, que es
+// predecible) — usado para el sorteo de puestos y responsabilidades.
+function secureShuffle(arr) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(i + 1);
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// Sortea los puestos entre los candidatos, ya sea una sola vez, o como
+// un calendario rotativo de 12 meses.
+//
+// Regla del calendario rotativo: cada mes se reparten TODOS los
+// puestos entre candidatos que no hayan salido en la "ronda" actual
+// (sin importar en qué puesto salieron antes — la bolsa es compartida
+// entre todos los puestos). Cuando ya no alcanzan candidatos frescos
+// para llenar los puestos de un mes, se vuelve a meter a todos a la
+// bolsa antes de repartir ese mes. Con grupos chicos donde la cantidad
+// de candidatos no es múltiplo exacto del número de puestos, esto
+// puede hacer que alguien repita antes de que TODOS hayan tenido un
+// puesto — es matemáticamente inevitable y, aun así, reparte de forma
+// justa con el tiempo.
+function drawResponsabilidades(roles, candidates, frequency) {
+  if (roles.length === 0 || candidates.length === 0) {
+    throw new Error("Se necesitan puestos y candidatos para poder sortear");
+  }
+
+  if (frequency === "once") {
+    const pool = secureShuffle(candidates);
+    const assignment = {};
+    roles.forEach((role) => {
+      if (pool.length === 0) return;
+      assignment[role.id] = pool.pop();
+    });
+    return { frequency: "once", assignment };
+  }
+
+  const months = [];
+  let pool = secureShuffle(candidates);
+  for (let m = 1; m <= 12; m++) {
+    if (pool.length < roles.length) pool = secureShuffle(candidates);
+    const assignment = {};
+    roles.forEach((role) => {
+      assignment[role.id] = pool.pop();
+    });
+    months.push({ month: m, assignment });
+  }
+  return { frequency: "monthly", months };
+}
 
 // Agrupa respuestas de texto libre (cada miembro puede enviar varias
 // propuestas) y cuenta cuántas veces se repitió cada una, ignorando
@@ -185,7 +238,18 @@ function computeStageResult(stage, responses, flowConfig = {}) {
     return { type: "ranking_multiganador", ...out };
   }
 
+  // Etapas de una sola respuesta (del facilitador): la lista final de
+  // puestos, o la lista final de candidatos para el sorteo.
+  if (stage.type === "configurar_puestos") {
+    const roles = values.length ? values[values.length - 1].roles : [];
+    return { type: "configurar_puestos", roles };
+  }
+  if (stage.type === "configurar_candidatos") {
+    const candidates = values.length ? values[values.length - 1].candidates : [];
+    return { type: "configurar_candidatos", candidates };
+  }
+
   throw new Error(`Tipo de etapa desconocido: ${stage.type}`);
 }
 
-module.exports = { poolOpenText, rankingMultiWinner, computeStageResult };
+module.exports = { poolOpenText, rankingMultiWinner, computeStageResult, drawResponsabilidades };

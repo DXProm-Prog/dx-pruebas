@@ -8,7 +8,7 @@ const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
 const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner } = require("./email");
-const { computeStageResult } = require("./flowEngine");
+const { computeStageResult, drawResponsabilidades } = require("./flowEngine");
 const { TEMPLATES } = require("./templates");
 
 // Si una sola consulta a la base de datos falla (ej. un problema pasajero
@@ -751,6 +751,30 @@ function licitacionAllDone(licitacion) {
   return Object.values(licitacion.categories).every((s) => ["resolved", "empty_closed", "tie_final"].includes(s.status));
 }
 
+// Cuando la licitación (propuestas de presupuesto) ya terminó por
+// completo, el flujo pasa a "finished" — igual que si hubiera acabado
+// por el camino normal de etapas — para que, si tiene un chainNext (ej.
+// Asociaciones encadenando a "responsabilidades"), se cree el
+// siguiente flujo automáticamente.
+function finishFlowIfLicitacionDone(group, flow) {
+  if (flow.status !== "active" || !flow.licitacion || !licitacionAllDone(flow.licitacion)) return;
+  flow.status = "finished";
+  if (flow.chainNext && TEMPLATES[flow.chainNext]) {
+    const nextTemplate = flow.chainNext;
+    group.flows.push({
+      id: generateId(),
+      template: nextTemplate,
+      status: "active",
+      config: { ...(TEMPLATES[nextTemplate].defaultConfig || {}) },
+      currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}), instanceIndex: 0 },
+      stages: [],
+      chainNext: null,
+      chainedFromFlowId: null,
+      createdAt: new Date().toISOString(),
+    });
+  }
+}
+
 // Si este flujo de presupuesto viene encadenado de un flujo de cuotas ya
 // terminado (Asociaciones), y ese flujo de cuotas calculó cuánto se
 // recauda (porque el admin puso número de miembros), el presupuesto
@@ -889,8 +913,11 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
   if (flow.status !== "active") return res.status(403).json({ error: "Este flujo ya terminó" });
 
   const stage = flow.currentStage;
-  if (stage.type === "conteo_miembros" && group.admin.id !== memberId) {
-    return res.status(403).json({ error: "Solo el administrador responde esta etapa" });
+  if (
+    ["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo"].includes(stage.type) &&
+    group.admin.id !== memberId
+  ) {
+    return res.status(403).json({ error: "Solo el facilitador responde esta etapa" });
   }
   let storedValue;
 
@@ -949,6 +976,25 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
       if (!isNaN(n) && n > 0) cleaned[k] = n;
     });
     storedValue = cleaned;
+  } else if (stage.type === "configurar_puestos") {
+    if (!Array.isArray(value) || value.length === 0) {
+      return res.status(400).json({ error: "Agrega al menos un puesto" });
+    }
+    const roles = value
+      .map((r) => ({ id: String(r.id || r.name || "").trim(), name: String(r.name || "").trim(), description: String(r.description || "").trim() }))
+      .filter((r) => r.name);
+    if (roles.length === 0) return res.status(400).json({ error: "Agrega al menos un puesto con nombre" });
+    storedValue = { roles };
+  } else if (stage.type === "configurar_candidatos") {
+    if (!Array.isArray(value)) return res.status(400).json({ error: "value debe ser una lista de nombres" });
+    const candidates = [...new Set(value.map((n) => String(n).trim()).filter(Boolean))];
+    if (candidates.length === 0) return res.status(400).json({ error: "Agrega al menos un candidato" });
+    storedValue = { candidates };
+  } else if (stage.type === "realizar_sorteo") {
+    // No necesita datos del usuario — la etapa entera se calcula al
+    // cerrarla, usando los puestos, la frecuencia y los candidatos que
+    // ya se decidieron en las etapas anteriores (ver /close-stage).
+    storedValue = {};
   } else {
     return res.status(400).json({ error: "Tipo de etapa desconocido" });
   }
@@ -983,7 +1029,28 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   const stage = flow.currentStage;
   const responses = group.responses.filter((r) => r.flowId === flow.id && r.stageInstanceIndex === stage.instanceIndex);
   const effectiveConfig = getEffectiveFlowConfig(group, flow);
-  const result = computeStageResult(stage, responses, effectiveConfig);
+
+  let result;
+  if (stage.type === "realizar_sorteo") {
+    // Esta etapa no calcula su resultado a partir de respuestas —
+    // necesita los datos de 3 etapas anteriores del mismo flujo.
+    const rolesStage = [...flow.stages].reverse().find((s) => s.key === "configurarPuestos");
+    const freqStage = [...flow.stages].reverse().find((s) => s.key === "frequencyVote");
+    const candStage = [...flow.stages].reverse().find((s) => s.key === "configurarCandidatos");
+    if (!rolesStage || !freqStage || !candStage) {
+      return res.status(400).json({ error: "Faltan datos de etapas anteriores para poder sortear" });
+    }
+    const roles = rolesStage.result.roles;
+    const candidates = candStage.result.candidates;
+    if (candidates.length < roles.length) {
+      return res.status(400).json({ error: `Se necesitan al menos ${roles.length} candidatos para ${roles.length} puesto(s), y solo hay ${candidates.length}.` });
+    }
+    const frequency = freqStage.result.winner === "Una sola vez" ? "once" : "monthly";
+    const draw = drawResponsabilidades(roles, candidates, frequency);
+    result = { type: "realizar_sorteo", roles, ...draw };
+  } else {
+    result = computeStageResult(stage, responses, effectiveConfig);
+  }
   flow.stages.push({ ...stage, result, closedAt: new Date().toISOString() });
 
   // Si esta etapa era la de "número de miembros", lo que haya puesto el
@@ -1012,7 +1079,10 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
         config: { ...(TEMPLATES[nextTemplate].defaultConfig || {}) },
         currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}), instanceIndex: 0 },
         stages: [],
-        chainNext: null,
+        // El presupuesto de Asociaciones sigue encadenando hacia
+        // "responsabilidades" — se le pregunta al grupo después de que
+        // termine su propio ciclo (incluyendo propuestas, si las usan).
+        chainNext: nextTemplate === "presupuesto" ? "responsabilidades" : null,
         chainedFromFlowId: flow.template === "cuotas" ? flow.id : null,
         createdAt: new Date().toISOString(),
       });
@@ -1148,8 +1218,10 @@ app.post("/api/groups/:code/flows/:flowId/close-collecting", async (req, res) =>
     if (!catState) return res.status(400).json({ error: "Categoría inválida" });
     if (catState.status !== "collecting") return res.status(400).json({ error: "Esta categoría no está recibiendo propuestas" });
     closeCategoryCollecting(flow.licitacion, category);
+    finishFlowIfLicitacionDone(group, flow);
   } else {
     closeLicitacionCollecting(flow.licitacion);
+    finishFlowIfLicitacionDone(group, flow);
   }
   await save(db);
   res.json(flow);
@@ -1221,6 +1293,7 @@ app.post("/api/groups/:code/flows/:flowId/close-voting", async (req, res) => {
   if (!hasVoting) return res.status(400).json({ error: "No hay ninguna categoría en votación en este momento" });
 
   const winners = closeLicitacionVoting(flow.licitacion, flow.config || {});
+  finishFlowIfLicitacionDone(group, flow);
   await save(db);
 
   const summaryLines = Object.entries(flow.licitacion.categories).map(([cat, s]) => {
