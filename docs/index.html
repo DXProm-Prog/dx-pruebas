@@ -1183,6 +1183,617 @@ function OnboardingCarousel({ slides, onClose, overlay = true }) {
 }
 
 
+// ==================== Municipios o países (demo interactiva) ====================
+// Esta sección NO es un flujo multi-usuario real: es una demo de un
+// solo jugador. La persona pone su propuesta, y se promedia con
+// respuestas ficticias ya preparadas, para mostrar cómo se sentiría
+// Democracia por Promedio a la escala de un país — con datos reales.
+
+const MUN_INGRESOS_DEFAULT = [
+  { id: "b10", label: "10% más bajo", income: 14000, households: 13.3, pct: 5 },
+  { id: "b10b", label: "10% siguiente", income: 23000, households: 13.3, pct: 8 },
+  { id: "m20a", label: "20% siguiente", income: 45000, households: 26.6, pct: 11 },
+  { id: "m20b", label: "20% medio", income: 75000, households: 26.6, pct: 15 },
+  { id: "m20c", label: "20% siguiente", income: 130000, households: 26.6, pct: 19 },
+  { id: "t10a", label: "10% siguiente", income: 180000, households: 13.3, cap: true, pct: 22 },
+  { id: "t9", label: "9% siguiente (top 10%)", income: 220000, households: 11.9, cap: true, pct: 26 },
+  { id: "t09", label: "0.9% siguiente (top 1%)", income: 500000, households: 1.19, cap: true, pct: 32 },
+  { id: "t0099", label: "0.099% siguiente", income: 3000000, households: 0.13, cap: true, pct: 38 },
+  { id: "billon", label: "0.00034% (billonarios)", income: 1500000000, households: 0.00045, sub: "935 personas", cap: true, pct: 45 },
+];
+const MUN_VIVIENDA_DEFAULT = [
+  { id: "c1", label: "1ª casa", sub: "80% de los hogares — exenta", households: 80, pct: 0 },
+  { id: "c2", label: "2ª casa", sub: "12% de los hogares", households: 12, pct: 5 },
+  { id: "c3", label: "3ª casa", sub: "3% de los hogares", households: 3, pct: 10 },
+  { id: "c4", label: "4ª casa", sub: "1% de los hogares", households: 1, pct: 15 },
+  { id: "c5", label: "5+ casas", sub: "0.5% de los hogares", households: 0.5, pct: 22 },
+  { id: "corp", label: "Corporaciones y megainversionistas", sub: "empresas que acumulan casas para renta", households: 0.05, pct: 27 },
+];
+const MUN_PRODUCTOS_DEFAULT = [
+  { id: "esen", label: "Esenciales", sub: "comida, medicina, ropa", gasto: 800000000000, pct: 0 },
+  { id: "noesen", label: "No esenciales", sub: "electrónicos, juguetes, etc.", gasto: 2500000000000, pct: 8 },
+  { id: "lujo", label: "Lujo", sub: "diamantes y joyería, autos de lujo, yates", gasto: 400000000000, pct: 20 },
+];
+const MUN_RIQUEZA_TOTAL = 8100000000000;
+const MUN_WEALTH_SLICES = [
+  { label: "50% de la población con menos recursos tienen el 2.5% de la riqueza del país", value: 2.5, color: "#3A6EA5" },
+  { label: "Siguiente 40% con menos recursos tienen el 30% de la riqueza", value: 30, color: "#6B4E9E" },
+  { label: "9% tienen el 34% de la riqueza", value: 34, color: "#4C9F70" },
+  { label: "1% tienen el 33% de la riqueza", value: 33, color: "#D64550" },
+];
+const MUN_DEPTOS_DEFAULT = [
+  { id: "defensa", label: "Defensa Nacional", pct: 0, subs: ["Ejército", "Marina", "Fuerza Aérea", "CIA", "Veteranos", "Guardia Nacional"] },
+  { id: "seguridad", label: "Seguridad y Protección Ciudadana", pct: 0, subs: ["FBI", "Seguridad Nacional (DHS)", "Patrulla Fronteriza", "DEA", "Servicio Secreto"] },
+  { id: "educacion", label: "Educación", pct: 0, subs: ["Educación básica", "Becas universitarias", "Educación especial", "Investigación educativa"] },
+  { id: "ambiente", label: "Medio Ambiente y Recursos Naturales", pct: 0, subs: ["Protección Ambiental (EPA)", "Parques Nacionales", "Vida Silvestre", "Calidad del Aire y Agua", "Cambio Climático"] },
+  { id: "energia", label: "Secretaría de Energía", pct: 0, subs: ["Energía Nuclear", "Energías Renovables", "Reservas de Petróleo", "Investigación (laboratorios nacionales)", "Regulación Energética"] },
+  { id: "economia", label: "Secretaría de Economía", pct: 0, subs: ["Comercio Internacional", "Pequeñas Empresas", "Protección al Consumidor", "Patentes y Marcas", "Estadísticas Económicas"] },
+  { id: "agricultura", label: "Agricultura y Desarrollo Rural", pct: 0, subs: ["Programas Agrícolas", "Silvicultura", "Pesca", "Seguridad Alimentaria", "Desarrollo Rural"] },
+  { id: "infraestructura", label: "Infraestructura, Comunicaciones y Transportes", pct: 0, subs: ["Presas y Recursos Hídricos", "Carreteras", "Trenes", "Telecomunicaciones", "Aviación", "Puertos"] },
+  { id: "salud", label: "Salud", pct: 0, subs: ["FDA", "CDC", "Medicaid", "Seguro Médico Universal", "NIH (investigación)"] },
+  { id: "trabajo", label: "Trabajo y Seguro Social", pct: 0, subs: ["Retiro (OASI)", "Sobrevivientes", "Discapacidad (SSDI)", "Administración de beneficios"] },
+  { id: "cultura", label: "Secretaría de Cultura", pct: 0, subs: ["Museos Nacionales", "Artes Escénicas", "Patrimonio Histórico", "Bibliotecas Públicas", "Cine y Medios"] },
+];
+const MUN_TOTAL_BUDGET = 15000000000000;
+
+function munFmt(n) {
+  return "$" + Math.round(n).toLocaleString("en-US");
+}
+
+function MunSliderRow({ item, pct, onChange, max, showIncome }) {
+  const netIncome = item.income !== undefined ? item.income * (1 - pct / 100) : null;
+  return (
+    <div className="rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
+      <div className="dp-body text-[11px] font-semibold" style={{ color: INK }}>
+        {item.label} {item.cap && <i className="ti ti-chart-line" style={{ fontSize: "10px", color: BLUE }}></i>}
+      </div>
+      {item.sub && <div className="dp-body text-[9px] mb-1" style={{ color: INK + "77" }}>{item.sub}</div>}
+      {showIncome && item.income !== undefined && (
+        <div className="flex justify-between dp-mono text-[9.5px] mb-1" style={{ color: INK + "99" }}>
+          <span>antes: {munFmt(item.income)}</span>
+          <span>después: <b style={{ color: GREEN }}>{munFmt(netIncome)}</b></span>
+        </div>
+      )}
+      <div className="flex items-center gap-1.5 mb-1">
+        <button onClick={() => onChange(Math.max(0, pct - 1))} className="rounded-full flex items-center justify-center" style={{ width: "22px", height: "22px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>−</button>
+        <input
+          type="range"
+          min="0"
+          max={max}
+          value={pct}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="flex-1"
+          style={{ background: `linear-gradient(to right, ${BLUE} ${(pct / max) * 100}%, #dfe3ea ${(pct / max) * 100}%)`, height: "6px", borderRadius: "3px", appearance: "none", WebkitAppearance: "none", outline: "none" }}
+        />
+        <button onClick={() => onChange(Math.min(max, pct + 1))} className="rounded-full flex items-center justify-center" style={{ width: "22px", height: "22px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>+</button>
+        <input
+          type="number"
+          min="0"
+          max={max}
+          value={pct}
+          onChange={(e) => onChange(Math.max(0, Math.min(max, Number(e.target.value) || 0)))}
+          className="dp-mono text-center rounded-lg"
+          style={{ width: "38px", border: `1px solid ${BLUE}33`, padding: "2px 4px", fontSize: "11px", color: BLUE, fontWeight: 700 }}
+        />
+        <span className="dp-body text-[10px]" style={{ color: INK + "77" }}>%</span>
+      </div>
+    </div>
+  );
+}
+
+function MunResultCard({ rows, totalLabel, totalValue, onContinue }) {
+  return (
+    <div className="rounded-xl p-3.5" style={{ background: PAGE_BG }}>
+      <div className="dp-display text-sm font-bold" style={{ color: INK }}>Propuesta enviada</div>
+      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>Se promedió con las respuestas de otros ciudadanos del ejemplo.</div>
+      <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Resultados colectivos</div>
+      {rows.map((r, i) => (
+        <div key={i} className="py-1" style={{ borderTop: `1px solid ${BLUE}15` }}>
+          <div className="dp-body text-[10.5px] font-semibold" style={{ color: INK }}>{r.label}</div>
+          <div className="flex justify-between dp-mono text-[10px]" style={{ color: INK + "99" }}>
+            <span>{r.pct !== undefined ? <React.Fragment>impuesto decidido: <b style={{ color: BLUE }}>{r.pct.toFixed(1)}%</b></React.Fragment> : ""}</span>
+            <span>recauda: <b style={{ color: GREEN }}>{munFmt(r.collected)}</b></span>
+          </div>
+        </div>
+      ))}
+      <div className="flex justify-between items-baseline mt-2 pt-2" style={{ borderTop: `1px solid ${BLUE}33` }}>
+        <span className="dp-body text-[11px]" style={{ color: INK + "99" }}>{totalLabel}</span>
+        <span className="dp-display text-base font-bold" style={{ color: BLUE }}>{totalValue}</span>
+      </div>
+      <button onClick={onContinue} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Continuar →</button>
+    </div>
+  );
+}
+
+function MunIngresosTab({ onNext }) {
+  const [items, setItems] = useState(MUN_INGRESOS_DEFAULT);
+  const [submitted, setSubmitted] = useState(false);
+  const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
+
+  let badOrder = false;
+  for (let i = 1; i < items.length; i++) {
+    if (items[i].income * (1 - items[i].pct / 100) < items[i - 1].income * (1 - items[i - 1].pct / 100)) badOrder = true;
+  }
+
+  if (submitted) {
+    const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.income * (it.pct / 100) * it.households * 1000000 }));
+    const total = rows.reduce((s, r) => s + r.collected, 0);
+    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
+  }
+
+  return (
+    <div>
+      <div className="mb-2"><OnbIcon name="ti-cash" /></div>
+      <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>Impuestos a los ingresos</div>
+      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>No puedes dejar a un nivel con menos dinero después de impuestos que el de abajo.</div>
+      {items.map((item, i) => (
+        <div key={item.id}>
+          <MunSliderRow item={item} pct={item.pct} onChange={(v) => setPct(i, v)} max={100} showIncome={true} />
+          <div className="flex justify-between dp-body text-[9.5px] mb-2 px-1" style={{ color: INK + "88" }}>
+            <span>{item.households >= 1 ? Math.round(item.households * 1000000).toLocaleString("en-US") + " hogares" : Math.round(item.households * 1000000).toLocaleString("en-US") + " personas"}</span>
+            <span>Recauda: <b style={{ color: BLUE }}>{munFmt(item.income * (item.pct / 100) * item.households * 1000000)}</b></span>
+          </div>
+        </div>
+      ))}
+      {badOrder && (
+        <div className="dp-body text-[10.5px] rounded-lg p-2 mb-2" style={{ color: CORAL, background: CORAL + "15" }}>
+          Un nivel quedaría con menos dinero que el de abajo — ajusta antes de enviar.
+        </div>
+      )}
+      <div className="dp-body text-[10px] rounded-lg p-2 mb-3" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
+        <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
+        En los años 50 en EE. UU., se cobraba más del 90% a quienes ganaban más de $200,000 al año.
+      </div>
+      <button onClick={() => !badOrder && setSubmitted(true)} disabled={badOrder} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40" style={{ background: BLUE }}>
+        📤 Enviar mi propuesta
+      </button>
+    </div>
+  );
+}
+
+function MunViviendaTab({ onNext }) {
+  const [items, setItems] = useState(MUN_VIVIENDA_DEFAULT);
+  const [submitted, setSubmitted] = useState(false);
+  const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
+
+  if (submitted) {
+    const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: 350000 * (it.pct / 100) * it.households * 1330000 }));
+    const total = rows.reduce((s, r) => s + r.collected, 0);
+    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
+  }
+
+  return (
+    <div>
+      <div className="mb-2"><OnbIcon name="ti-home" /></div>
+      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Impuesto a la vivienda</div>
+      {items.map((item, i) => (
+        <div key={item.id}>
+          <MunSliderRow item={item} pct={item.pct} onChange={(v) => setPct(i, v)} max={100} showIncome={false} />
+          <div className="flex justify-between dp-body text-[9.5px] mb-2 px-1" style={{ color: INK + "88" }}>
+            <span></span>
+            <span>Recauda: <b style={{ color: BLUE }}>{munFmt(350000 * (item.pct / 100) * item.households * 1330000)}</b></span>
+          </div>
+        </div>
+      ))}
+      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+    </div>
+  );
+}
+
+function MunProductosTab({ onNext }) {
+  const [items, setItems] = useState(MUN_PRODUCTOS_DEFAULT);
+  const [submitted, setSubmitted] = useState(false);
+  const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
+
+  if (submitted) {
+    const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.gasto * (it.pct / 100) }));
+    const total = rows.reduce((s, r) => s + r.collected, 0);
+    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
+  }
+
+  return (
+    <div>
+      <div className="mb-2"><OnbIcon name="ti-shopping-cart" /></div>
+      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Impuesto a productos</div>
+      {items.map((item, i) => (
+        <div key={item.id}>
+          <MunSliderRow item={item} pct={item.pct} onChange={(v) => setPct(i, v)} max={100} showIncome={false} />
+          <div className="flex justify-between dp-body text-[9.5px] mb-2 px-1" style={{ color: INK + "88" }}>
+            <span></span>
+            <span>Recauda: <b style={{ color: BLUE }}>{munFmt(item.gasto * (item.pct / 100))}</b></span>
+          </div>
+        </div>
+      ))}
+      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+    </div>
+  );
+}
+
+function MunPieSVG({ slices }) {
+  const total = slices.reduce((s, x) => s + x.value, 0);
+  const cx = 70, cy = 70, r = 60;
+  let start = -90;
+  const paths = slices.map((sl, i) => {
+    const angle = (sl.value / total) * 360;
+    const end = start + angle;
+    const x1 = cx + r * Math.cos((start * Math.PI) / 180), y1 = cy + r * Math.sin((start * Math.PI) / 180);
+    const x2 = cx + r * Math.cos((end * Math.PI) / 180), y2 = cy + r * Math.sin((end * Math.PI) / 180);
+    const large = angle > 180 ? 1 : 0;
+    const d = `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`;
+    start = end;
+    return <path key={i} d={d} fill={sl.color} />;
+  });
+  return <svg viewBox="0 0 140 140" width="110" height="110">{paths}</svg>;
+}
+
+function MunRiquezaTab({ onNext }) {
+  const [pct, setPct] = useState(2);
+  const [submitted, setSubmitted] = useState(false);
+
+  if (submitted) {
+    const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
+    return <MunResultCard rows={[{ label: "0.1% más rico", pct, collected }]} totalLabel="Total recaudado" totalValue={munFmt(collected)} onContinue={onNext} />;
+  }
+
+  const comparisons = [
+    { label: "50% más bajo de la población", extra: "~66,000,000 hogares", value: 60000, color: INK },
+    { label: "El hombre más rico del país", extra: "", value: 839000000000, color: CORAL },
+  ];
+
+  return (
+    <div>
+      <div className="mb-2"><OnbIcon name="ti-building-bank" /></div>
+      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Impuesto a la riqueza</div>
+      {comparisons.map((c, i) => (
+        <div key={i} className="flex justify-between items-center rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
+          <div>
+            <div className="dp-body text-[10.5px] font-semibold" style={{ color: c.color }}>{c.label}</div>
+            {c.extra && <div className="dp-body text-[9px]" style={{ color: c.color + "99" }}>{c.extra}</div>}
+          </div>
+          <div className="dp-mono font-bold" style={{ fontSize: c.value > 1e9 ? "12px" : "13px", color: c.color }}>{munFmt(c.value)}</div>
+        </div>
+      ))}
+      <div className="dp-body text-[11px] font-semibold my-2.5" style={{ color: INK }}>Distribución de la riqueza de EE. UU.</div>
+      <div className="flex gap-2.5 items-center mb-2.5">
+        <div><MunPieSVG slices={MUN_WEALTH_SLICES} /></div>
+        <div className="flex-1">
+          {MUN_WEALTH_SLICES.map((sl, i) => (
+            <div key={i} className="flex items-start gap-1.5 mb-1.5">
+              <span className="flex-shrink-0" style={{ width: "8px", height: "8px", borderRadius: "2px", background: sl.color, marginTop: "2px" }}></span>
+              <span className="dp-body text-[9px]" style={{ color: INK, lineHeight: 1.35 }}>{sl.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>
+        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 0.1% más rico del país</b> — a la mediana, y a casi todos los demás, no les toca nada.
+      </div>
+      <MunSliderRow item={{ label: "0.1% más rico", sub: `patrimonio combinado: ${munFmt(MUN_RIQUEZA_TOTAL)}` }} pct={pct} onChange={setPct} max={100} showIncome={false} />
+      <div className="flex justify-between dp-body text-[9.5px] mb-3 px-1" style={{ color: INK + "88" }}>
+        <span></span>
+        <span>Recauda: <b style={{ color: BLUE }}>{munFmt(MUN_RIQUEZA_TOTAL * (pct / 100))}</b></span>
+      </div>
+      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+    </div>
+  );
+}
+
+function MunDeptRow({ dept, deptos, idx, onSetPct, expanded, onToggle, onSetSubPct, onAddSub }) {
+  const used = deptos.reduce((s, d, i) => (i === idx ? s : s + d.pct), 0);
+  const max = Math.max(0, 100 - used);
+  const subTotal = dept.subs.reduce((s, x) => s + (x.pct || 0), 0);
+
+  return (
+    <div className="rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
+      <div className="flex justify-between items-center mb-1">
+        <span className="dp-body text-[11px] font-semibold" style={{ color: INK }}>{dept.label}</span>
+        <button onClick={onToggle} className="dp-body text-[10px]" style={{ color: BLUE }}>{expanded ? "▼ ocultar" : "▶ sub-secretarías"}</button>
+      </div>
+      <div className="flex items-center gap-1.5 mb-1">
+        <button onClick={() => onSetPct(Math.max(0, dept.pct - 1))} className="rounded-full flex items-center justify-center" style={{ width: "22px", height: "22px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>−</button>
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={dept.pct}
+          onChange={(e) => onSetPct(Math.min(max, Number(e.target.value)))}
+          className="flex-1"
+          style={{ background: `linear-gradient(to right, ${BLUE} ${dept.pct}%, #dfe3ea ${dept.pct}%)`, height: "6px", borderRadius: "3px", appearance: "none", WebkitAppearance: "none", outline: "none" }}
+        />
+        <button onClick={() => onSetPct(Math.min(max, dept.pct + 1))} className="rounded-full flex items-center justify-center" style={{ width: "22px", height: "22px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>+</button>
+        <span className="dp-mono text-xs font-bold" style={{ color: BLUE, minWidth: "32px", textAlign: "right" }}>{dept.pct}%</span>
+      </div>
+      <div className="dp-body text-[9.5px]" style={{ color: INK + "88" }}>{munFmt(MUN_TOTAL_BUDGET * (dept.pct / 100))}</div>
+      {expanded && (
+        <div className="mt-2 pt-2" style={{ borderTop: `1px dashed ${BLUE}33` }}>
+          <div className="dp-body text-[9px] mb-0.5" style={{ color: INK + "77" }}>Reparte el 100% de lo que le toca a {dept.label} entre sus sub-secretarías:</div>
+          <div className="dp-body text-[8.5px] mb-1.5 italic" style={{ color: CORAL }}>Si los ciudadanos no lo reparten, los legisladores repartirán entre sub-secretarías.</div>
+          {dept.subs.map((sub, si) => (
+            <div key={si} className="flex items-center gap-1.5 mb-1">
+              <span className="dp-body text-[10px] flex-1" style={{ color: INK }}>{sub.n || sub}</span>
+              <button onClick={() => onSetSubPct(si, -1)} className="rounded-full flex items-center justify-center" style={{ width: "18px", height: "18px", fontSize: "11px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>−</button>
+              <span className="dp-mono text-[10px] font-bold" style={{ color: BLUE, minWidth: "28px", textAlign: "center" }}>{sub.pct || 0}%</span>
+              <button onClick={() => onSetSubPct(si, 1)} className="rounded-full flex items-center justify-center" style={{ width: "18px", height: "18px", fontSize: "11px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>+</button>
+            </div>
+          ))}
+          <div className="dp-body text-[9.5px] text-right" style={{ color: subTotal === 100 ? GREEN : CORAL }}>sub-secretarías: {subTotal}% de {dept.pct}%</div>
+          <button onClick={onAddSub} className="dp-body text-[9.5px] font-medium mt-1.5" style={{ color: BLUE, border: `1.5px dashed ${BLUE}55`, borderRadius: "999px", padding: "4px 10px", background: "none" }}>+ agregar sub-secretaría o proyecto</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MunPresupuestoTab({ onNext }) {
+  const [deptos, setDeptos] = useState(MUN_DEPTOS_DEFAULT.map((d) => ({ ...d, subs: d.subs.map((n) => ({ n, pct: 0 })) })));
+  const [expanded, setExpanded] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [resultExpanded, setResultExpanded] = useState({});
+
+  const setDeptPct = (i, v) => {
+    const used = deptos.reduce((s, d, idx) => (idx === i ? s : s + d.pct), 0);
+    const clamped = Math.max(0, Math.min(100 - used, v));
+    setDeptos(deptos.map((d, idx) => (idx === i ? { ...d, pct: clamped } : d)));
+  };
+  const setSubPct = (di, si, delta) => {
+    const dept = deptos[di];
+    const used = dept.subs.reduce((s, x, idx) => (idx === si ? s : s + x.pct), 0);
+    const clamped = Math.max(0, Math.min(100 - used, dept.subs[si].pct + delta));
+    const newSubs = dept.subs.map((s, idx) => (idx === si ? { ...s, pct: clamped } : s));
+    setDeptos(deptos.map((d, idx) => (idx === di ? { ...d, subs: newSubs } : d)));
+  };
+  const addSub = (di) => {
+    const name = prompt("Nombre de la sub-secretaría o proyecto:");
+    if (!name) return;
+    setDeptos(deptos.map((d, idx) => (idx === di ? { ...d, subs: [...d.subs, { n: name, pct: 0 }] } : d)));
+  };
+  const addDept = () => {
+    const name = prompt("Nombre de la nueva secretaría:");
+    if (!name) return;
+    setDeptos([...deptos, { id: `custom_${Date.now()}`, label: name, pct: 0, subs: [] }]);
+  };
+
+  const totalPct = deptos.reduce((s, d) => s + d.pct, 0);
+
+  if (submitted) {
+    // Se promedia con 2 respuestas ficticias que favorecen Salud y Educación.
+    const favored = { salud: true, educacion: true };
+    let avgDeptos = deptos.map((d) => {
+      const boost = favored[d.id] ? d.pct * 0.6 + 18 : d.pct * 0.85;
+      return { ...d, avgPct: (d.pct + boost + boost) / 3 };
+    });
+    const sumPct = avgDeptos.reduce((s, d) => s + d.avgPct, 0) || 1;
+    avgDeptos = avgDeptos.map((d) => ({ ...d, avgPct: (d.avgPct / sumPct) * 100 }));
+
+    return (
+      <div className="rounded-xl p-3.5" style={{ background: PAGE_BG }}>
+        <div className="dp-display text-sm font-bold" style={{ color: INK }}>Propuesta enviada</div>
+        <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>Se promedió con las respuestas de otros ciudadanos del ejemplo.</div>
+        <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Resultados colectivos por secretaría</div>
+        {avgDeptos.map((d, i) => (
+          <div key={d.id} className="py-1" style={{ borderTop: `1px solid ${BLUE}15` }}>
+            <div className="flex justify-between items-center">
+              <span className="dp-body text-[10.5px] font-semibold" style={{ color: INK }}>{d.label}</span>
+              <span className="flex items-center gap-1.5">
+                <span className="dp-mono text-[11px] font-bold" style={{ color: BLUE }}>{d.avgPct.toFixed(1)}%</span>
+                {d.subs.length > 0 && (
+                  <button onClick={() => setResultExpanded({ ...resultExpanded, [i]: !resultExpanded[i] })} className="dp-body text-[9px]" style={{ color: BLUE }}>{resultExpanded[i] ? "▼" : "▶"}</button>
+                )}
+              </span>
+            </div>
+            <div className="dp-mono text-[9.5px]" style={{ color: INK + "77" }}>{munFmt(MUN_TOTAL_BUDGET * (d.avgPct / 100))}</div>
+            {resultExpanded[i] && d.subs.length > 0 && (
+              <div className="mt-1 pl-2" style={{ borderLeft: `2px solid ${BLUE}33` }}>
+                {d.subs.map((s, si) => {
+                  const subPctOfTotal = (d.avgPct * (100 / d.subs.length)) / 100;
+                  return (
+                    <div key={si} className="flex justify-between dp-body text-[9.5px] py-0.5" style={{ color: INK + "88" }}>
+                      <span>{s.n}</span>
+                      <span>{munFmt(MUN_TOTAL_BUDGET * (subPctOfTotal / 100))}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ))}
+        <button onClick={onNext} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Continuar →</button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="mb-2"><OnbIcon name="ti-chart-pie" /></div>
+      <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>Presupuesto participativo</div>
+      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>
+        Reparte lo recaudado entre secretaría, sub-secretaría, o un proyecto específico que creas importante. Las respuestas de todos se promedian por categoría.
+      </div>
+      {deptos.map((dept, i) => (
+        <MunDeptRow
+          key={dept.id}
+          dept={dept}
+          deptos={deptos}
+          idx={i}
+          onSetPct={(v) => setDeptPct(i, v)}
+          expanded={!!expanded[i]}
+          onToggle={() => setExpanded({ ...expanded, [i]: !expanded[i] })}
+          onSetSubPct={(si, delta) => setSubPct(i, si, delta)}
+          onAddSub={() => addSub(i)}
+        />
+      ))}
+      <div className="dp-body text-xs font-bold text-center my-2 py-2 rounded-lg" style={{ background: totalPct === 100 ? GREEN + "18" : BLUE_SOFT, color: totalPct === 100 ? GREEN : INK }}>
+        {totalPct}% repartido · {100 - totalPct}% por repartir
+      </div>
+      <button onClick={addDept} className="dp-body w-full text-xs py-2 rounded-full font-medium mb-2" style={{ border: `1.5px dashed ${BLUE}55`, color: BLUE }}>+ agregar otra secretaría</button>
+      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+    </div>
+  );
+}
+
+function MunOtraPreguntaTab({ qkey, title, unit, defaultValue, comparison, min, max, fictitiousResult }) {
+  const [value, setValue] = useState(defaultValue);
+  const [submitted, setSubmitted] = useState(false);
+
+  if (submitted) {
+    return <MunResultCard rows={[{ label: "Decisión colectiva", collected: fictitiousResult }]} totalLabel="Promedio final" totalValue={fictitiousResult + (unit.includes("hora") ? " USD/hora" : unit.includes("vez") ? "x" : unit.includes("año") ? " años" : "")} onContinue={() => {}} />;
+  }
+
+  return (
+    <div>
+      <div className="mb-2"><OnbIcon name="ti-scale" /></div>
+      <div className="dp-display text-base font-bold mb-2" style={{ color: INK }}>{title}</div>
+      <div className="dp-body text-[10px] rounded-lg p-2 mb-2.5" style={{ background: PAGE_BG, color: INK + "88", lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: comparison }} />
+      <div className="flex items-center gap-2 mb-3">
+        <input
+          type="number"
+          value={value}
+          min={min}
+          max={max}
+          onChange={(e) => setValue(Number(e.target.value))}
+          className="dp-mono flex-1 rounded-lg px-2.5 py-2 text-sm font-bold outline-none"
+          style={{ border: `1px solid ${BLUE}33`, color: BLUE }}
+        />
+        <span className="dp-body text-[11px]" style={{ color: INK + "77" }}>{unit}</span>
+      </div>
+      <button
+        onClick={() => {
+          if (min !== undefined && max !== undefined && (value < min || value > max)) {
+            alert(`Debe estar entre ${min} y ${max}.`);
+            return;
+          }
+          setSubmitted(true);
+        }}
+        className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
+        style={{ background: BLUE }}
+      >
+        📤 Enviar mi propuesta
+      </button>
+    </div>
+  );
+}
+
+const MUN_TAX_SUBTABS = [
+  { key: "ingresos", label: "Ingresos" },
+  { key: "vivienda", label: "Vivienda" },
+  { key: "productos", label: "Productos" },
+  { key: "riqueza", label: "Riqueza" },
+];
+const MUN_OTRAS_SUBTABS = [
+  { key: "salario", label: "Salario mín." },
+  { key: "tope", label: "Tope salarial" },
+  { key: "retiro", label: "Retiro" },
+  { key: "horas", label: "Horas/semana" },
+];
+
+function MunicipiosDemo({ onBack }) {
+  const [mainTab, setMainTab] = useState("impuestos");
+  const [taxSubTab, setTaxSubTab] = useState("ingresos");
+  const [otraSubTab, setOtraSubTab] = useState("salario");
+
+  const mainTabs = [
+    { key: "impuestos", label: "Impuestos" },
+    { key: "presupuesto", label: "Presupuesto" },
+    { key: "otras", label: "Otras preguntas" },
+  ];
+
+  return (
+    <div className="px-4 py-6">
+      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <div className="flex gap-1.5 mb-2.5">
+        {mainTabs.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setMainTab(t.key)}
+            className="dp-body flex-1 text-[11px] font-semibold py-2 rounded-lg"
+            style={mainTab === t.key ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {mainTab === "impuestos" && (
+        <div className="flex gap-1 mb-2.5 flex-wrap">
+          {MUN_TAX_SUBTABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTaxSubTab(t.key)}
+              className="dp-body text-[9.5px] font-semibold py-1.5 px-2 rounded-md flex-1"
+              style={{ minWidth: "60px", ...(taxSubTab === t.key ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }) }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {mainTab === "otras" && (
+        <div className="flex gap-1 mb-2.5 flex-wrap">
+          {MUN_OTRAS_SUBTABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setOtraSubTab(t.key)}
+              className="dp-body text-[9.5px] font-semibold py-1.5 px-2 rounded-md flex-1"
+              style={{ minWidth: "60px", ...(otraSubTab === t.key ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }) }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        {mainTab === "impuestos" && taxSubTab === "ingresos" && <MunIngresosTab onNext={() => setTaxSubTab("vivienda")} />}
+        {mainTab === "impuestos" && taxSubTab === "vivienda" && <MunViviendaTab onNext={() => setTaxSubTab("productos")} />}
+        {mainTab === "impuestos" && taxSubTab === "productos" && <MunProductosTab onNext={() => setTaxSubTab("riqueza")} />}
+        {mainTab === "impuestos" && taxSubTab === "riqueza" && <MunRiquezaTab onNext={() => setMainTab("presupuesto")} />}
+        {mainTab === "presupuesto" && <MunPresupuestoTab onNext={() => setMainTab("otras")} />}
+        {mainTab === "otras" && otraSubTab === "salario" && (
+          <MunOtraPreguntaTab
+            qkey="salario"
+            title="¿Cuál debería ser el salario mínimo?"
+            unit="USD/hora"
+            defaultValue={15}
+            comparison="Mínimo federal actual: <b>$7.25/hora</b> (sin cambios desde 2009). Si hubiera subido con la inflación desde los años 60, hoy sería más de <b>$14/hora</b>."
+            fictitiousResult={16}
+          />
+        )}
+        {mainTab === "otras" && otraSubTab === "tope" && (
+          <MunOtraPreguntaTab
+            qkey="tope"
+            title="¿Debe haber un tope entre el sueldo más alto y el más bajo de una empresa?"
+            unit="veces (ej. 20 = el jefe gana 20x el más bajo)"
+            defaultValue={20}
+            comparison="En los años 50/60, un director general ganaba <b>~20 veces</b> más que el trabajador promedio. Hoy en día, gana <b>~281 veces</b> más."
+            fictitiousResult={25}
+          />
+        )}
+        {mainTab === "otras" && otraSubTab === "retiro" && (
+          <MunOtraPreguntaTab
+            qkey="retiro"
+            title="¿A qué edad deberían poder retirarse las personas?"
+            unit="años"
+            defaultValue={65}
+            comparison="La edad de retiro completo del Seguro Social hoy es <b>67 años</b> para quienes nacieron en 1960 o después."
+            fictitiousResult={64}
+          />
+        )}
+        {mainTab === "otras" && otraSubTab === "horas" && (
+          <MunOtraPreguntaTab
+            qkey="horas"
+            title="¿Cuántas horas máximo se debería trabajar a la semana?"
+            unit="horas/semana (entre 15 y 48)"
+            defaultValue={40}
+            min={15}
+            max={48}
+            comparison="Rango permitido: de <b>15</b> a <b>48</b> horas semanales."
+            fictitiousResult={42}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
   return (
     <button
@@ -1208,14 +1819,7 @@ function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
   );
 }
 
-function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones, onChooseResponsables }) {
-  const [soonMsg, setSoonMsg] = useState("");
-
-  const showSoon = (label) => {
-    setSoonMsg(label);
-    setTimeout(() => setSoonMsg(""), 2000);
-  };
-
+function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones, onChooseResponsables, onChooseMunicipios }) {
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
       <HomeIconButton
@@ -1257,15 +1861,9 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
       <HomeIconButton
         icon="ti-building-bank"
         title="Municipios o países"
-        subtitle="Plantilla con impuestos y presupuesto participativo a mayor escala."
-        badge="PRÓXIMAMENTE"
-        onClick={() => showSoon("Municipios o países")}
+        subtitle="Demo interactiva: impuestos y presupuesto participativo a la escala de un país, con datos reales."
+        onClick={onChooseMunicipios}
       />
-      {soonMsg && (
-        <div className="dp-body text-xs text-center py-2 rounded-xl" style={{ background: CORAL + "15", color: CORAL }}>
-          "{soonMsg}" todavía no está lista — ¡pronto!
-        </div>
-      )}
     </div>
   );
 }
@@ -4001,6 +4599,7 @@ function DemocraciaPorPromedioConectada() {
     presupuesto: "Presupuestos participativos",
     asociaciones: "Asociaciones, clubes y orgs",
     responsables: "Selección de responsables",
+    municipios: "Municipios o países",
   };
   const STEP_CHAINS = {
     default: ["Arma tu grupo", "Escribe las preguntas", "Elige el proceso", "Envía a tu grupo", "¡Decidan juntos!"],
@@ -4008,6 +4607,7 @@ function DemocraciaPorPromedioConectada() {
     cuotas: ["Arma tu grupo", "Decidan las categorías", "Propongan la cuota", "Aprueben el resultado", "¡Cobren juntos!"],
     presupuesto: ["Arma tu grupo", "Propongan categorías", "Repartan el %", "Aprueben el resultado", "¡Gasten juntos!"],
     asociaciones: ["Arma tu grupo", "Decidan las cuotas", "Repartan el presupuesto", "Propongan proyectos", "¡Decidan juntos!"],
+    municipios: ["Impuestos", "Presupuesto", "Otras preguntas"],
   };
   const HOME_TAGLINE = "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? — Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.";
   const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || "Organízate y decide";
@@ -4134,6 +4734,18 @@ function DemocraciaPorPromedioConectada() {
               setEntryPurpose("responsabilidades");
               setSelectedOption("responsables");
               setView("custom");
+            }}
+            onChooseMunicipios={() => {
+              setSelectedOption("municipios");
+              setView("municipios");
+            }}
+          />
+        )}
+        {view === "municipios" && (
+          <MunicipiosDemo
+            onBack={() => {
+              setSelectedOption(null);
+              setView("home");
             }}
           />
         )}
