@@ -1051,7 +1051,7 @@ const ONBOARDING_SLIDES = [
   {
     icon: "ti-scale",
     title: "¿Qué es la verdadera democracia?",
-    text: "Elegir representantes, o solo poder escoger entre las opciones que quienes ya tienen el poder nos presentan, no es lo mismo que decidir juntos. Esos procesos concentran el poder en pocas manos — y ahí es más fácil que se abuse de ese poder, o que se divida a la sociedad en bandos.\n\nPor eso creamos esta app: para que cualquier grupo tome decisiones de forma horizontal, sin entregarle el poder a una sola persona, y con total transparencia en cómo se llega a cada resultado.",
+    text: "Elegir representantes, o solo poder escoger entre las opciones que quienes ya tienen el poder nos presentan, no es lo mismo que decidir juntos. Esos procesos concentran el poder en pocas manos — y ahí es más fácil que se abuse de ese poder, o que se divida a la sociedad en bandos.\n\nPor eso creamos esta app: para que cualquier grupo tome decisiones de forma horizontal, sin entregarle el poder a una sola persona, con total transparencia y con procesos muy rápidos y eficientes.\n\nCon los procesos adecuados, decidir juntos une y fortalece al grupo — mientras que votar para darle poder a unas cuantas personas puede dividirlo.",
   },
   {
     icon: "ti-scale",
@@ -1118,7 +1118,12 @@ const ONBOARDING_SLIDES = [
   {
     icon: "ti-building-community",
     title: "Asociaciones, clubes y organizaciones",
-    text: 'Une dos procesos en uno: primero, el grupo decide las Cuotas participativas de cada quien; ese dinero recaudado se convierte automáticamente en el Presupuesto participativo a repartir entre categorías.\n\nDespués de decidir colectivamente en qué categorías se va a gastar el dinero, los miembros pueden proponer proyectos específicos que usen los recursos de cada categoría. Por ejemplo, si se decidió que el 30% del presupuesto —unos $2,000— se destinará a iluminación, los integrantes pueden proponer cómo usar ese dinero: alguien puede sugerir tiras de luces LED que cuestan $1,800, otra persona lámparas para las esquinas por $1,000, y así sucesivamente. Después, todos votan para elegir el proyecto ganador en cada categoría.',
+    text: 'Unimos varios procesos en un solo flujo conectado: primero, el grupo decide las Cuotas participativas de cada quien; ese dinero recaudado se convierte automáticamente en el Presupuesto participativo a repartir entre categorías.\n\nDespués de decidir colectivamente en qué categorías se va a gastar el dinero, los miembros pueden proponer proyectos específicos que usen los recursos de cada categoría. Por ejemplo, si se decidió que el 30% del presupuesto —unos $2,000— se destinará a iluminación, los integrantes pueden proponer cómo usar ese dinero: alguien puede sugerir tiras de luces LED que cuestan $1,800, otra persona lámparas para las esquinas por $1,000, y así sucesivamente. Después, todos votan para elegir el proyecto ganador en cada categoría.\n\nFinalmente, se reparten las responsabilidades del grupo por sorteo entre los miembros.',
+  },
+  {
+    icon: "ti-world",
+    title: "De grupos chicos a sociedades enteras",
+    text: "Estos mismos procesos se pueden usar en grupos pequeños o en sociedades muy grandes, sin cambiar de fondo cómo funcionan.\n\nPor ejemplo, una ciudad o un país, en vez de elegir cuotas, puede elegir sus impuestos: los ciudadanos deciden juntos cuánto cobrar en cada nivel económico, de la misma forma que un grupo decide su cuota.\n\nDe la misma manera, pueden decidir su presupuesto: primero, qué porcentaje va a cada secretaría del gobierno; con el tiempo, pueden proponer proyectos específicos y detallar su presupuesto tanto como quieran. Los presupuestos que propone cada quien se promedian entre todos, para llegar a la decisión final.",
   },
 ];
 
@@ -1222,26 +1227,26 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
       <HomeIconButton
         icon="ti-coin"
         title="Cuotas participativas"
-        subtitle="Flujo guiado de varias etapas para decidir las cuotas de tu vecindario, condominio o club."
+        subtitle="Decidamos juntos si todos pagamos la misma cuota, y cuánto es lo que hay que pagar."
         onClick={onChooseCuotas}
       />
       <HomeIconButton
         icon="ti-chart-pie"
         title="Presupuestos participativos"
-        subtitle="Flujo guiado para decidir en qué se gasta el presupuesto del grupo."
+        subtitle="Decidamos juntos en qué invertir o gastar el dinero que tenemos."
         onClick={onChoosePresupuesto}
-      />
-      <HomeIconButton
-        icon="ti-building-community"
-        title="Asociaciones, clubes y orgs"
-        subtitle="Cuotas y presupuesto participativo, uno después del otro."
-        onClick={onChooseAsociaciones}
       />
       <HomeIconButton
         icon="ti-dice-5"
         title="Selección de responsables"
-        subtitle="Define cargos (como tesorero) y sortea al azar entre los candidatos de cada uno, sin repetir hasta que todos hayan salido."
+        subtitle="Para asignar responsabilidades no hace falta votar por personas — asignemos responsabilidades por sorteo."
         onClick={onChooseResponsables}
+      />
+      <HomeIconButton
+        icon="ti-building-community"
+        title="Asociaciones, clubes y orgs"
+        subtitle="Cuotas, presupuesto, proyectos y responsables — un solo proceso conectado."
+        onClick={onChooseAsociaciones}
       />
       <HomeIconButton
         icon="ti-pencil"
@@ -1416,7 +1421,7 @@ function GroupCreatedScreen({ groupName, code, onContinue }) {
   return (
     <div className="px-4 py-6">
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>¡Tu grupo "{groupName}" ya existe!</div>
+        <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>¡Creaste el grupo "{groupName}"!</div>
         <p className="dp-body text-[12px] mb-3" style={{ color: INK + "88" }}>
           Comparte el código o el link con quienes quieras invitar.
         </p>
@@ -4004,9 +4009,11 @@ function DemocraciaPorPromedioConectada() {
     presupuesto: ["Arma tu grupo", "Propongan categorías", "Repartan el %", "Aprueben el resultado", "¡Gasten juntos!"],
     asociaciones: ["Arma tu grupo", "Decidan las cuotas", "Repartan el presupuesto", "Propongan proyectos", "¡Decidan juntos!"],
   };
+  const HOME_TAGLINE = "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? — Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.";
   const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || "Organízate y decide";
   const sessionName = session ? (session.user.user_metadata && session.user.user_metadata.name) || "" : "";
   const sessionEmail = session ? session.user.email : "";
+  const isHomeHeader = !connectedGroupName && !selectedOption;
   const headerSteps = STEP_CHAINS[selectedOption] || STEP_CHAINS.default;
 
   useEffect(() => {
@@ -4059,12 +4066,16 @@ function DemocraciaPorPromedioConectada() {
           </div>
           <h1 className="dp-display text-2xl font-bold leading-tight" style={{ color: INK }}>{headerTitle}</h1>
           <div className="dp-body text-[12px] mt-2.5 leading-relaxed" style={{ color: INK + "99" }}>
-            {headerSteps.map((f, i, arr) => (
-              <React.Fragment key={i}>
-                <span>{f}</span>
-                {i < arr.length - 1 && <span style={{ color: BLUE, margin: "0 4px" }}>→</span>}
-              </React.Fragment>
-            ))}
+            {isHomeHeader ? (
+              <span>{HOME_TAGLINE}</span>
+            ) : (
+              headerSteps.map((f, i, arr) => (
+                <React.Fragment key={i}>
+                  <span>{f}</span>
+                  {i < arr.length - 1 && <span style={{ color: BLUE, margin: "0 4px" }}>→</span>}
+                </React.Fragment>
+              ))
+            )}
           </div>
         </div>
 
