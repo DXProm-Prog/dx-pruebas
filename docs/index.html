@@ -1238,16 +1238,16 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
         onClick={onChooseAsociaciones}
       />
       <HomeIconButton
-        icon="ti-pencil"
-        title="Crea tu grupo y tus propias preguntas"
-        subtitle="Arma tu propio grupo, preguntas y reglas, sin plantilla."
-        onClick={onChooseCustom}
-      />
-      <HomeIconButton
         icon="ti-dice-5"
         title="Selección de responsables"
         subtitle="Define cargos (como tesorero) y sortea al azar entre los candidatos de cada uno, sin repetir hasta que todos hayan salido."
         onClick={onChooseResponsables}
+      />
+      <HomeIconButton
+        icon="ti-pencil"
+        title="Crea tu grupo y tus propias preguntas"
+        subtitle="Arma tu propio grupo, preguntas y reglas, sin plantilla."
+        onClick={onChooseCustom}
       />
       <HomeIconButton
         icon="ti-building-bank"
@@ -3155,10 +3155,10 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
-        {flow.template === "cuotas" ? "Cuotas participativas" : "Presupuesto participativo"}{flow.status === "finished" ? " · terminado" : ""}
+        {flow.template === "cuotas" ? "Cuotas participativas" : flow.template === "responsabilidades" ? "Selección de responsables" : "Presupuesto participativo"}{flow.status === "finished" ? " · terminado" : ""}
       </div>
 
-      {isAdmin && flow.status === "active" && (
+      {isAdmin && flow.status === "active" && flow.template !== "responsabilidades" && (
         <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
           <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
             % mínimo de apoyo para que sobreviva una categoría
