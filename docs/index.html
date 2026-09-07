@@ -3543,7 +3543,12 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   const prevPendingCount = React.useRef(null);
 
   const flows = group ? group.flows || [] : [];
-  const latestOrActive = [...flows].reverse().find((f) => f.status === "active") || flows[flows.length - 1];
+  // Si venimos de "Selección de responsables" (sin pasar por
+  // Asociaciones), solo nos interesan flujos de ese tipo — así, un
+  // grupo reciclado que ya tuviera Cuotas o Presupuesto de pruebas
+  // anteriores no se cuela aquí ni confunde la pantalla.
+  const relevantFlows = hideFlowStarters ? flows.filter((f) => f.template === "responsabilidades") : flows;
+  const latestOrActive = [...relevantFlows].reverse().find((f) => f.status === "active") || relevantFlows[relevantFlows.length - 1];
   // Se muestra el flujo "fijado" (para que una tarjeta de felicidades o
   // resultado recién terminado no desaparezca de golpe si se encadena a
   // otro flujo) — solo se avanza al siguiente cuando el usuario lo pide
@@ -3635,7 +3640,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
 
   const me = group.members.find((m) => m.id === memberId);
   const isAdmin = group.admin.id === memberId;
-  const activeFlow = flows.find((f) => f.id === pinnedFlowId) || latestOrActive;
+  const activeFlow = relevantFlows.find((f) => f.id === pinnedFlowId) || latestOrActive;
   const pendingMembers = group.members.filter((m) => !m.approved);
 
   return (

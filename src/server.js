@@ -846,12 +846,22 @@ app.post("/api/groups/:code/flows", async (req, res) => {
   const alreadyActive = group.flows.find((f) => f.template === template && f.status === "active");
   if (alreadyActive) return res.status(400).json({ error: "Ya hay un flujo de este tipo en curso" });
 
+  // Este endpoint genérico solo se usa para arrancar un flujo de forma
+  // independiente (nunca para el encadenado interno de Asociaciones,
+  // que se arma aparte) — así que si es "responsabilidades", significa
+  // que se eligió a propósito desde "Selección de responsables", y no
+  // hace falta preguntarle al grupo si quiere hacerlo: ya se decidió.
+  const initialConfig = {
+    ...(TEMPLATES[template].defaultConfig || {}),
+    ...(template === "responsabilidades" ? { skipOpenVote: true } : {}),
+  };
+
   const flow = {
     id: generateId(),
     template,
     status: "active",
-    config: { ...(TEMPLATES[template].defaultConfig || {}) },
-    currentStage: { ...TEMPLATES[template].getInitialStage(TEMPLATES[template].defaultConfig || {}), instanceIndex: 0 },
+    config: initialConfig,
+    currentStage: { ...TEMPLATES[template].getInitialStage(initialConfig), instanceIndex: 0 },
     stages: [],
     chainNext: chainNext || null,
     createdAt: new Date().toISOString(),

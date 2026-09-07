@@ -184,10 +184,34 @@ const presupuesto = {
   },
 };
 
+const RESPONSABILIDADES_SUGGESTED_ROLES = [
+  { id: "tesorero", name: "Tesorero", description: "recibe el dinero de las cuotas y lo reparte para los proyectos." },
+  { id: "auditor", name: "Auditor", description: "revisa los proyectos para asegurarse de que sí se estén realizando conforme a las propuestas y de acuerdo al presupuesto." },
+  { id: "facilitador", name: "Facilitador", description: "encargado de organizar las reuniones durante el mes." },
+];
+
+function responsabilidadesConfigurarPuestosStage() {
+  return {
+    key: "configurarPuestos",
+    type: "configurar_puestos",
+    text: "Estos son puestos sugeridos para Asociaciones, pero pueden modificarlos por los puestos o responsabilidades que su grupo necesite.",
+    config: { suggestedRoles: RESPONSABILIDADES_SUGGESTED_ROLES },
+  };
+}
+
 const responsabilidades = {
   defaultConfig: {},
 
-  getInitialStage() {
+  // flowConfig.skipOpenVote === true cuando este flujo se usa desde
+  // "Selección de responsables" en solitario (fuera de Asociaciones):
+  // ahí, elegir la opción desde inicio YA es la decisión de hacerlo —
+  // no hace falta volver a preguntarle al grupo. Dentro de Asociaciones
+  // (donde esto es una función extra, opcional, sugerida al final del
+  // proceso) sí se le pregunta al grupo primero.
+  getInitialStage(flowConfig) {
+    if (flowConfig && flowConfig.skipOpenVote) {
+      return responsabilidadesConfigurarPuestosStage();
+    }
     return {
       key: "openRoles",
       type: "mayoria",
@@ -206,18 +230,7 @@ const responsabilidades = {
 
     if (last.key === "openRoles") {
       if (last.result.winner !== "Sí") return null;
-      return {
-        key: "configurarPuestos",
-        type: "configurar_puestos",
-        text: "Estos son puestos sugeridos para Asociaciones, pero pueden modificarlos por los puestos o responsabilidades que su grupo necesite.",
-        config: {
-          suggestedRoles: [
-            { id: "tesorero", name: "Tesorero", description: "recibe el dinero de las cuotas y lo reparte para los proyectos." },
-            { id: "auditor", name: "Auditor", description: "revisa los proyectos para asegurarse de que sí se estén realizando conforme a las propuestas y de acuerdo al presupuesto." },
-            { id: "facilitador", name: "Facilitador", description: "encargado de organizar las reuniones durante el mes." },
-          ],
-        },
-      };
+      return responsabilidadesConfigurarPuestosStage();
     }
 
     if (last.key === "configurarPuestos") {
