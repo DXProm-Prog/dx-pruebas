@@ -1342,7 +1342,7 @@ function MunIngresosTab({ onNext }) {
       )}
       <div className="dp-body text-[10px] rounded-lg p-2 mb-3" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
         <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
-        En los años 50 en EE. UU., se cobraba más del 90% a quienes ganaban más de $200,000 al año.
+        En los años 50 en EE. UU. (1951–1963), se cobraba un 91% a la porción de ingresos por encima de $200,000 al año.
       </div>
       <button onClick={() => !badOrder && setSubmitted(true)} disabled={badOrder} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40" style={{ background: BLUE }}>
         📤 Enviar mi propuesta
@@ -1432,7 +1432,7 @@ function MunRiquezaTab({ onNext }) {
 
   if (submitted) {
     const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
-    return <MunResultCard rows={[{ label: "0.1% más rico", pct, collected }]} totalLabel="Total recaudado" totalValue={munFmt(collected)} onContinue={onNext} />;
+    return <MunResultCard rows={[{ label: "0.01% más rico", pct, collected }]} totalLabel="Total recaudado" totalValue={munFmt(collected)} onContinue={onNext} />;
   }
 
   const comparisons = [
@@ -1466,9 +1466,13 @@ function MunRiquezaTab({ onNext }) {
         </div>
       </div>
       <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>
-        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 0.1% más rico del país</b> — a la mediana, y a casi todos los demás, no les toca nada.
+        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 0.01% más rico del país</b> — a la mediana, y a casi todos los demás, no les toca nada.
       </div>
-      <MunSliderRow item={{ label: "0.1% más rico", sub: `patrimonio combinado: ${munFmt(MUN_RIQUEZA_TOTAL)}` }} pct={pct} onChange={setPct} max={100} showIncome={false} />
+      <div className="dp-body text-[10px] rounded-lg p-2 mb-2.5" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
+        <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
+        En los años 50 en EE. UU. (1951–1963), se cobraba un 91% a la porción de ingresos por encima de $200,000 al año.
+      </div>
+      <MunSliderRow item={{ label: "0.01% más rico", sub: `patrimonio combinado: ${munFmt(MUN_RIQUEZA_TOTAL)}` }} pct={pct} onChange={setPct} max={100} showIncome={false} />
       <div className="flex justify-between dp-body text-[9.5px] mb-3 px-1" style={{ color: INK + "88" }}>
         <span></span>
         <span>Recauda: <b style={{ color: BLUE }}>{munFmt(MUN_RIQUEZA_TOTAL * (pct / 100))}</b></span>
@@ -1631,12 +1635,31 @@ function MunPresupuestoTab({ onNext }) {
   );
 }
 
-function MunOtraPreguntaTab({ qkey, title, unit, defaultValue, comparison, min, max, fictitiousResult }) {
+function MunOtraPreguntaTab({ title, unit, resultLabel, resultSuffix, defaultValue, comparison, min, max, fictitiousResult, onNext, onSubmitResult, isLast, onShowSummary }) {
   const [value, setValue] = useState(defaultValue);
   const [submitted, setSubmitted] = useState(false);
 
   if (submitted) {
-    return <MunResultCard rows={[{ label: "Decisión colectiva", collected: fictitiousResult }]} totalLabel="Promedio final" totalValue={fictitiousResult + (unit.includes("hora") ? " USD/hora" : unit.includes("vez") ? "x" : unit.includes("año") ? " años" : "")} onContinue={() => {}} />;
+    const collective = Math.round(((value + fictitiousResult * 3) / 4) * 10) / 10;
+    return (
+      <div className="rounded-xl p-3.5" style={{ background: PAGE_BG }}>
+        <div className="dp-display text-sm font-bold" style={{ color: INK }}>Propuesta enviada</div>
+        <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>Se promedió con las respuestas de otros ciudadanos del ejemplo.</div>
+        <div className="dp-body text-[11px] font-semibold mb-1" style={{ color: INK }}>Resultado colectivo</div>
+        <div className="flex justify-between items-baseline py-1">
+          <span className="dp-body text-[11px]" style={{ color: INK + "99" }}>{resultLabel}</span>
+          <span className="dp-display text-base font-bold" style={{ color: BLUE }}>{collective}{resultSuffix}</span>
+        </div>
+        <div className="flex gap-2 mt-3">
+          {!isLast && (
+            <button onClick={onNext} className="dp-body flex-1 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Continuar →</button>
+          )}
+          {isLast && (
+            <button onClick={onShowSummary} className="dp-body flex-1 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Ver resultados de todo el flujo</button>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -1662,6 +1685,8 @@ function MunOtraPreguntaTab({ qkey, title, unit, defaultValue, comparison, min, 
             alert(`Debe estar entre ${min} y ${max}.`);
             return;
           }
+          const collective = Math.round(((value + fictitiousResult * 3) / 4) * 10) / 10;
+          onSubmitResult(collective);
           setSubmitted(true);
         }}
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
@@ -1669,6 +1694,30 @@ function MunOtraPreguntaTab({ qkey, title, unit, defaultValue, comparison, min, 
       >
         📤 Enviar mi propuesta
       </button>
+    </div>
+  );
+}
+
+function MunOtrasResumen({ results, onBack }) {
+  const rows = [
+    { label: "Salario mínimo", value: results.salario, suffix: " USD/hora" },
+    { label: "Tope de proporción salarial", value: results.tope, suffix: "x" },
+    { label: "Horas máximas por semana", value: results.horas, suffix: " horas" },
+    { label: "Edad de retiro", value: results.retiro, suffix: " años" },
+  ];
+  return (
+    <div>
+      <div className="mb-2"><OnbIcon name="ti-list-check" /></div>
+      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Resultados de todo el flujo</div>
+      {rows.map((r, i) => (
+        <div key={i} className="flex justify-between items-center rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
+          <span className="dp-body text-[11px] font-semibold" style={{ color: INK }}>{r.label}</span>
+          <span className="dp-mono text-sm font-bold" style={{ color: r.value === null ? INK + "55" : BLUE }}>
+            {r.value === null ? "sin responder" : r.value + r.suffix}
+          </span>
+        </div>
+      ))}
+      <button onClick={onBack} className="dp-body w-full mt-3 text-xs py-2 rounded-full font-medium" style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}>← Volver a las preguntas</button>
     </div>
   );
 }
@@ -1682,14 +1731,16 @@ const MUN_TAX_SUBTABS = [
 const MUN_OTRAS_SUBTABS = [
   { key: "salario", label: "Salario mín." },
   { key: "tope", label: "Tope salarial" },
-  { key: "retiro", label: "Retiro" },
   { key: "horas", label: "Horas/semana" },
+  { key: "retiro", label: "Retiro" },
 ];
 
 function MunicipiosDemo({ onBack }) {
   const [mainTab, setMainTab] = useState("impuestos");
   const [taxSubTab, setTaxSubTab] = useState("ingresos");
   const [otraSubTab, setOtraSubTab] = useState("salario");
+  const [showOtrasSummary, setShowOtrasSummary] = useState(false);
+  const [otrasResults, setOtrasResults] = useState({ salario: null, tope: null, horas: null, retiro: null });
 
   const mainTabs = [
     { key: "impuestos", label: "Impuestos" },
@@ -1726,7 +1777,7 @@ function MunicipiosDemo({ onBack }) {
           ))}
         </div>
       )}
-      {mainTab === "otras" && (
+      {mainTab === "otras" && !showOtrasSummary && (
         <div className="flex gap-1 mb-2.5 flex-wrap">
           {MUN_OTRAS_SUBTABS.map((t) => (
             <button
@@ -1746,49 +1797,64 @@ function MunicipiosDemo({ onBack }) {
         {mainTab === "impuestos" && taxSubTab === "productos" && <MunProductosTab onNext={() => setTaxSubTab("riqueza")} />}
         {mainTab === "impuestos" && taxSubTab === "riqueza" && <MunRiquezaTab onNext={() => setMainTab("presupuesto")} />}
         {mainTab === "presupuesto" && <MunPresupuestoTab onNext={() => setMainTab("otras")} />}
-        {mainTab === "otras" && otraSubTab === "salario" && (
+        {mainTab === "otras" && showOtrasSummary && <MunOtrasResumen results={otrasResults} onBack={() => setShowOtrasSummary(false)} />}
+        {mainTab === "otras" && !showOtrasSummary && otraSubTab === "salario" && (
           <MunOtraPreguntaTab
-            qkey="salario"
             title="¿Cuál debería ser el salario mínimo?"
             unit="USD/hora"
+            resultLabel="Salario mínimo"
+            resultSuffix=" USD/hora"
             defaultValue={15}
             comparison="Mínimo federal actual: <b>$7.25/hora</b> (sin cambios desde 2009). Si hubiera subido con la inflación desde los años 60, hoy sería más de <b>$14/hora</b>."
             fictitiousResult={16}
+            onNext={() => setOtraSubTab("tope")}
+            onSubmitResult={(v) => setOtrasResults({ ...otrasResults, salario: v })}
           />
         )}
-        {mainTab === "otras" && otraSubTab === "tope" && (
+        {mainTab === "otras" && !showOtrasSummary && otraSubTab === "tope" && (
           <MunOtraPreguntaTab
-            qkey="tope"
             title="¿Debe haber un tope entre el sueldo más alto y el más bajo de una empresa?"
             unit="veces (ej. 20 = el jefe gana 20x el más bajo)"
+            resultLabel="Tope de proporción salarial"
+            resultSuffix="x"
             defaultValue={20}
             comparison="En los años 50/60, un director general ganaba <b>~20 veces</b> más que el trabajador promedio. Hoy en día, gana <b>~281 veces</b> más."
             fictitiousResult={25}
+            onNext={() => setOtraSubTab("horas")}
+            onSubmitResult={(v) => setOtrasResults({ ...otrasResults, tope: v })}
           />
         )}
-        {mainTab === "otras" && otraSubTab === "retiro" && (
+        {mainTab === "otras" && !showOtrasSummary && otraSubTab === "horas" && (
           <MunOtraPreguntaTab
-            qkey="retiro"
-            title="¿A qué edad deberían poder retirarse las personas?"
-            unit="años"
-            defaultValue={65}
-            comparison="La edad de retiro completo del Seguro Social hoy es <b>67 años</b> para quienes nacieron en 1960 o después."
-            fictitiousResult={64}
-          />
-        )}
-        {mainTab === "otras" && otraSubTab === "horas" && (
-          <MunOtraPreguntaTab
-            qkey="horas"
             title="¿Cuántas horas máximo se debería trabajar a la semana?"
             unit="horas/semana (entre 15 y 48)"
+            resultLabel="Horas máximas por semana"
+            resultSuffix=" horas"
             defaultValue={40}
             min={15}
             max={48}
             comparison="Rango permitido: de <b>15</b> a <b>48</b> horas semanales."
             fictitiousResult={42}
+            onNext={() => setOtraSubTab("retiro")}
+            onSubmitResult={(v) => setOtrasResults({ ...otrasResults, horas: v })}
+          />
+        )}
+        {mainTab === "otras" && !showOtrasSummary && otraSubTab === "retiro" && (
+          <MunOtraPreguntaTab
+            title="¿A qué edad deberían poder retirarse las personas?"
+            unit="años"
+            resultLabel="Edad de retiro"
+            resultSuffix=" años"
+            defaultValue={65}
+            comparison="La edad de retiro completo del Seguro Social hoy es <b>67 años</b> para quienes nacieron en 1960 o después."
+            fictitiousResult={64}
+            isLast={true}
+            onSubmitResult={(v) => setOtrasResults({ ...otrasResults, retiro: v })}
+            onShowSummary={() => setShowOtrasSummary(true)}
           />
         )}
       </div>
+
     </div>
   );
 }
@@ -2727,25 +2793,59 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
         <div className="mb-3">
           <PieChart data={pieData} />
         </div>
-        {stage.config.categories.map((cat) => (
-          <div key={cat} className="flex items-center gap-2 mb-1.5">
-            <span className="dp-body text-xs flex-1" style={{ color: INK }}>{cat}</span>
-            <input
-              type="number"
-              value={catValues[cat] || ""}
-              disabled={disabled}
-              onChange={(e) => setCatValues({ ...catValues, [cat]: e.target.value })}
-              className="dp-mono w-20 rounded-lg px-2 py-1.5 text-sm outline-none disabled:opacity-50"
-              style={{ background: BLUE_SOFT, color: INK }}
-            />
-            <span className="dp-mono text-xs" style={{ color: INK + "77" }}>%</span>
-            {totalBudget > 0 && (
-              <span className="dp-mono text-[11px]" style={{ color: INK + "77" }}>
-                = {formatMoney(((Number(catValues[cat]) || 0) / 100) * totalBudget)}
-              </span>
-            )}
-          </div>
-        ))}
+        {stage.config.categories.map((cat) => {
+          const val = Number(catValues[cat]) || 0;
+          const usedByOthers = stage.config.categories.reduce((s, c) => (c === cat ? s : s + (Number(catValues[c]) || 0)), 0);
+          const maxForThis = Math.max(0, 100 - usedByOthers);
+          const setCatVal = (v) => setCatValues({ ...catValues, [cat]: Math.max(0, Math.min(maxForThis, v)) });
+          return (
+            <div key={cat} className="rounded-lg p-2.5 mb-2" style={{ background: BLUE_SOFT }}>
+              <div className="dp-body text-xs font-semibold mb-1.5" style={{ color: INK }}>{cat}</div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCatVal(val - 1)}
+                  disabled={disabled}
+                  className="rounded-full flex items-center justify-center disabled:opacity-40"
+                  style={{ width: "24px", height: "24px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE, flexShrink: 0 }}
+                >
+                  −
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={val}
+                  disabled={disabled}
+                  onChange={(e) => setCatVal(Number(e.target.value))}
+                  className="flex-1"
+                  style={{ background: `linear-gradient(to right, ${BLUE} ${val}%, #dfe3ea ${val}%)`, height: "6px", borderRadius: "3px", appearance: "none", WebkitAppearance: "none", outline: "none" }}
+                />
+                <button
+                  onClick={() => setCatVal(val + 1)}
+                  disabled={disabled}
+                  className="rounded-full flex items-center justify-center disabled:opacity-40"
+                  style={{ width: "24px", height: "24px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE, flexShrink: 0 }}
+                >
+                  +
+                </button>
+                <input
+                  type="number"
+                  value={catValues[cat] || ""}
+                  disabled={disabled}
+                  onChange={(e) => setCatVal(Number(e.target.value) || 0)}
+                  className="dp-mono text-center rounded-lg disabled:opacity-50"
+                  style={{ width: "42px", border: `1px solid ${BLUE}55`, padding: "3px 4px", fontSize: "12px", color: BLUE, fontWeight: 700, background: "#fff", flexShrink: 0 }}
+                />
+                <span className="dp-mono text-xs" style={{ color: INK + "77", flexShrink: 0 }}>%</span>
+              </div>
+              {totalBudget > 0 && (
+                <div className="dp-mono text-[10.5px] text-right mt-1" style={{ color: INK + "77" }}>
+                  asignado: {formatMoney((val / 100) * totalBudget)}
+                </div>
+              )}
+            </div>
+          );
+        })}
         <div className="dp-mono text-[11px] mb-2 font-semibold" style={{ color: totalRounded === 100 ? GREEN : CORAL }}>
           asignado: {total}% de 100%{totalBudget > 0 ? ` (${formatMoney((total / 100) * totalBudget)} de ${formatMoney(totalBudget)})` : ""}
           {totalRounded > 100 ? ` — te pasaste por ${(totalRounded - 100).toFixed(1)}%` : ""}
