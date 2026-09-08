@@ -828,10 +828,43 @@ function summarizeStage(s) {
     const lines = Object.entries(s.result.categories).map(([cat, r]) => `  - ${cat}: ${r.normalizedPercent}%${r.amount !== undefined ? ` ($${r.amount})` : ""}`);
     return `${s.text}\n${lines.join("\n")}`;
   }
+  if (s.type === "configurar_puestos") {
+    return `${s.text}\n→ puestos: ${s.result.roles.map((r) => r.name).join(", ")}`;
+  }
+  if (s.type === "configurar_candidatos") {
+    return `${s.text}\n→ candidatos: ${s.result.candidates.join(", ")}`;
+  }
+  if (s.type === "monto_por_puesto") {
+    const roleName = (id) => (s.config.roles.find((role) => role.id === id) || {}).name || id;
+    const lines = Object.entries(s.result.puestos).map(([id, p]) => `  - ${roleName(id)}: $${p.amount}/${s.config.frequency}${p.adjusted ? ` (ajustado, era $${p.original})` : ""}`);
+    return `${s.text}\n${lines.join("\n")}`;
+  }
+  if (s.type === "gastos_fijos") {
+    const lines = s.result.gastos.map((g) => `  - ${g.nombre}: $${g.monto}`);
+    return `${s.text}\n  ingresos: $${s.result.ingresos}\n${lines.join("\n")}`;
+  }
+  if (s.type === "ajustar_gastos_fijos") {
+    const lines = s.result.gastos.map((g) => `  - ${g.nombre}: $${g.montoFinal}${g.montoFinal !== g.montoOriginal ? ` (era $${g.montoOriginal})` : ""}`);
+    return `${s.text}\n${lines.join("\n")}\n  TOTAL: $${s.result.totalFinal}`;
+  }
+  if (s.type === "realizar_sorteo") {
+    const roleName = (id) => (s.result.roles.find((role) => role.id === id) || {}).name || id;
+    if (s.result.frequency === "once") {
+      const lines = s.result.roles.map((role) => `  - ${role.name}: ${s.result.assignment[role.id] || "—"}`);
+      return `${s.text}\n${lines.join("\n")}`;
+    }
+    return `${s.text}\n→ calendario rotativo de ${s.result.months.length} meses (ver el detalle en la app)`;
+  }
   return s.text;
 }
 
-const TEMPLATE_LABELS = { cuotas: "Cuotas participativas", presupuesto: "Presupuesto participativo" };
+const TEMPLATE_LABELS = {
+  cuotas: "Cuotas participativas",
+  presupuesto: "Presupuesto participativo",
+  presupuestoCooperativa: "Presupuesto participativo (cooperativa)",
+  responsabilidades: "Selección de responsables",
+  tabuladorSueldos: "Tabulador de sueldos",
+};
 
 // El administrador inicia un flujo nuevo (ej. "cuotas").
 app.post("/api/groups/:code/flows", async (req, res) => {
@@ -1286,6 +1319,24 @@ app.post("/api/groups/:code/flows/:flowId/close-collecting", async (req, res) =>
     finishFlowIfLicitacionDone(group, flow);
   }
   await save(db);
+
+  if (flow.status === "finished") {
+    const summaryLines = Object.entries(flow.licitacion.categories).map(([cat, s]) => {
+      if (s.status === "resolved") {
+        const p = flow.licitacion.proposals.find((pp) => pp.id === s.winner);
+        return `${cat}: ganó "${p ? p.name : "?"}"`;
+      }
+      return `${cat}: sin propuestas`;
+    });
+    notifyResultsToMembers({
+      group,
+      questionText: "Resultado de propuestas del presupuesto",
+      summaryText: summaryLines.join("\n"),
+      frontendUrl: process.env.FRONTEND_URL,
+      subjectPrefix: "Resultado de propuestas",
+    }).catch((err) => console.error("Error de correo (propuestas):", err.message));
+  }
+
   res.json(flow);
 });
 
