@@ -142,6 +142,56 @@ function getFlowChain(flow, allFlows) {
   return chain;
 }
 
+// Muestra los proyectos ganadores de una licitación (propuestas de
+// presupuesto) — se usa junto a la decisión del presupuesto, ya que la
+// licitación no es una "etapa" normal, vive aparte en flow.licitacion.
+function LicitacionResultsDisplay({ flow, detailed }) {
+  if (!flow.licitacion) return null;
+  const cats = Object.keys(flow.licitacion.categories);
+  const resolved = cats.filter((c) => flow.licitacion.categories[c].status === "resolved");
+  if (resolved.length === 0 && !detailed) return null;
+
+  if (!detailed) {
+    return (
+      <div className="mt-3 pt-3" style={{ borderTop: `1px dashed ${BLUE}55` }}>
+        <div className="dp-body text-xs font-semibold mb-2" style={{ color: INK }}>Proyectos ganadores:</div>
+        {resolved.map((cat) => {
+          const s = flow.licitacion.categories[cat];
+          const p = flow.licitacion.proposals.find((pp) => pp.id === s.winner);
+          return (
+            <div key={cat} className="flex justify-between items-baseline mb-1.5">
+              <span className="dp-body text-xs" style={{ color: INK + "99" }}>{cat}</span>
+              <span className="dp-display text-sm font-bold" style={{ color: GREEN }}>{p ? p.name : "—"}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-3">
+      <div className="dp-body text-[11px] font-semibold mb-1" style={{ color: INK + "99" }}>Propuestas de proyectos por categoría</div>
+      {cats.map((cat) => {
+        const catProposals = flow.licitacion.proposals.filter((p) => p.category === cat);
+        const s = flow.licitacion.categories[cat];
+        return (
+          <div key={cat} className="mb-2 pl-2" style={{ borderLeft: `2px solid ${BLUE_SOFT}` }}>
+            <div className="dp-body text-[11px] font-medium mb-1" style={{ color: INK }}>{cat}</div>
+            {catProposals.length === 0 && <div className="dp-body text-[10.5px]" style={{ color: INK + "77" }}>Sin propuestas.</div>}
+            {catProposals.map((p) => (
+              <div key={p.id} className="flex justify-between text-[10.5px]" style={{ color: p.id === s.winner ? GREEN : INK + "99", fontWeight: p.id === s.winner ? 700 : 400 }}>
+                <span>{p.id === s.winner ? "🏆 " : ""}{p.name}</span>
+                <span>{p.cost !== undefined ? formatMoney(p.cost) : ""}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Tarjeta colapsada para un flujo YA TERMINADO dentro de una cadena
 // (ej. Cuotas dentro de Asociaciones) — siempre visible arriba del
 // flujo activo, con la decisión final a la vista y la opción de
@@ -159,8 +209,10 @@ function PreviousFlowSummary({ flow }) {
       {finalStage && (
         <div className="rounded-lg p-3 mt-2" style={{ background: BLUE_SOFT }}>
           <BigDecisionDisplay stage={finalStage} />
+          <LicitacionResultsDisplay flow={flow} />
         </div>
       )}
+      {!finalStage && <LicitacionResultsDisplay flow={flow} />}
       {expanded && (
         <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${BLUE}15` }}>
           {flow.stages.map((s, i) => (
@@ -169,6 +221,7 @@ function PreviousFlowSummary({ flow }) {
               <StageResultView stage={s} />
             </div>
           ))}
+          <LicitacionResultsDisplay flow={flow} detailed />
         </div>
       )}
     </div>
@@ -4680,11 +4733,12 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
 
       {flow.status === "finished" && (() => {
         const finalStage = [...flow.stages].reverse().find((s) => s.key === "quotas" || s.key === "singleQuota" || s.key === "budget" || s.key === "montoPorPuesto");
-        if (!finalStage) return null;
+        if (!finalStage && !flow.licitacion) return null;
         return (
           <div className="rounded-xl p-3.5 mb-3" style={{ background: BLUE_SOFT }}>
             <div className="dp-display text-lg font-bold mb-2" style={{ color: INK }}>Decisión colectiva:</div>
-            <BigDecisionDisplay stage={finalStage} />
+            {finalStage && <BigDecisionDisplay stage={finalStage} />}
+            <LicitacionResultsDisplay flow={flow} />
           </div>
         );
       })()}
@@ -5025,10 +5079,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             </div>
             {(() => {
               const finalStage = [...flow.stages].reverse().find((s) => s.key === "quotas" || s.key === "singleQuota" || s.key === "budget" || s.key === "montoPorPuesto");
-              if (!finalStage) return null;
+              if (!finalStage && !flow.licitacion) return null;
               return (
                 <div className="rounded-lg p-3" style={{ background: BLUE_SOFT }}>
-                  <BigDecisionDisplay stage={finalStage} />
+                  {finalStage && <BigDecisionDisplay stage={finalStage} />}
+                  <LicitacionResultsDisplay flow={flow} />
                 </div>
               );
             })()}
