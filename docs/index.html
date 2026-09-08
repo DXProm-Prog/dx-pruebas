@@ -3149,14 +3149,36 @@ function StageResultView({ stage }) {
     const roleName = (id) => (stage.config.roles.find((role) => role.id === id) || {}).name || id;
     return (
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
-        {Object.entries(r.puestos).map(([id, p]) => (
-          <div key={id} className="flex justify-between py-0.5">
-            <span>{roleName(id)}</span>
-            <span className="dp-mono font-semibold" style={{ color: p.adjusted ? CORAL : INK }}>
-              {formatMoney(p.amount)}/{stage.config.frequency}{p.adjusted ? ` (recortado, era ${formatMoney(p.original)})` : ""}
-            </span>
-          </div>
-        ))}
+        {stage.result.trimPercent > 0 && (
+          <div className="dp-body text-[10.5px] mb-2" style={{ color: INK + "77" }}>Recorte aplicado: {stage.result.trimPercent}% (alto y bajo) antes de promediar.</div>
+        )}
+        {Object.entries(r.puestos).map(([id, p]) => {
+          const d = p.detail;
+          return (
+            <div key={id} className="rounded-lg p-2.5 mb-2" style={{ background: PAGE_BG }}>
+              <div className="flex justify-between items-baseline mb-1">
+                <span className="font-semibold" style={{ color: INK }}>{roleName(id)}</span>
+                <span className="dp-mono font-bold text-sm" style={{ color: p.adjusted ? CORAL : BLUE }}>{formatMoney(p.amount)}/{stage.config.frequency}</span>
+              </div>
+              {d && (
+                <React.Fragment>
+                  <div className="dp-mono text-[10px] mb-1" style={{ color: INK + "88" }}>
+                    Propuestas: {d.sorted.map((v) => formatMoney(v)).join(", ")}
+                    {d.trimmedCount > 0 ? ` — se descartan ${d.trimmedCount} más alta(s) y ${d.trimmedCount} más baja(s)` : ""}
+                  </div>
+                  <div className="dp-mono text-[10px]" style={{ color: INK + "88" }}>
+                    ({d.kept.map((v) => formatMoney(v)).join(" + ")}) ÷ {d.kept.length} = {formatMoney(d.average)}
+                  </div>
+                </React.Fragment>
+              )}
+              {p.adjusted && (
+                <div className="dp-body text-[10px] mt-1" style={{ color: CORAL }}>
+                  Se recortó de {formatMoney(p.original)} a {formatMoney(p.amount)} para respetar el límite de {r.limitTimes}x.
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     );
   }
@@ -3901,6 +3923,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
     flow.config?.categoryThresholdPercent ?? flow.config?.selectionThresholdPercent ?? 10
   );
   const [quotaTrimPercent, setQuotaTrimPercent] = useState(flow.config?.quotaTrimPercent ?? 10);
+  const [sueldoTrimPercent, setSueldoTrimPercent] = useState(flow.config?.sueldoTrimPercent ?? 10);
   const [totalBudget, setTotalBudget] = useState(flow.config?.totalBudget ?? "");
   const [extraAmount, setExtraAmount] = useState(flow.config?.extraAmount ?? "");
   const [memberCounts, setMemberCounts] = useState(flow.config?.memberCounts || {});
@@ -3950,6 +3973,8 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       const config =
         flow.template === "cuotas"
           ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent), memberCounts }
+          : flow.template === "tabuladorSueldos"
+          ? { sueldoTrimPercent: Number(sueldoTrimPercent) }
           : isChainedBudget
           ? { selectionThresholdPercent: Number(categoryThresholdPercent), extraAmount: extraAmount === "" ? 0 : Number(extraAmount), ...licitacionConfig }
           : { selectionThresholdPercent: Number(categoryThresholdPercent), totalBudget: totalBudget === "" ? null : Number(totalBudget), ...licitacionConfig };
@@ -4074,10 +4099,19 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
-        {flow.template === "cuotas" ? "Cuotas participativas" : flow.template === "responsabilidades" ? "Selección de responsables" : "Presupuesto participativo"}{flow.status === "finished" ? " · terminado" : ""}
+        {flow.template === "cuotas"
+          ? "Cuotas participativas"
+          : flow.template === "responsabilidades"
+          ? "Selección de responsables"
+          : flow.template === "tabuladorSueldos"
+          ? "Tabulador de sueldos"
+          : flow.template === "presupuestoCooperativa"
+          ? "Presupuesto participativo (cooperativa)"
+          : "Presupuesto participativo"}
+        {flow.status === "finished" ? " · terminado" : ""}
       </div>
 
-      {isAdmin && flow.status === "active" && flow.template !== "responsabilidades" && (
+      {isAdmin && flow.status === "active" && !["responsabilidades", "tabuladorSueldos"].includes(flow.template) && (
         <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
           <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
             % mínimo de apoyo para que sobreviva una categoría
@@ -4158,6 +4192,31 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           )}
           <div className="dp-body text-[10px] mb-2" style={{ color: INK + "77" }}>
             Solo afecta las etapas que todavía no se han calculado.
+          </div>
+          <button
+            onClick={saveConfig}
+            disabled={savingConfig}
+            className="dp-body w-full text-xs py-1.5 rounded-full text-white font-medium disabled:opacity-40"
+            style={{ background: BLUE }}
+          >
+            {savingConfig ? "Guardando…" : "Guardar"}
+          </button>
+        </div>
+      )}
+
+      {isAdmin && flow.status === "active" && flow.template === "tabuladorSueldos" && (
+        <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
+          <label className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
+            % de recorte (alto y bajo) en los sueldos propuestos
+            <input
+              type="number" min="0" max="45" value={sueldoTrimPercent}
+              onChange={(e) => setSueldoTrimPercent(e.target.value)}
+              className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none ml-2"
+              style={{ background: "#fff" }}
+            />
+          </label>
+          <div className="dp-body text-[10px] mb-2" style={{ color: INK + "77" }}>
+            Antes de promediar cada puesto, se descartan las propuestas más extremas — solo afecta las etapas que todavía no se han calculado.
           </div>
           <button
             onClick={saveConfig}

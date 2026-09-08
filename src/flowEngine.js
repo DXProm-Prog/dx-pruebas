@@ -255,33 +255,34 @@ function computeStageResult(stage, responses, flowConfig = {}) {
   // rompe, se recorta hacia abajo el sueldo más alto (nunca se sube el
   // más bajo) hasta que la proporción quede dentro del límite.
   if (stage.type === "monto_por_puesto") {
-    const raw = {};
+    const trimPercent = stage.config.trimPercent ?? 10;
+    const trimmed = {};
     stage.config.roles.forEach((role) => {
       const vals = responses.map((r) => r.value && r.value[role.id]).filter((v) => typeof v === "number" && !isNaN(v));
-      raw[role.id] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+      trimmed[role.id] = computeTrimmedMean(vals, trimPercent);
     });
     const puestos = {};
     const limitTimes = stage.config.limitTimes || null;
     let wasAdjusted = false;
     if (limitTimes) {
-      const minAvg = Math.min(...Object.values(raw).filter((v) => v > 0));
+      const minAvg = Math.min(...Object.values(trimmed).map((t) => t.average).filter((v) => v > 0));
       const allowedMax = minAvg * limitTimes;
       stage.config.roles.forEach((role) => {
-        const original = Math.round(raw[role.id] * 100) / 100;
-        if (raw[role.id] > allowedMax) {
-          puestos[role.id] = { amount: Math.round(allowedMax * 100) / 100, original, adjusted: true };
+        const original = Math.round(trimmed[role.id].average * 100) / 100;
+        if (trimmed[role.id].average > allowedMax) {
+          puestos[role.id] = { amount: Math.round(allowedMax * 100) / 100, original, adjusted: true, detail: trimmed[role.id] };
           wasAdjusted = true;
         } else {
-          puestos[role.id] = { amount: original, original, adjusted: false };
+          puestos[role.id] = { amount: original, original, adjusted: false, detail: trimmed[role.id] };
         }
       });
     } else {
       stage.config.roles.forEach((role) => {
-        const amount = Math.round(raw[role.id] * 100) / 100;
-        puestos[role.id] = { amount, original: amount, adjusted: false };
+        const amount = Math.round(trimmed[role.id].average * 100) / 100;
+        puestos[role.id] = { amount, original: amount, adjusted: false, detail: trimmed[role.id] };
       });
     }
-    return { type: "monto_por_puesto", puestos, limitTimes, wasAdjusted };
+    return { type: "monto_por_puesto", puestos, limitTimes, wasAdjusted, trimPercent };
   }
 
   // Etapa de una sola respuesta (del facilitador): ingresos de la

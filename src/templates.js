@@ -281,7 +281,7 @@ const responsabilidades = {
 };
 
 const tabuladorSueldos = {
-  defaultConfig: {},
+  defaultConfig: { sueldoTrimPercent: 10 },
 
   getInitialStage() {
     return {
@@ -292,7 +292,7 @@ const tabuladorSueldos = {
     };
   },
 
-  getNextStage(stages) {
+  getNextStage(stages, flowConfig = {}) {
     const last = stages[stages.length - 1];
 
     if (last.key === "limiteVote") {
@@ -339,11 +339,12 @@ const tabuladorSueldos = {
       const vecesStage = stages.find((s) => s.key === "vecesPromedio");
       const limitTimes = vecesStage ? vecesStage.result.average : null;
       const frequency = last.result.winner === "Por hora" ? "hora" : "mes";
+      const trimPercent = flowConfig.sueldoTrimPercent ?? 10;
       return {
         key: "montoPorPuesto",
         type: "monto_por_puesto",
         text: `¿Cuánto debería ganar cada puesto en nuestra cooperativa? (por ${frequency})`,
-        config: { roles: rolesStage.result.roles, frequency, limitTimes },
+        config: { roles: rolesStage.result.roles, frequency, limitTimes, trimPercent },
       };
     }
 
