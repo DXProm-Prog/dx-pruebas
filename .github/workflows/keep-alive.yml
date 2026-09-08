@@ -1,0 +1,16 @@
+name: Mantener activa la base de datos
+
+# Corre cada 2 días (bastante antes del límite de 7 días de Supabase),
+# y también se puede correr a mano desde la pestaña "Actions" de GitHub.
+on:
+  schedule:
+    - cron: "0 12 */2 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping al backend (toca la base de datos)
+        run: |
+          curl -sf https://democracia-por-promedio.onrender.com/api/keepalive
