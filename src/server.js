@@ -9,7 +9,7 @@ const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
 const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner } = require("./email");
 const { computeStageResult, drawResponsabilidades } = require("./flowEngine");
-const { TEMPLATES } = require("./templates");
+const { TEMPLATES, rolesFromNames } = require("./templates");
 
 // Si una sola consulta a la base de datos falla (ej. un problema pasajero
 // de red o de configuración), que se quede solo en ESA petición y no
@@ -1130,14 +1130,29 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   let result;
   if (stage.type === "realizar_sorteo") {
     // Esta etapa no calcula su resultado a partir de respuestas —
-    // necesita los datos de 3 etapas anteriores del mismo flujo.
-    const rolesStage = [...flow.stages].reverse().find((s) => s.key === "configurarPuestos");
+    // necesita los datos de 3 etapas anteriores del mismo flujo. Los
+    // puestos pueden venir de una etapa admin (configurarPuestos, usada
+    // en Tabulador de sueldos) o de una votación con umbral entre todos
+    // (votarPuestos, usada en Selección de responsables).
+    const configuredRolesStage = [...flow.stages].reverse().find((s) => s.key === "configurarPuestos");
+    const votedRolesStage = [...flow.stages].reverse().find((s) => s.key === "votarPuestos");
     const freqStage = [...flow.stages].reverse().find((s) => s.key === "frequencyVote");
     const candStage = [...flow.stages].reverse().find((s) => s.key === "configurarCandidatos");
-    if (!rolesStage || !freqStage || !candStage) {
+    if ((!configuredRolesStage && !votedRolesStage) || !freqStage || !candStage) {
       return res.status(400).json({ error: "Faltan datos de etapas anteriores para poder sortear" });
     }
-    const roles = rolesStage.result.roles;
+    let roles;
+    if (configuredRolesStage) {
+      roles = configuredRolesStage.result.roles;
+    } else {
+      const thresholdPercent = effectiveConfig.puestosThresholdPercent ?? 10;
+      let survivors = votedRolesStage.result.tally.filter((t) => t.percent >= thresholdPercent).map((t) => t.option);
+      if (survivors.length === 0) {
+        const sorted = [...votedRolesStage.result.tally].sort((a, b) => b.percent - a.percent);
+        survivors = sorted.slice(0, 1).map((t) => t.option);
+      }
+      roles = rolesFromNames(survivors);
+    }
     const candidates = candStage.result.candidates;
     if (candidates.length < roles.length) {
       return res.status(400).json({ error: `Se necesitan al menos ${roles.length} candidatos para ${roles.length} puesto(s), y solo hay ${candidates.length}.` });

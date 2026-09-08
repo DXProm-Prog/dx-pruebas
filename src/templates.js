@@ -190,17 +190,29 @@ const RESPONSABILIDADES_SUGGESTED_ROLES = [
   { id: "facilitador", name: "Facilitador", description: "encargado de organizar las reuniones durante el mes." },
 ];
 
-function responsabilidadesConfigurarPuestosStage() {
+// Convierte nombres de puestos (texto simple, ya elegidos por votación)
+// en objetos {id, name, description} — si el nombre coincide con uno
+// de los sugeridos, se le conserva su descripción.
+function rolesFromNames(names) {
+  return names.map((name) => {
+    const clean = String(name).trim();
+    const match = RESPONSABILIDADES_SUGGESTED_ROLES.find((r) => r.name.toLowerCase() === clean.toLowerCase());
+    const slug = clean.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    return { id: slug || `puesto_${Math.random().toString(36).slice(2, 8)}`, name: clean, description: match ? match.description : "" };
+  });
+}
+
+function responsabilidadesProponerPuestosStage() {
   return {
-    key: "configurarPuestos",
-    type: "configurar_puestos",
-    text: "Estos son puestos sugeridos para Asociaciones, pero pueden modificarlos por los puestos o responsabilidades que su grupo necesite.",
-    config: { suggestedRoles: RESPONSABILIDADES_SUGGESTED_ROLES },
+    key: "proponerPuestos",
+    type: "recoleccion_abierta",
+    text: "Propongan los puestos o responsabilidades que debería tener este grupo — ya tienen algunos sugeridos, pueden editarlos o agregar más.",
+    config: { maxItemsPerPerson: 5, suggestedItems: RESPONSABILIDADES_SUGGESTED_ROLES.map((r) => r.name) },
   };
 }
 
 const responsabilidades = {
-  defaultConfig: {},
+  defaultConfig: { puestosThresholdPercent: 10 },
 
   // flowConfig.skipOpenVote === true cuando este flujo se usa desde
   // "Selección de responsables" en solitario (fuera de Asociaciones):
@@ -210,7 +222,7 @@ const responsabilidades = {
   // proceso) sí se le pregunta al grupo primero.
   getInitialStage(flowConfig) {
     if (flowConfig && flowConfig.skipOpenVote) {
-      return responsabilidadesConfigurarPuestosStage();
+      return responsabilidadesProponerPuestosStage();
     }
     return {
       key: "openRoles",
@@ -225,15 +237,26 @@ const responsabilidades = {
     };
   },
 
-  getNextStage(stages) {
+  getNextStage(stages, flowConfig = {}) {
     const last = stages[stages.length - 1];
+    const thresholdPercent = flowConfig.puestosThresholdPercent ?? 10;
 
     if (last.key === "openRoles") {
       if (last.result.winner !== "Sí") return null;
-      return responsabilidadesConfigurarPuestosStage();
+      return responsabilidadesProponerPuestosStage();
     }
 
-    if (last.key === "configurarPuestos") {
+    if (last.key === "proponerPuestos") {
+      const allNames = last.result.pool.map((p) => p.text);
+      return {
+        key: "votarPuestos",
+        type: "seleccion_multiple",
+        text: `Elijan los puestos que crean que este grupo debería tener (pueden elegir varios). Se descartan los que no lleguen al ${thresholdPercent}% de apoyo.`,
+        config: { options: allNames },
+      };
+    }
+
+    if (last.key === "votarPuestos") {
       return {
         key: "frequencyVote",
         type: "mayoria",
@@ -448,4 +471,4 @@ const presupuestoCooperativa = {
 
 const TEMPLATES = { cuotas, presupuesto, responsabilidades, tabuladorSueldos, presupuestoCooperativa };
 
-module.exports = { TEMPLATES };
+module.exports = { TEMPLATES, rolesFromNames };

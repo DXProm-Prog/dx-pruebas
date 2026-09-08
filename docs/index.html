@@ -3079,7 +3079,11 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemberNames }) {
   const [numValue, setNumValue] = useState("");
   const [selected, setSelected] = useState("");
-  const [texts, setTexts] = useState(Array(stage.config.maxItemsPerPerson || 1).fill(""));
+  const [texts, setTexts] = useState(() => {
+    const suggested = stage.config.suggestedItems || [];
+    const blanks = Array(Math.max(0, (stage.config.maxItemsPerPerson || 1) - suggested.length)).fill("");
+    return suggested.length ? [...suggested, ...blanks] : Array(stage.config.maxItemsPerPerson || 1).fill("");
+  });
   const [rankOrder, setRankOrder] = useState([]);
   const [catValues, setCatValues] = useState({});
   const [selectedMulti, setSelectedMulti] = useState([]);
@@ -4408,7 +4412,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const [sent, setSent] = useState(false);
   const [closingStage, setClosingStage] = useState(false);
   const [categoryThresholdPercent, setCategoryThresholdPercent] = useState(
-    flow.config?.categoryThresholdPercent ?? flow.config?.selectionThresholdPercent ?? 10
+    flow.config?.categoryThresholdPercent ?? flow.config?.selectionThresholdPercent ?? flow.config?.puestosThresholdPercent ?? 10
   );
   const [quotaTrimPercent, setQuotaTrimPercent] = useState(flow.config?.quotaTrimPercent ?? 10);
   const [sueldoTrimPercent, setSueldoTrimPercent] = useState(flow.config?.sueldoTrimPercent ?? 10);
@@ -4463,6 +4467,8 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent), memberCounts }
           : flow.template === "tabuladorSueldos"
           ? { sueldoTrimPercent: Number(sueldoTrimPercent) }
+          : flow.template === "responsabilidades"
+          ? { puestosThresholdPercent: Number(categoryThresholdPercent) }
           : isChainedBudget
           ? { selectionThresholdPercent: Number(categoryThresholdPercent), extraAmount: extraAmount === "" ? 0 : Number(extraAmount), ...licitacionConfig }
           : { selectionThresholdPercent: Number(categoryThresholdPercent), totalBudget: totalBudget === "" ? null : Number(totalBudget), ...licitacionConfig };
@@ -4603,10 +4609,10 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         {flow.status === "finished" ? " · terminado" : ""}
       </div>
 
-      {isAdmin && flow.status === "active" && !["responsabilidades", "tabuladorSueldos"].includes(flow.template) && (
+      {isAdmin && flow.status === "active" && flow.template !== "tabuladorSueldos" && (
         <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
           <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
-            % mínimo de apoyo para que sobreviva una categoría
+            {flow.template === "responsabilidades" ? "% mínimo de apoyo para que sobreviva un puesto propuesto" : "% mínimo de apoyo para que sobreviva una categoría"}
             <input
               type="number" min="0" max="100" value={categoryThresholdPercent}
               onChange={(e) => setCategoryThresholdPercent(e.target.value)}
