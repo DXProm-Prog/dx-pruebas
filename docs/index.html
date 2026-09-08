@@ -1214,7 +1214,7 @@ const MUN_PRODUCTOS_DEFAULT = [
   { id: "noesen", label: "No esenciales", sub: "electrónicos, juguetes, etc.", gasto: 2500000000000, pct: 8 },
   { id: "lujo", label: "Lujo", sub: "diamantes y joyería, autos de lujo, yates", gasto: 400000000000, pct: 20 },
 ];
-const MUN_RIQUEZA_TOTAL = 8100000000000;
+const MUN_RIQUEZA_TOTAL = 55900000000000; // 33% del patrimonio total de hogares en EE. UU. ($169.4 billones, Fed Q4 2024) — lo que posee el 1% más rico.
 const MUN_WEALTH_SLICES = [
   { label: "50% de la población con menos recursos tienen el 2.5% de la riqueza del país", value: 2.5, color: "#3A6EA5" },
   { label: "Siguiente 40% con menos recursos tienen el 30% de la riqueza", value: 30, color: "#6B4E9E" },
@@ -1432,7 +1432,7 @@ function MunRiquezaTab({ onNext }) {
 
   if (submitted) {
     const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
-    return <MunResultCard rows={[{ label: "0.01% más rico", pct, collected }]} totalLabel="Total recaudado" totalValue={munFmt(collected)} onContinue={onNext} />;
+    return <MunResultCard rows={[{ label: "1% más rico", pct, collected }]} totalLabel="Total recaudado" totalValue={munFmt(collected)} onContinue={onNext} />;
   }
 
   const comparisons = [
@@ -1466,13 +1466,13 @@ function MunRiquezaTab({ onNext }) {
         </div>
       </div>
       <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>
-        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 0.01% más rico del país</b> — a la mediana, y a casi todos los demás, no les toca nada.
+        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 1% de las personas más ricas del país</b>, que son dueñas del 33% de la riqueza — a la mediana, y a casi todos los demás, no les toca nada.
       </div>
       <div className="dp-body text-[10px] rounded-lg p-2 mb-2.5" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
         <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
         En los años 50 en EE. UU. (1951–1963), se cobraba un 91% a la porción de ingresos por encima de $200,000 al año.
       </div>
-      <MunSliderRow item={{ label: "0.01% más rico", sub: `patrimonio combinado: ${munFmt(MUN_RIQUEZA_TOTAL)}` }} pct={pct} onChange={setPct} max={100} showIncome={false} />
+      <MunSliderRow item={{ label: "1% más rico", sub: `patrimonio combinado: ${munFmt(MUN_RIQUEZA_TOTAL)}` }} pct={pct} onChange={setPct} max={100} showIncome={false} />
       <div className="flex justify-between dp-body text-[9.5px] mb-3 px-1" style={{ color: INK + "88" }}>
         <span></span>
         <span>Recauda: <b style={{ color: BLUE }}>{munFmt(MUN_RIQUEZA_TOTAL * (pct / 100))}</b></span>
@@ -1602,6 +1602,9 @@ function MunPresupuestoTab({ onNext }) {
           </div>
         ))}
         <button onClick={onNext} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Continuar →</button>
+        <button disabled className="dp-body w-full mt-2 text-xs py-2 rounded-full font-medium flex items-center justify-center gap-1.5" style={{ background: "none", border: `1.5px dashed ${INK}33`, color: INK + "77" }}>
+          <i className="ti ti-sparkles"></i> Próximamente: Objetivocracia
+        </button>
       </div>
     );
   }
@@ -1735,12 +1738,46 @@ const MUN_OTRAS_SUBTABS = [
   { key: "retiro", label: "Retiro" },
 ];
 
+function MunIntroCard({ onContinue }) {
+  return (
+    <div className="px-4 py-6">
+      <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="mb-2"><OnbIcon name="ti-flask" /></div>
+        <div className="dp-display text-lg font-bold mb-3" style={{ color: INK }}>Antes de empezar: esto es solo una demostración</div>
+        <div className="dp-body text-[13px] leading-relaxed" style={{ color: INK + "cc" }}>
+          <p className="mb-3">Lo que vas a ver a continuación <b style={{ color: INK }}>no es un proceso real de tu grupo</b> — es una demostración con datos reales, para que sientas cómo se viviría decidir estas cosas de forma horizontal.</p>
+
+          <p className="mb-3">En la antigüedad, muchos filósofos y pensadores no consideraban que votar por personas fuera un proceso democrático. Para ellos, elegir representantes era un proceso <b style={{ color: INK }}>aristocrático u oligárquico</b>: el poder de decidir se le entregaba a unos cuantos, no se repartía entre todos.</p>
+
+          <p className="mb-3">Concentrar demasiado poder en pocas manos tiende a generar los mismos problemas, sin importar la época: <b style={{ color: INK }}>polariza a la sociedad</b>, y termina formando una clase política que vela más por sus propios intereses que por los del ciudadano común.</p>
+
+          <p className="mb-3">Ante las crisis que hoy viven las repúblicas capitalistas, muchas personas buscan la salida en algún salvador a quien entregarle el poder — o simplemente se desencantan de la política y dejan de participar.</p>
+
+          <p className="mb-3">Pero existe otro camino: podemos inyectar procesos de <b style={{ color: INK }}>democracia de verdad</b> al sistema actual, para quitarle poder a la clase política y repartirlo entre todos los ciudadanos. Lo que verás aquí son solo algunos de los primeros cambios posibles para transformar una república capitalista en una verdadera democracia.</p>
+
+          <p className="mb-3">En los ejemplos podrás elegir los impuestos de un país, y en qué se gastan — de las decisiones más importantes que cualquier sociedad tiene que tomar.</p>
+
+          <p>Y al final, te adelantamos otro sistema de organización política que podría remplazar por completo a la república, para repartir el poder y las responsabilidades entre todos los ciudadanos.</p>
+        </div>
+        <button onClick={onContinue} className="dp-body w-full mt-4 text-sm py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>
+          Entendido, empezar la demostración
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function MunicipiosDemo({ onBack }) {
+  const [showIntro, setShowIntro] = useState(true);
   const [mainTab, setMainTab] = useState("impuestos");
   const [taxSubTab, setTaxSubTab] = useState("ingresos");
   const [otraSubTab, setOtraSubTab] = useState("salario");
   const [showOtrasSummary, setShowOtrasSummary] = useState(false);
   const [otrasResults, setOtrasResults] = useState({ salario: null, tope: null, horas: null, retiro: null });
+
+  if (showIntro) {
+    return <MunIntroCard onContinue={() => setShowIntro(false)} />;
+  }
 
   const mainTabs = [
     { key: "impuestos", label: "Impuestos" },
