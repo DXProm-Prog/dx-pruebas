@@ -1305,9 +1305,9 @@ function MunResultCard({ rows, totalLabel, totalValue, onContinue }) {
   );
 }
 
-function MunIngresosTab({ onNext }) {
+function MunIngresosTab({ onNext, onSubmitResult, savedResult }) {
   const [items, setItems] = useState(MUN_INGRESOS_DEFAULT);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!savedResult);
   const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
 
   let badOrder = false;
@@ -1316,8 +1316,11 @@ function MunIngresosTab({ onNext }) {
   }
 
   if (submitted) {
-    const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.income * (it.pct / 100) * it.households * 1000000 }));
-    const total = rows.reduce((s, r) => s + r.collected, 0);
+    const { rows, total } = savedResult || (() => {
+      const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.income * (it.pct / 100) * it.households * 1000000 }));
+      const total = rows.reduce((s, r) => s + r.collected, 0);
+      return { rows, total };
+    })();
     return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
@@ -1344,21 +1347,37 @@ function MunIngresosTab({ onNext }) {
         <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
         En los años 50 en EE. UU. (1951–1963), se cobraba un 91% a la porción de ingresos por encima de $200,000 al año.
       </div>
-      <button onClick={() => !badOrder && setSubmitted(true)} disabled={badOrder} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40" style={{ background: BLUE }}>
+      <button
+        onClick={() => {
+          if (badOrder) return;
+          const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.income * (it.pct / 100) * it.households * 1000000 }));
+          const total = rows.reduce((s, r) => s + r.collected, 0);
+          if (onSubmitResult) onSubmitResult({ rows, total });
+          setSubmitted(true);
+        }}
+        disabled={badOrder}
+        className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
+        style={{ background: BLUE }}
+      >
         📤 Enviar mi propuesta
       </button>
     </div>
   );
 }
 
-function MunViviendaTab({ onNext }) {
+function MunViviendaTab({ onNext, onSubmitResult, savedResult }) {
   const [items, setItems] = useState(MUN_VIVIENDA_DEFAULT);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!savedResult);
   const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
 
   if (submitted) {
-    const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: 350000 * (it.pct / 100) * it.households * 1330000 }));
-    const total = rows.reduce((s, r) => s + r.collected, 0);
+    const { rows, total } =
+      savedResult ||
+      (() => {
+        const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: 350000 * (it.pct / 100) * it.households * 1330000 }));
+        const total = rows.reduce((s, r) => s + r.collected, 0);
+        return { rows, total };
+      })();
     return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
@@ -1375,19 +1394,35 @@ function MunViviendaTab({ onNext }) {
           </div>
         </div>
       ))}
-      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+      <button
+        onClick={() => {
+          const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: 350000 * (it.pct / 100) * it.households * 1330000 }));
+          const total = rows.reduce((s, r) => s + r.collected, 0);
+          if (onSubmitResult) onSubmitResult({ rows, total });
+          setSubmitted(true);
+        }}
+        className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
+        style={{ background: BLUE }}
+      >
+        📤 Enviar mi propuesta
+      </button>
     </div>
   );
 }
 
-function MunProductosTab({ onNext }) {
+function MunProductosTab({ onNext, onSubmitResult, savedResult }) {
   const [items, setItems] = useState(MUN_PRODUCTOS_DEFAULT);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!savedResult);
   const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
 
   if (submitted) {
-    const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.gasto * (it.pct / 100) }));
-    const total = rows.reduce((s, r) => s + r.collected, 0);
+    const { rows, total } =
+      savedResult ||
+      (() => {
+        const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.gasto * (it.pct / 100) }));
+        const total = rows.reduce((s, r) => s + r.collected, 0);
+        return { rows, total };
+      })();
     return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
@@ -1404,7 +1439,18 @@ function MunProductosTab({ onNext }) {
           </div>
         </div>
       ))}
-      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+      <button
+        onClick={() => {
+          const rows = items.map((it) => ({ label: it.label, pct: it.pct, collected: it.gasto * (it.pct / 100) }));
+          const total = rows.reduce((s, r) => s + r.collected, 0);
+          if (onSubmitResult) onSubmitResult({ rows, total });
+          setSubmitted(true);
+        }}
+        className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
+        style={{ background: BLUE }}
+      >
+        📤 Enviar mi propuesta
+      </button>
     </div>
   );
 }
@@ -1426,13 +1472,18 @@ function MunPieSVG({ slices }) {
   return <svg viewBox="0 0 140 140" width="110" height="110">{paths}</svg>;
 }
 
-function MunRiquezaTab({ onNext }) {
+function MunRiquezaTab({ onNext, onSubmitResult, savedResult }) {
   const [pct, setPct] = useState(2);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!savedResult);
 
   if (submitted) {
-    const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
-    return <MunResultCard rows={[{ label: "1% más rico", pct, collected }]} totalLabel="Total recaudado" totalValue={munFmt(collected)} onContinue={onNext} />;
+    const { rows, total } =
+      savedResult ||
+      (() => {
+        const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
+        return { rows: [{ label: "1% más rico", pct, collected }], total: collected };
+      })();
+    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
   const comparisons = [
@@ -1477,7 +1528,17 @@ function MunRiquezaTab({ onNext }) {
         <span></span>
         <span>Recauda: <b style={{ color: BLUE }}>{munFmt(MUN_RIQUEZA_TOTAL * (pct / 100))}</b></span>
       </div>
-      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+      <button
+        onClick={() => {
+          const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
+          if (onSubmitResult) onSubmitResult({ rows: [{ label: "1% más rico", pct, collected }], total: collected });
+          setSubmitted(true);
+        }}
+        className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
+        style={{ background: BLUE }}
+      >
+        📤 Enviar mi propuesta
+      </button>
     </div>
   );
 }
@@ -1528,10 +1589,10 @@ function MunDeptRow({ dept, deptos, idx, onSetPct, expanded, onToggle, onSetSubP
   );
 }
 
-function MunPresupuestoTab({ onNext }) {
+function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
   const [deptos, setDeptos] = useState(MUN_DEPTOS_DEFAULT.map((d) => ({ ...d, subs: d.subs.map((n) => ({ n, pct: 0 })) })));
   const [expanded, setExpanded] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+  const [submitted, setSubmitted] = useState(!!savedResult);
   const [resultExpanded, setResultExpanded] = useState({});
 
   const setDeptPct = (i, v) => {
@@ -1559,7 +1620,7 @@ function MunPresupuestoTab({ onNext }) {
 
   const totalPct = deptos.reduce((s, d) => s + d.pct, 0);
 
-  if (submitted) {
+  const computeAvgDeptos = () => {
     // Se promedia con 2 respuestas ficticias que favorecen Salud y Educación.
     const favored = { salud: true, educacion: true };
     let avgDeptos = deptos.map((d) => {
@@ -1567,8 +1628,11 @@ function MunPresupuestoTab({ onNext }) {
       return { ...d, avgPct: (d.pct + boost + boost) / 3 };
     });
     const sumPct = avgDeptos.reduce((s, d) => s + d.avgPct, 0) || 1;
-    avgDeptos = avgDeptos.map((d) => ({ ...d, avgPct: (d.avgPct / sumPct) * 100 }));
+    return avgDeptos.map((d) => ({ ...d, avgPct: (d.avgPct / sumPct) * 100 }));
+  };
 
+  if (submitted) {
+    const avgDeptos = savedResult || computeAvgDeptos();
     return (
       <div className="rounded-xl p-3.5" style={{ background: PAGE_BG }}>
         <div className="dp-display text-sm font-bold" style={{ color: INK }}>Propuesta enviada</div>
@@ -1630,7 +1694,16 @@ function MunPresupuestoTab({ onNext }) {
         {totalPct}% repartido · {100 - totalPct}% por repartir
       </div>
       <button onClick={addDept} className="dp-body w-full text-xs py-2 rounded-full font-medium mb-2" style={{ border: `1.5px dashed ${BLUE}55`, color: BLUE }}>+ agregar otra secretaría</button>
-      <button onClick={() => setSubmitted(true)} className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium" style={{ background: BLUE }}>📤 Enviar mi propuesta</button>
+      <button
+        onClick={() => {
+          if (onSubmitResult) onSubmitResult(computeAvgDeptos());
+          setSubmitted(true);
+        }}
+        className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
+        style={{ background: BLUE }}
+      >
+        📤 Enviar mi propuesta
+      </button>
     </div>
   );
 }
@@ -1698,18 +1771,76 @@ function MunOtraPreguntaTab({ title, unit, resultLabel, resultSuffix, defaultVal
   );
 }
 
-function MunOtrasResumen({ results, onBack }) {
-  const rows = [
-    { label: "Salario mínimo", value: results.salario, suffix: " USD/hora" },
-    { label: "Tope de proporción salarial", value: results.tope, suffix: "x" },
-    { label: "Horas máximas por semana", value: results.horas, suffix: " horas" },
-    { label: "Edad de retiro", value: results.retiro, suffix: " años" },
-  ];
+function MunFullResumen({ taxResults, presupuestoResult, otrasResults, onBack }) {
+  const [expandedSections, setExpandedSections] = useState({ ingresos: true, vivienda: false, productos: false, riqueza: false, presupuesto: false });
+  const toggle = (key) => setExpandedSections({ ...expandedSections, [key]: !expandedSections[key] });
+
+  const taxSection = (key, icon, label, result) => (
+    <div className="mb-2">
+      <button onClick={() => toggle(key)} className="dp-body w-full flex justify-between items-center rounded-lg p-2.5" style={{ background: PAGE_BG }}>
+        <span className="flex items-center gap-1.5 font-semibold text-[11px]" style={{ color: INK }}>
+          <i className={`ti ${icon}`} style={{ color: BLUE }}></i> {label}
+        </span>
+        <span className="flex items-center gap-1.5">
+          {result ? <span className="dp-mono text-[11px] font-bold" style={{ color: GREEN }}>{munFmt(result.total)}</span> : <span className="dp-body text-[10px]" style={{ color: INK + "55" }}>sin responder</span>}
+          <span style={{ color: BLUE }}>{expandedSections[key] ? "▼" : "▶"}</span>
+        </span>
+      </button>
+      {expandedSections[key] && result && (
+        <div className="mt-1 pl-2" style={{ borderLeft: `2px solid ${BLUE}33` }}>
+          {result.rows.map((r, i) => (
+            <div key={i} className="flex justify-between dp-body text-[10px] py-0.5" style={{ color: INK + "99" }}>
+              <span>{r.label}</span>
+              <span className="dp-mono">{r.pct !== undefined ? `${r.pct.toFixed(1)}% · ` : ""}{munFmt(r.collected)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div>
       <div className="mb-2"><OnbIcon name="ti-list-check" /></div>
-      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Resultados de todo el flujo</div>
-      {rows.map((r, i) => (
+      <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>Resultados de todo el flujo</div>
+      <div className="dp-body text-[10.5px] mb-3" style={{ color: INK + "88" }}>Desde impuestos hasta presupuesto y otras preguntas — todo lo que decidieron en esta demostración.</div>
+
+      <div className="dp-body text-[11px] font-bold mb-1.5" style={{ color: INK }}>Impuestos</div>
+      {taxSection("ingresos", "ti-cash", "Ingresos", taxResults.ingresos)}
+      {taxSection("vivienda", "ti-home", "Vivienda", taxResults.vivienda)}
+      {taxSection("productos", "ti-shopping-cart", "Productos", taxResults.productos)}
+      {taxSection("riqueza", "ti-building-bank", "Riqueza", taxResults.riqueza)}
+
+      <div className="dp-body text-[11px] font-bold mb-1.5 mt-3" style={{ color: INK }}>Presupuesto</div>
+      <div className="mb-2">
+        <button onClick={() => toggle("presupuesto")} className="dp-body w-full flex justify-between items-center rounded-lg p-2.5" style={{ background: PAGE_BG }}>
+          <span className="flex items-center gap-1.5 font-semibold text-[11px]" style={{ color: INK }}>
+            <i className="ti ti-chart-pie" style={{ color: BLUE }}></i> Presupuesto participativo
+          </span>
+          <span style={{ color: BLUE }}>{expandedSections.presupuesto ? "▼" : "▶"}</span>
+        </button>
+        {expandedSections.presupuesto && presupuestoResult && (
+          <div className="mt-1 pl-2" style={{ borderLeft: `2px solid ${BLUE}33` }}>
+            {presupuestoResult.map((d, i) => (
+              <div key={i} className="flex justify-between dp-body text-[10px] py-0.5" style={{ color: INK + "99" }}>
+                <span>{d.label}</span>
+                <span className="dp-mono">{d.avgPct.toFixed(1)}% · {munFmt(MUN_TOTAL_BUDGET * (d.avgPct / 100))}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {expandedSections.presupuesto && !presupuestoResult && (
+          <div className="dp-body text-[10px] mt-1 pl-2" style={{ color: INK + "55" }}>sin responder</div>
+        )}
+      </div>
+
+      <div className="dp-body text-[11px] font-bold mb-1.5 mt-3" style={{ color: INK }}>Otras preguntas</div>
+      {[
+        { label: "Salario mínimo", value: otrasResults.salario, suffix: " USD/hora" },
+        { label: "Tope de proporción salarial", value: otrasResults.tope, suffix: "x" },
+        { label: "Horas máximas por semana", value: otrasResults.horas, suffix: " horas" },
+        { label: "Edad de retiro", value: otrasResults.retiro, suffix: " años" },
+      ].map((r, i) => (
         <div key={i} className="flex justify-between items-center rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
           <span className="dp-body text-[11px] font-semibold" style={{ color: INK }}>{r.label}</span>
           <span className="dp-mono text-sm font-bold" style={{ color: r.value === null ? INK + "55" : BLUE }}>
@@ -1717,6 +1848,7 @@ function MunOtrasResumen({ results, onBack }) {
           </span>
         </div>
       ))}
+
       <button onClick={onBack} className="dp-body w-full mt-3 text-xs py-2 rounded-full font-medium" style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}>← Volver a las preguntas</button>
       <button disabled className="dp-body w-full mt-3 text-xs py-2 rounded-full font-medium flex items-center justify-center gap-1.5" style={{ background: "none", border: `1.5px dashed ${INK}33`, color: INK + "77" }}>
         <i className="ti ti-sparkles"></i> Próximamente: Objetivocracia
@@ -1775,6 +1907,8 @@ function MunicipiosDemo({ onBack }) {
   const [otraSubTab, setOtraSubTab] = useState("salario");
   const [showOtrasSummary, setShowOtrasSummary] = useState(false);
   const [otrasResults, setOtrasResults] = useState({ salario: null, tope: null, horas: null, retiro: null });
+  const [taxResults, setTaxResults] = useState({ ingresos: null, vivienda: null, productos: null, riqueza: null });
+  const [presupuestoResult, setPresupuestoResult] = useState(null);
 
   if (showIntro) {
     return <MunIntroCard onContinue={() => setShowIntro(false)} />;
@@ -1830,12 +1964,24 @@ function MunicipiosDemo({ onBack }) {
         </div>
       )}
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        {mainTab === "impuestos" && taxSubTab === "ingresos" && <MunIngresosTab onNext={() => setTaxSubTab("vivienda")} />}
-        {mainTab === "impuestos" && taxSubTab === "vivienda" && <MunViviendaTab onNext={() => setTaxSubTab("productos")} />}
-        {mainTab === "impuestos" && taxSubTab === "productos" && <MunProductosTab onNext={() => setTaxSubTab("riqueza")} />}
-        {mainTab === "impuestos" && taxSubTab === "riqueza" && <MunRiquezaTab onNext={() => setMainTab("presupuesto")} />}
-        {mainTab === "presupuesto" && <MunPresupuestoTab onNext={() => setMainTab("otras")} />}
-        {mainTab === "otras" && showOtrasSummary && <MunOtrasResumen results={otrasResults} onBack={() => setShowOtrasSummary(false)} />}
+        {mainTab === "impuestos" && taxSubTab === "ingresos" && (
+          <MunIngresosTab onNext={() => setTaxSubTab("vivienda")} savedResult={taxResults.ingresos} onSubmitResult={(r) => setTaxResults({ ...taxResults, ingresos: r })} />
+        )}
+        {mainTab === "impuestos" && taxSubTab === "vivienda" && (
+          <MunViviendaTab onNext={() => setTaxSubTab("productos")} savedResult={taxResults.vivienda} onSubmitResult={(r) => setTaxResults({ ...taxResults, vivienda: r })} />
+        )}
+        {mainTab === "impuestos" && taxSubTab === "productos" && (
+          <MunProductosTab onNext={() => setTaxSubTab("riqueza")} savedResult={taxResults.productos} onSubmitResult={(r) => setTaxResults({ ...taxResults, productos: r })} />
+        )}
+        {mainTab === "impuestos" && taxSubTab === "riqueza" && (
+          <MunRiquezaTab onNext={() => setMainTab("presupuesto")} savedResult={taxResults.riqueza} onSubmitResult={(r) => setTaxResults({ ...taxResults, riqueza: r })} />
+        )}
+        {mainTab === "presupuesto" && (
+          <MunPresupuestoTab onNext={() => setMainTab("otras")} savedResult={presupuestoResult} onSubmitResult={setPresupuestoResult} />
+        )}
+        {mainTab === "otras" && showOtrasSummary && (
+          <MunFullResumen taxResults={taxResults} presupuestoResult={presupuestoResult} otrasResults={otrasResults} onBack={() => setShowOtrasSummary(false)} />
+        )}
         {mainTab === "otras" && !showOtrasSummary && otraSubTab === "salario" && (
           <MunOtraPreguntaTab
             title="¿Cuál debería ser el salario mínimo?"
@@ -3772,7 +3918,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
   );
 }
 
-function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdvance }) {
+function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdvance, onSwitchFlow }) {
   const lic = flow.licitacion;
   const categoryNames = Object.keys(lic.categories);
   const [closingCollecting, setClosingCollecting] = useState(false);
@@ -3788,6 +3934,16 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   const anyReopenableEmpty = !anyActive && categoryNames.some((c) => lic.categories[c].status === "empty");
   const allDone = categoryNames.every((c) => ["resolved", "empty_closed", "tie_final"].includes(lic.categories[c].status));
 
+  // Si al avanzar la licitación termina por completo, el backend puede
+  // haber encadenado un flujo nuevo (ej. Selección de responsables,
+  // dentro de Asociaciones) — si es así, saltamos a mostrarlo de una
+  // vez, en vez de dejar a la persona viendo el flujo ya terminado.
+  const switchToChainedFlowIfAny = (freshData) => {
+    if (!freshData || !onSwitchFlow) return;
+    const nextFlow = (freshData.flows || []).find((f) => f.chainedFromFlowId === flow.id);
+    if (nextFlow) onSwitchFlow(nextFlow.id);
+  };
+
   const closeCollecting = async () => {
     const ok = window.confirm("¿Cerrar la recepción de propuestas de todas las categorías? Nadie más podrá mandar o editar propuestas después de esto, y se revelan todas juntas.");
     if (!ok) return;
@@ -3801,7 +3957,8 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cerrar");
-      await onAdvance();
+      const freshData = await onAdvance();
+      switchToChainedFlowIfAny(freshData);
     } catch (e) {
       setCollectingError(e.message);
     } finally {
@@ -3821,7 +3978,8 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cerrar");
-      await onAdvance();
+      const freshData = await onAdvance();
+      switchToChainedFlowIfAny(freshData);
     } catch (e) {
       setVotingError(e.message);
     } finally {
@@ -4031,7 +4189,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cerrar la etapa");
-      await onAdvance();
+      const freshData = await onAdvance();
+      if (freshData && onSwitchFlow) {
+        const nextFlow = (freshData.flows || []).find((f) => f.chainedFromFlowId === flow.id);
+        if (nextFlow) onSwitchFlow(nextFlow.id);
+      }
     } catch (e) {
       setSendError(e.message);
     } finally {
@@ -4527,6 +4689,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           flow={flow}
           isAdmin={isAdmin}
           onAdvance={onAdvance}
+          onSwitchFlow={onSwitchFlow}
         />
       )}
 
@@ -4638,12 +4801,14 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
         });
       }
       prevPendingCount.current = pendingCount;
+      return data;
     } catch (e) {
       setError(
         e.message === "Failed to fetch"
           ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
           : e.message
       );
+      return null;
     } finally {
       setLoading(false);
     }

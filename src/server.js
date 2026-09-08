@@ -769,7 +769,7 @@ function finishFlowIfLicitacionDone(group, flow) {
       currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}), instanceIndex: 0 },
       stages: [],
       chainNext: null,
-      chainedFromFlowId: null,
+      chainedFromFlowId: flow.id,
       createdAt: new Date().toISOString(),
     });
   }
@@ -1135,7 +1135,7 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
         // "responsabilidades" — se le pregunta al grupo después de que
         // termine su propio ciclo (incluyendo propuestas, si las usan).
         chainNext: nextTemplate === "presupuesto" ? "responsabilidades" : null,
-        chainedFromFlowId: flow.template === "cuotas" ? flow.id : null,
+        chainedFromFlowId: flow.id,
         createdAt: new Date().toISOString(),
       });
     }
