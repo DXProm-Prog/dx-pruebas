@@ -3914,7 +3914,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   );
 }
 
-function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, approvedMemberNames, onAdvance, onSwitchFlow }) {
+function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, approvedMemberNames, onAdvance, onSwitchFlow, cooperativasMode, onFinishedStandalone }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
@@ -4546,7 +4546,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               <div style={{ fontSize: "36px" }}>🎉</div>
               <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>¡Felicidades!</div>
               <div className="dp-body text-[13px] mt-1" style={{ color: INK + "99" }}>
-                Decidieron {flow.template === "cuotas" ? "las cuotas" : "el presupuesto"} de forma colectiva.
+                Decidieron {{
+                  cuotas: "las cuotas",
+                  presupuesto: "el presupuesto",
+                  tabuladorSueldos: "los sueldos",
+                  presupuestoCooperativa: "el presupuesto",
+                  responsabilidades: "los responsables",
+                }[flow.template] || "el resultado"} de forma colectiva.
               </div>
             </div>
             {(() => {
@@ -4564,12 +4570,14 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 if (flow.status === "finished" && flow.chainNext && onSwitchFlow) {
                   const nextFlow = (allFlows || []).find((f) => f.chainedFromFlowId === flow.id);
                   if (nextFlow) onSwitchFlow(nextFlow.id);
+                } else if (flow.status === "finished" && !flow.chainNext && cooperativasMode && onFinishedStandalone) {
+                  onFinishedStandalone();
                 }
               }}
               className="dp-body w-full mt-3 text-xs py-2.5 rounded-full text-white font-medium"
               style={{ background: BLUE }}
             >
-              {nextStepLabel ? `Continuar hacia: ${nextStepLabel}` : "Ver todo el proceso"}
+              {nextStepLabel ? `Continuar hacia: ${nextStepLabel}` : flow.status === "finished" && !flow.chainNext && cooperativasMode ? "Continuar" : "Ver todo el proceso"}
             </button>
           </div>
         </div>
@@ -4584,6 +4592,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   const [error, setError] = useState("");
   const [approving, setApproving] = useState("");
   const [pinnedFlowId, setPinnedFlowId] = useState(null);
+  const [showCooperativasChooser, setShowCooperativasChooser] = useState(false);
   const prevPendingCount = React.useRef(null);
 
   const flows = group ? group.flows || [] : [];
@@ -4757,7 +4766,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
         </div>
       )}
 
-      {activeFlow ? (
+      {activeFlow && !showCooperativasChooser ? (
         <FlowRunner
           backendUrl={backendUrl}
           groupCode={groupCode}
@@ -4770,6 +4779,8 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
           approvedMemberNames={group.members.filter((m) => m.approved).map((m) => m.name)}
           onAdvance={fetchGroup}
           onSwitchFlow={setPinnedFlowId}
+          cooperativasMode={cooperativasMode}
+          onFinishedStandalone={() => setShowCooperativasChooser(true)}
         />
       ) : (
         isAdmin && !hideFlowStarters && !cooperativasMode && (
@@ -4832,11 +4843,13 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
         )
       )}
 
-      {!activeFlow && cooperativasMode && (
+      {(!activeFlow || showCooperativasChooser) && cooperativasMode && (
         isAdmin ? (
           <div className="flex flex-col gap-2 mb-4">
             <div className="dp-body text-[12.5px] rounded-xl p-3 mb-1" style={{ background: BLUE_SOFT, color: INK + "cc", lineHeight: 1.5 }}>
-              Para facilitar la toma de decisiones eficiente en una cooperativa, combinamos Democracia por Promedio con procesos de mayoría y sorteo.
+              {showCooperativasChooser
+                ? "¿Quieren hacer otro proceso con esta cooperativa?"
+                : "Para facilitar la toma de decisiones eficiente en una cooperativa, combinamos Democracia por Promedio con procesos de mayoría y sorteo."}
             </div>
             <button
               onClick={async () => {
@@ -4845,6 +4858,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: "tabuladorSueldos", memberId }),
                 });
+                setShowCooperativasChooser(false);
                 setPinnedFlowId(null);
                 await fetchGroup();
               }}
@@ -4863,6 +4877,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: "presupuestoCooperativa", memberId }),
                 });
+                setShowCooperativasChooser(false);
                 setPinnedFlowId(null);
                 await fetchGroup();
               }}
@@ -4881,6 +4896,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: "responsabilidades", memberId }),
                 });
+                setShowCooperativasChooser(false);
                 setPinnedFlowId(null);
                 await fetchGroup();
               }}
@@ -4892,6 +4908,11 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
                 Repartan cargos y responsabilidades por sorteo, con o sin rotación mensual.
               </div>
             </button>
+            {showCooperativasChooser && (
+              <button onClick={() => setShowCooperativasChooser(false)} className="dp-body text-xs mt-1" style={{ color: INK + "77" }}>
+                No, ya terminamos por ahora
+              </button>
+            )}
           </div>
         ) : (
           <div className="dp-body text-[13px] text-center py-4" style={{ color: INK + "88" }}>⏳ El facilitador todavía no elige qué proceso iniciar…</div>
