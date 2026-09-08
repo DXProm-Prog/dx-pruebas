@@ -280,6 +280,171 @@ const responsabilidades = {
   },
 };
 
-const TEMPLATES = { cuotas, presupuesto, responsabilidades };
+const tabuladorSueldos = {
+  defaultConfig: {},
+
+  getInitialStage() {
+    return {
+      key: "limiteVote",
+      type: "mayoria",
+      text: "¿Quieres que exista un límite de desigualdad entre la persona que más gana y la que menos gana en nuestra cooperativa?",
+      config: { options: ["Sí", "No"], majorityRule: "absoluta" },
+    };
+  },
+
+  getNextStage(stages) {
+    const last = stages[stages.length - 1];
+
+    if (last.key === "limiteVote") {
+      if (last.result.winner === "Sí") {
+        return {
+          key: "vecesPromedio",
+          type: "promedio",
+          text: "¿Cuántas veces más piensas que debe ganar la persona que más gana en nuestra cooperativa, comparada con la persona que menos gana? (considerando que trabajan las mismas horas)",
+          config: { trimPercent: 0 },
+        };
+      }
+      return { key: "configurarPuestos", type: "configurar_puestos", text: "Define los puestos de la cooperativa.", config: { suggestedRoles: [], minSlots: 5 } };
+    }
+
+    if (last.key === "vecesPromedio") {
+      return { key: "configurarPuestos", type: "configurar_puestos", text: "Define los puestos de la cooperativa.", config: { suggestedRoles: [], minSlots: 5 } };
+    }
+
+    if (last.key === "configurarPuestos") {
+      const names = last.result.roles.map((r) => r.name).join(", ");
+      return {
+        key: "aprobarPuestos",
+        type: "mayoria",
+        text: `¿Aprueban esta lista de puestos? ${names}`,
+        config: { options: ["Sí", "No"], majorityRule: "absoluta" },
+      };
+    }
+
+    if (last.key === "aprobarPuestos") {
+      if (last.result.winner !== "Sí") {
+        const prevRoles = [...stages].reverse().find((s) => s.key === "configurarPuestos").result.roles;
+        return { key: "configurarPuestos", type: "configurar_puestos", text: "Ajusten la lista de puestos — no se aprobó la anterior.", config: { suggestedRoles: prevRoles, minSlots: 5 } };
+      }
+      return {
+        key: "frecuenciaSueldo",
+        type: "mayoria",
+        text: "¿Los sueldos de la cooperativa se deciden por hora, o por mes?",
+        config: { options: ["Por hora", "Por mes"], majorityRule: "simple" },
+      };
+    }
+
+    if (last.key === "frecuenciaSueldo") {
+      const rolesStage = [...stages].reverse().find((s) => s.key === "configurarPuestos");
+      const vecesStage = stages.find((s) => s.key === "vecesPromedio");
+      const limitTimes = vecesStage ? vecesStage.result.average : null;
+      const frequency = last.result.winner === "Por hora" ? "hora" : "mes";
+      return {
+        key: "montoPorPuesto",
+        type: "monto_por_puesto",
+        text: `¿Cuánto debería ganar cada puesto en nuestra cooperativa? (por ${frequency})`,
+        config: { roles: rolesStage.result.roles, frequency, limitTimes },
+      };
+    }
+
+    if (last.key === "montoPorPuesto") {
+      return {
+        key: "aprobarSueldos",
+        type: "mayoria",
+        text: "¿Aprueban este resultado de sueldos por puesto?",
+        config: { options: ["Sí", "No"], majorityRule: "absoluta" },
+      };
+    }
+
+    if (last.key === "aprobarSueldos") {
+      if (last.result.winner !== "Sí") {
+        const freqStage = [...stages].reverse().find((s) => s.key === "frecuenciaSueldo");
+        const rolesStage = [...stages].reverse().find((s) => s.key === "configurarPuestos");
+        const prevMontos = [...stages].reverse().find((s) => s.key === "montoPorPuesto");
+        return {
+          key: "montoPorPuesto",
+          type: "monto_por_puesto",
+          text: "Vuelvan a proponer los sueldos — no se aprobó el resultado anterior.",
+          config: prevMontos.config,
+        };
+      }
+      return null;
+    }
+
+    return null;
+  },
+};
+
+const presupuestoCooperativa = {
+  defaultConfig: { selectionThresholdPercent: 10 },
+
+  getInitialStage() {
+    return {
+      key: "gastosFijos",
+      type: "gastos_fijos",
+      text: "Ingresa los ingresos mensuales de la cooperativa y desglosa sus gastos fijos.",
+      config: {},
+    };
+  },
+
+  getNextStage(stages, flowConfig = {}) {
+    const thresholdPercent = flowConfig.selectionThresholdPercent ?? 10;
+    const last = stages[stages.length - 1];
+
+    if (last.key === "gastosFijos") {
+      return { key: "categories", type: "recoleccion_abierta", text: "Propón rubros de gasto para el presupuesto (además de los gastos fijos ya establecidos).", config: { maxItemsPerPerson: 5 } };
+    }
+
+    if (last.key === "categories") {
+      const allNames = last.result.pool.map((p) => p.text);
+      return {
+        key: "selection",
+        type: "seleccion_multiple",
+        text: `Elige los rubros que te importan (puedes elegir varios). Se descartan los que no lleguen al ${thresholdPercent}% de apoyo.`,
+        config: { options: allNames },
+      };
+    }
+
+    if (last.key === "selection") {
+      const gastosStage = stages.find((s) => s.key === "gastosFijos");
+      return {
+        key: "ajustarFijos",
+        type: "ajustar_gastos_fijos",
+        text: "Estos son los gastos fijos de la cooperativa — puedes subirlos o bajarlos.",
+        config: { gastos: gastosStage.result.gastos },
+      };
+    }
+
+    if (last.key === "ajustarFijos") {
+      let survivors = stages.find((s) => s.key === "selection").result.tally.filter((t) => t.percent >= thresholdPercent).map((t) => t.option);
+      if (survivors.length === 0) {
+        const sorted = [...stages.find((s) => s.key === "selection").result.tally].sort((a, b) => b.percent - a.percent);
+        survivors = sorted.slice(0, 1).map((t) => t.option);
+      }
+      const gastosStage = stages.find((s) => s.key === "gastosFijos");
+      const restante = Math.max(0, gastosStage.result.ingresos - last.result.totalFinal);
+      return {
+        key: "budget",
+        type: "porcentaje_por_categoria",
+        text: `Asigna el % del disponible después de gastos fijos que crees justo para cada rubro (si la suma pasa de 100%, se ajusta sola).`,
+        config: { categories: survivors, totalBudget: restante },
+      };
+    }
+
+    if (last.key === "budget") {
+      return approvalStage("el presupuesto de la cooperativa");
+    }
+
+    if (last.key === "approval") {
+      if (last.result.winner === "Sí") return null;
+      const budgetStage = [...stages].reverse().find((s) => s.key === "budget");
+      return { key: "budget", type: "porcentaje_por_categoria", text: budgetStage.text, config: budgetStage.config };
+    }
+
+    return null;
+  },
+};
+
+const TEMPLATES = { cuotas, presupuesto, responsabilidades, tabuladorSueldos, presupuestoCooperativa };
 
 module.exports = { TEMPLATES };

@@ -924,7 +924,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
 
   const stage = flow.currentStage;
   if (
-    ["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo"].includes(stage.type) &&
+    ["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos"].includes(stage.type) &&
     group.admin.id !== memberId
   ) {
     return res.status(403).json({ error: "Solo el facilitador responde esta etapa" });
@@ -1005,6 +1005,48 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
     // cerrarla, usando los puestos, la frecuencia y los candidatos que
     // ya se decidieron en las etapas anteriores (ver /close-stage).
     storedValue = {};
+  } else if (stage.type === "monto_por_puesto") {
+    if (typeof value !== "object" || Array.isArray(value) || value === null) {
+      return res.status(400).json({ error: "value debe ser un objeto {puestoId: monto}" });
+    }
+    const cleaned = {};
+    stage.config.roles.forEach((role) => {
+      const n = Number(value[role.id]);
+      if (!isNaN(n) && n > 0) cleaned[role.id] = n;
+    });
+    if (Object.keys(cleaned).length < stage.config.roles.length) {
+      return res.status(400).json({ error: "Propón un monto para cada puesto" });
+    }
+    if (stage.config.limitTimes) {
+      const amounts = Object.values(cleaned);
+      const ratio = Math.max(...amounts) / Math.min(...amounts);
+      if (ratio > stage.config.limitTimes + 0.001) {
+        return res.status(400).json({
+          error: `Tu propuesta tiene una desigualdad de ${ratio.toFixed(2)} veces entre el puesto que más y el que menos gana — el límite acordado es ${stage.config.limitTimes} veces. Ajusta tus montos.`,
+        });
+      }
+    }
+    storedValue = cleaned;
+  } else if (stage.type === "gastos_fijos") {
+    if (typeof value !== "object" || Array.isArray(value) || value === null) {
+      return res.status(400).json({ error: "value debe ser un objeto {ingresos, gastos}" });
+    }
+    const ingresos = Number(value.ingresos) || 0;
+    const gastos = Array.isArray(value.gastos)
+      ? value.gastos.map((g) => ({ nombre: String(g.nombre || "").trim(), monto: Number(g.monto) || 0 })).filter((g) => g.nombre)
+      : [];
+    if (ingresos <= 0) return res.status(400).json({ error: "Ingresa un monto de ingresos mayor a 0" });
+    storedValue = { ingresos, gastos };
+  } else if (stage.type === "ajustar_gastos_fijos") {
+    if (typeof value !== "object" || Array.isArray(value) || value === null) {
+      return res.status(400).json({ error: "value debe ser un objeto {nombreDelGasto: monto}" });
+    }
+    const cleaned = {};
+    stage.config.gastos.forEach((g) => {
+      const n = Number(value[g.nombre]);
+      cleaned[g.nombre] = !isNaN(n) && n >= 0 ? n : g.monto;
+    });
+    storedValue = cleaned;
   } else {
     return res.status(400).json({ error: "Tipo de etapa desconocido" });
   }

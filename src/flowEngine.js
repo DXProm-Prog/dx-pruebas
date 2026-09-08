@@ -249,6 +249,61 @@ function computeStageResult(stage, responses, flowConfig = {}) {
     return { type: "configurar_candidatos", candidates };
   }
 
+  // Cada miembro propone un monto (no un %) para cada puesto — se
+  // promedia cada puesto por separado. Si el flujo tiene un límite de
+  // desigualdad activo (flowConfig.limitTimes), y el promedio final lo
+  // rompe, se recorta hacia abajo el sueldo más alto (nunca se sube el
+  // más bajo) hasta que la proporción quede dentro del límite.
+  if (stage.type === "monto_por_puesto") {
+    const raw = {};
+    stage.config.roles.forEach((role) => {
+      const vals = responses.map((r) => r.value && r.value[role.id]).filter((v) => typeof v === "number" && !isNaN(v));
+      raw[role.id] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    });
+    const puestos = {};
+    const limitTimes = stage.config.limitTimes || null;
+    let wasAdjusted = false;
+    if (limitTimes) {
+      const minAvg = Math.min(...Object.values(raw).filter((v) => v > 0));
+      const allowedMax = minAvg * limitTimes;
+      stage.config.roles.forEach((role) => {
+        const original = Math.round(raw[role.id] * 100) / 100;
+        if (raw[role.id] > allowedMax) {
+          puestos[role.id] = { amount: Math.round(allowedMax * 100) / 100, original, adjusted: true };
+          wasAdjusted = true;
+        } else {
+          puestos[role.id] = { amount: original, original, adjusted: false };
+        }
+      });
+    } else {
+      stage.config.roles.forEach((role) => {
+        const amount = Math.round(raw[role.id] * 100) / 100;
+        puestos[role.id] = { amount, original: amount, adjusted: false };
+      });
+    }
+    return { type: "monto_por_puesto", puestos, limitTimes, wasAdjusted };
+  }
+
+  // Etapa de una sola respuesta (del facilitador): ingresos de la
+  // cooperativa y desglose de sus gastos fijos.
+  if (stage.type === "gastos_fijos") {
+    const last = values.length ? values[values.length - 1] : { ingresos: 0, gastos: [] };
+    return { type: "gastos_fijos", ingresos: last.ingresos || 0, gastos: last.gastos || [] };
+  }
+
+  // Cada miembro puede subir o bajar cada gasto fijo — se promedia cada
+  // uno por separado (sin límite superior; el flujo solo avisa si
+  // alguien lo baja, no lo impide).
+  if (stage.type === "ajustar_gastos_fijos") {
+    const gastos = stage.config.gastos.map((g) => {
+      const vals = responses.map((r) => r.value && r.value[g.nombre]).filter((v) => typeof v === "number" && !isNaN(v));
+      const amount = vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 100) / 100 : g.monto;
+      return { nombre: g.nombre, montoOriginal: g.monto, montoFinal: amount };
+    });
+    const totalFinal = gastos.reduce((s, g) => s + g.montoFinal, 0);
+    return { type: "ajustar_gastos_fijos", gastos, totalFinal: Math.round(totalFinal * 100) / 100 };
+  }
+
   throw new Error(`Tipo de etapa desconocido: ${stage.type}`);
 }
 
