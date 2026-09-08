@@ -8,6 +8,8 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" rel="stylesheet" />
 <style>
@@ -113,7 +115,156 @@ function formatMoney(n) {
   return "$" + Math.round(n).toLocaleString("es-MX");
 }
 
+function flowTemplateLabel(template) {
+  return (
+    {
+      cuotas: "Cuotas participativas",
+      presupuesto: "Presupuesto participativo",
+      presupuestoCooperativa: "Presupuesto participativo (cooperativa)",
+      responsabilidades: "Selección de responsables",
+      tabuladorSueldos: "Tabulador de sueldos",
+    }[template] || "Proceso"
+  );
+}
+
+// Arma la cadena completa de flujos encadenados (ej. dentro de
+// Asociaciones o Cooperativas), del más viejo al más nuevo, siguiendo
+// chainedFromFlowId hacia atrás desde el flujo actual.
+function getFlowChain(flow, allFlows) {
+  const chain = [flow];
+  let current = flow;
+  while (current.chainedFromFlowId) {
+    const parent = (allFlows || []).find((f) => f.id === current.chainedFromFlowId);
+    if (!parent) break;
+    chain.unshift(parent);
+    current = parent;
+  }
+  return chain;
+}
+
+// Tarjeta colapsada para un flujo YA TERMINADO dentro de una cadena
+// (ej. Cuotas dentro de Asociaciones) — siempre visible arriba del
+// flujo activo, con la decisión final a la vista y la opción de
+// desplegar todo el proceso paso a paso.
+function PreviousFlowSummary({ flow }) {
+  const [expanded, setExpanded] = useState(false);
+  const finalStage = [...flow.stages].reverse().find((s) => ["quotas", "singleQuota", "budget", "montoPorPuesto"].includes(s.key));
+
+  return (
+    <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}22`, opacity: 0.92 }}>
+      <button onClick={() => setExpanded(!expanded)} className="dp-body w-full flex justify-between items-center">
+        <span className="text-xs font-semibold" style={{ color: BLUE }}>{flowTemplateLabel(flow.template)} · terminado</span>
+        <span className="text-xs" style={{ color: BLUE }}>{expanded ? "▼ ocultar proceso" : "▶ ver proceso completo"}</span>
+      </button>
+      {finalStage && (
+        <div className="rounded-lg p-3 mt-2" style={{ background: BLUE_SOFT }}>
+          <BigDecisionDisplay stage={finalStage} />
+        </div>
+      )}
+      {expanded && (
+        <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${BLUE}15` }}>
+          {flow.stages.map((s, i) => (
+            <div key={i} className="mb-3">
+              <div className="dp-body text-[11px] font-semibold mb-1" style={{ color: INK + "99" }}>{s.text}</div>
+              <StageResultView stage={s} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatResponseValue(v) {
+  if (typeof v === "number") return String(Math.round(v * 100) / 100);
+  if (typeof v === "object" && v !== null) {
+    return Object.entries(v)
+      .map(([k, val]) => `${k}: ${typeof val === "number" ? Math.round(val * 100) / 100 : val}`)
+      .join(", ");
+  }
+  return String(v);
+}
+
+// El contenido que se convierte en PDF: arriba, solo las decisiones
+// finales de cada proceso (sin detalle); abajo, el proceso completo
+// paso a paso — con nombres de quién propuso qué solo si el
+// facilitador eligió mostrar nombres al crear el grupo.
+function PdfExportContent({ groupName, flowChain, showNames }) {
+  return (
+    <div style={{ width: "760px", padding: "36px", background: "#fff", fontFamily: "Inter, sans-serif" }}>
+      <div style={{ fontFamily: "Sora, sans-serif", fontSize: "24px", fontWeight: 700, color: INK, marginBottom: "2px" }}>{groupName}</div>
+      <div style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: INK + "88", marginBottom: "8px" }}>
+        Organicen y decidan · resultados generados el {new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}
+      </div>
+      <div style={{ height: "1px", background: BLUE + "33", marginBottom: "24px" }}></div>
+
+      <div style={{ fontFamily: "Sora, sans-serif", fontSize: "18px", fontWeight: 700, color: INK, marginBottom: "14px" }}>Resultados finales</div>
+      {flowChain.map((flow) => {
+        const finalStage = [...flow.stages].reverse().find((s) => ["quotas", "singleQuota", "budget", "montoPorPuesto"].includes(s.key));
+        if (!finalStage) return null;
+        return (
+          <div key={flow.id} style={{ marginBottom: "18px" }}>
+            <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: BLUE, marginBottom: "8px" }}>{flowTemplateLabel(flow.template)}</div>
+            <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "14px" }}>
+              <BigDecisionDisplay stage={finalStage} />
+            </div>
+          </div>
+        );
+      })}
+
+      <div style={{ fontFamily: "Sora, sans-serif", fontSize: "18px", fontWeight: 700, color: INK, margin: "28px 0 14px" }}>Proceso completo</div>
+      {flowChain.map((flow) => (
+        <div key={flow.id} style={{ marginBottom: "20px" }}>
+          <div style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 700, color: INK, marginBottom: "10px" }}>{flowTemplateLabel(flow.template)}</div>
+          {flow.stages.map((s, i) => (
+            <div key={i} style={{ marginBottom: "12px", paddingLeft: "12px", borderLeft: `3px solid ${BLUE_SOFT}` }}>
+              <div style={{ fontFamily: "Inter, sans-serif", fontSize: "11.5px", fontWeight: 600, color: INK + "aa", marginBottom: "5px" }}>{s.text}</div>
+              <StageResultView stage={s} />
+              {showNames && s.result && s.result.individualResponses && s.result.individualResponses.length > 0 && (
+                <div style={{ marginTop: "6px", background: "#f7f8fa", borderRadius: "8px", padding: "8px 10px" }}>
+                  <div style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", fontWeight: 700, color: INK + "99", marginBottom: "3px" }}>Respuestas individuales:</div>
+                  {s.result.individualResponses.map((r, ri) => (
+                    <div key={ri} style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", color: INK + "88" }}>
+                      <b>{r.memberName}:</b> {formatResponseValue(r.value)}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Convierte el contenido de arriba en un PDF paginado (usando
+// html2canvas para "tomarle una foto" al contenido con la misma
+// estética que la app, y jsPDF para partirlo en hojas).
+async function generateResultsPdf(pdfNode, filename) {
+  const canvas = await window.html2canvas(pdfNode, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+  const imgData = canvas.toDataURL("image/png");
+  const pdf = new window.jspdf.jsPDF("p", "pt", "a4");
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgWidth = pageWidth;
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  let heightLeft = imgHeight;
+  let position = 0;
+  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+  heightLeft -= pageHeight;
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight;
+    pdf.addPage();
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+  }
+  pdf.save(filename);
+}
+
 const PIE_COLORS = ["#3A6EA5", "#E0A458", "#8B5A8F", "#4C9F70", "#D64550", "#6B4E9E", "#5C8A99", "#B5533C"];
+
+
 
 function PieChart({ data, size }) {
   // data: [{ label, value }] — anillo segmentado, con espacio entre cada
@@ -4072,7 +4223,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   );
 }
 
-function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, approvedMemberNames, onAdvance, onSwitchFlow, cooperativasMode, onFinishedStandalone }) {
+function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, approvedMemberNames, onAdvance, onSwitchFlow, cooperativasMode, onFinishedStandalone, onDownloadPdf }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
@@ -4742,6 +4893,15 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             >
               {nextStepLabel ? `Continuar hacia: ${nextStepLabel}` : flow.status === "finished" && !flow.chainNext && cooperativasMode ? "Continuar" : "Ver todo el proceso"}
             </button>
+            {onDownloadPdf && (
+              <button
+                onClick={() => onDownloadPdf()}
+                className="dp-body w-full mt-2 text-xs py-2 rounded-full font-medium"
+                style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}
+              >
+                ⬇ Descargar resultados (PDF)
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -4756,6 +4916,8 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   const [approving, setApproving] = useState("");
   const [pinnedFlowId, setPinnedFlowId] = useState(null);
   const [showCooperativasChooser, setShowCooperativasChooser] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const pdfContentRef = React.useRef(null);
   const prevPendingCount = React.useRef(null);
 
   const flows = group ? group.flows || [] : [];
@@ -4813,6 +4975,16 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
       setLoading(false);
     }
   };
+
+  React.useEffect(() => {
+    if (generatingPdf && pdfContentRef.current) {
+      generateResultsPdf(pdfContentRef.current, `${(group && group.name) || "resultados"}.pdf`)
+        .catch((e) => window.alert("No se pudo generar el PDF: " + e.message))
+        .finally(() => setGeneratingPdf(false));
+    }
+  }, [generatingPdf]);
+
+  const downloadPdf = () => setGeneratingPdf(true);
 
   useEffect(() => {
     fetchGroup();
@@ -4884,10 +5056,18 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
             Tu participación está pendiente de aprobación del facilitador.
           </div>
         )}
-        <div className="flex gap-2 mt-2.5">
-          <a href={`${backendUrl}/api/groups/${groupCode}/export/respuestas.csv`} className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium" style={{ background: BLUE_SOFT, color: INK }}>⬇ Respuestas (CSV)</a>
-          <a href={`${backendUrl}/api/groups/${groupCode}/export/resultados.csv`} className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium" style={{ background: BLUE_SOFT, color: INK }}>⬇ Resultados (CSV)</a>
-        </div>
+        {flows.length > 0 && (
+          <div className="mt-2.5">
+            <button
+              onClick={downloadPdf}
+              disabled={generatingPdf}
+              className="dp-body text-[11px] px-3 py-1.5 rounded-full font-medium disabled:opacity-50"
+              style={{ background: BLUE_SOFT, color: INK }}
+            >
+              {generatingPdf ? "Generando PDF…" : "⬇ Descargar resultados (PDF)"}
+            </button>
+          </div>
+        )}
         {isAdmin && (
           <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${BLUE}22` }}>
             <div className="dp-body text-xs font-medium mb-2" style={{ color: INK }}>
@@ -4932,21 +5112,29 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
       )}
 
       {activeFlow && !showCooperativasChooser ? (
-        <FlowRunner
-          backendUrl={backendUrl}
-          groupCode={groupCode}
-          memberId={memberId}
-          flow={activeFlow}
-          allFlows={flows}
-          isAdmin={isAdmin}
-          groupResponses={group.responses}
-          approvedMemberCount={group.members.filter((m) => m.approved).length}
-          approvedMemberNames={group.members.filter((m) => m.approved).map((m) => m.name)}
-          onAdvance={fetchGroup}
-          onSwitchFlow={setPinnedFlowId}
-          cooperativasMode={cooperativasMode}
-          onFinishedStandalone={() => setShowCooperativasChooser(true)}
-        />
+        <React.Fragment>
+          {getFlowChain(activeFlow, flows)
+            .slice(0, -1)
+            .map((f) => (
+              <PreviousFlowSummary key={f.id} flow={f} />
+            ))}
+          <FlowRunner
+            backendUrl={backendUrl}
+            groupCode={groupCode}
+            memberId={memberId}
+            flow={activeFlow}
+            allFlows={flows}
+            isAdmin={isAdmin}
+            groupResponses={group.responses}
+            approvedMemberCount={group.members.filter((m) => m.approved).length}
+            approvedMemberNames={group.members.filter((m) => m.approved).map((m) => m.name)}
+            onAdvance={fetchGroup}
+            onSwitchFlow={setPinnedFlowId}
+            cooperativasMode={cooperativasMode}
+            onFinishedStandalone={() => setShowCooperativasChooser(true)}
+            onDownloadPdf={downloadPdf}
+          />
+        </React.Fragment>
       ) : (
         isAdmin && !hideFlowStarters && !cooperativasMode && (
           <div className="flex flex-col gap-2 mb-4">
@@ -5111,6 +5299,14 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
             )
           )}
         </React.Fragment>
+      )}
+
+      {generatingPdf && (
+        <div style={{ position: "fixed", left: "-9999px", top: 0, zIndex: -1 }}>
+          <div ref={pdfContentRef}>
+            <PdfExportContent groupName={group.name} flowChain={flows.filter((f) => f.stages.length > 0)} showNames={group.secretResponses === false} />
+          </div>
+        </div>
       )}
     </div>
   );

@@ -1103,6 +1103,16 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
   } else {
     result = computeStageResult(stage, responses, effectiveConfig);
   }
+
+  // Si el grupo no oculta las respuestas (secretResponses === false), se
+  // adjunta quién propuso qué en cada etapa — de forma genérica, sin
+  // tener que tocar el cálculo específico de cada tipo de etapa. Esto
+  // es lo que después usa el PDF de resultados para mostrar (o no) los
+  // nombres, según lo que el facilitador eligió al crear el grupo.
+  if (group.secretResponses === false && responses.length > 0) {
+    result.individualResponses = responses.map((r) => ({ memberName: r.memberName, value: r.value }));
+  }
+
   flow.stages.push({ ...stage, result, closedAt: new Date().toISOString() });
 
   // Si esta etapa era la de "número de miembros", lo que haya puesto el
