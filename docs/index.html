@@ -186,45 +186,128 @@ function formatResponseValue(v) {
 }
 
 // El contenido que se convierte en PDF: arriba, solo las decisiones
-// finales de cada proceso (sin detalle); abajo, el proceso completo
-// paso a paso — con nombres de quién propuso qué solo si el
-// facilitador eligió mostrar nombres al crear el grupo.
-function PdfExportContent({ groupName, flowChain, showNames }) {
+// finales de cada proceso (sin detalle) — incluyendo proyectos
+// ganadores y puestos por sorteo; abajo, el proceso completo paso a
+// paso, en orden (Cuotas, Presupuesto, Proyectos, Responsables) — con
+// nombres de quién propuso qué solo si el facilitador eligió mostrar
+// nombres al crear el grupo. Cada sección va envuelta con
+// data-pdf-block, para que la paginación nunca corte una gráfica ni
+// separe una pregunta de su respuesta.
+function PdfLicitacionSummary({ flow }) {
+  if (!flow.licitacion) return null;
+  const entries = Object.entries(flow.licitacion.categories).filter(([, s]) => s.status === "resolved");
+  if (entries.length === 0) return null;
   return (
-    <div style={{ width: "760px", padding: "36px", background: "#fff", fontFamily: "Inter, sans-serif" }}>
-      <div style={{ fontFamily: "Sora, sans-serif", fontSize: "24px", fontWeight: 700, color: INK, marginBottom: "2px" }}>{groupName}</div>
-      <div style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: INK + "88", marginBottom: "8px" }}>
-        Organicen y decidan · resultados generados el {new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}
-      </div>
-      <div style={{ height: "1px", background: BLUE + "33", marginBottom: "24px" }}></div>
-
-      <div style={{ fontFamily: "Sora, sans-serif", fontSize: "18px", fontWeight: 700, color: INK, marginBottom: "14px" }}>Resultados finales</div>
-      {flowChain.map((flow) => {
-        const finalStage = [...flow.stages].reverse().find((s) => ["quotas", "singleQuota", "budget", "montoPorPuesto"].includes(s.key));
-        if (!finalStage) return null;
-        return (
-          <div key={flow.id} style={{ marginBottom: "18px" }}>
-            <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: BLUE, marginBottom: "8px" }}>{flowTemplateLabel(flow.template)}</div>
-            <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "14px" }}>
-              <BigDecisionDisplay stage={finalStage} />
+    <div data-pdf-block style={{ marginBottom: "20px" }}>
+      <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: BLUE, marginBottom: "10px" }}>Proyectos ganadores</div>
+      <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "16px" }}>
+        {entries.map(([cat, s]) => {
+          const p = flow.licitacion.proposals.find((pp) => pp.id === s.winner);
+          return (
+            <div key={cat} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
+              <span style={{ fontFamily: "Inter, sans-serif", fontSize: "12.5px", color: INK }}>{cat}</span>
+              <span style={{ fontFamily: "Sora, sans-serif", fontSize: "14px", fontWeight: 700, color: GREEN, textAlign: "right" }}>
+                {p ? p.name : "—"}
+                {p && p.cost !== undefined && <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", color: INK + "88", fontWeight: 400, display: "block" }}>{formatMoney(p.cost)}</span>}
+              </span>
             </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PdfSorteoSummary({ flow }) {
+  const stage = [...flow.stages].reverse().find((s) => s.key === "realizarSorteo");
+  if (!stage) return null;
+  return (
+    <div data-pdf-block style={{ marginBottom: "20px" }}>
+      <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: BLUE, marginBottom: "10px" }}>Puestos designados por sorteo</div>
+      <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "16px" }}>
+        <StageResultView stage={stage} />
+      </div>
+    </div>
+  );
+}
+
+function PdfLicitacionDetail({ flow, showNames }) {
+  if (!flow.licitacion) return null;
+  const cats = Object.keys(flow.licitacion.categories);
+  return (
+    <div data-pdf-block style={{ marginBottom: "16px", paddingLeft: "14px", borderLeft: `3px solid ${BLUE_SOFT}` }}>
+      <div style={{ fontFamily: "Inter, sans-serif", fontSize: "12.5px", fontWeight: 700, color: INK, marginBottom: "8px" }}>Propuestas de proyectos por categoría</div>
+      {cats.map((cat) => {
+        const catProposals = flow.licitacion.proposals.filter((p) => p.category === cat);
+        const s = flow.licitacion.categories[cat];
+        return (
+          <div key={cat} style={{ marginBottom: "12px" }}>
+            <div style={{ fontFamily: "Inter, sans-serif", fontSize: "11.5px", fontWeight: 600, color: INK + "aa", marginBottom: "5px" }}>{cat}</div>
+            {catProposals.length === 0 && <div style={{ fontFamily: "Inter, sans-serif", fontSize: "10.5px", color: INK + "77" }}>Sin propuestas.</div>}
+            {catProposals.map((p) => (
+              <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontFamily: "Inter, sans-serif", fontSize: "10.5px", color: p.id === s.winner ? GREEN : INK + "99", fontWeight: p.id === s.winner ? 700 : 400, padding: "2px 0" }}>
+                <span>{p.id === s.winner ? "🏆 " : ""}{p.name}{showNames && p.memberName ? ` — ${p.memberName}` : ""}</span>
+                <span>{p.cost !== undefined ? formatMoney(p.cost) : ""}</span>
+              </div>
+            ))}
           </div>
         );
       })}
+    </div>
+  );
+}
 
-      <div style={{ fontFamily: "Sora, sans-serif", fontSize: "18px", fontWeight: 700, color: INK, margin: "28px 0 14px" }}>Proceso completo</div>
+function PdfExportContent({ groupName, flowChain, showNames }) {
+  return (
+    <div style={{ width: "740px", padding: "40px", background: "#fff", fontFamily: "Inter, sans-serif" }}>
+      <div data-pdf-block style={{ marginBottom: "26px" }}>
+        <div style={{ fontFamily: "Sora, sans-serif", fontSize: "26px", fontWeight: 700, color: INK, marginBottom: "6px" }}>{groupName}</div>
+        <div style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", color: INK + "88" }}>
+          Organicen y decidan · resultados generados el {new Date().toLocaleDateString("es-MX", { year: "numeric", month: "long", day: "numeric" })}
+        </div>
+        <div style={{ height: "1px", background: BLUE + "33", marginTop: "16px" }}></div>
+      </div>
+
+      <div data-pdf-block style={{ marginBottom: "8px" }}>
+        <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK }}>Resultados finales</div>
+      </div>
+      {flowChain.map((flow) => {
+        const finalStage = [...flow.stages].reverse().find((s) => ["singleQuota", "budget", "montoPorPuesto"].includes(s.key));
+        return (
+          <React.Fragment key={flow.id}>
+            {finalStage && (
+              <div data-pdf-block style={{ marginBottom: "20px" }}>
+                <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: BLUE, marginBottom: "10px" }}>{flowTemplateLabel(flow.template)}</div>
+                <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "16px" }}>
+                  <BigDecisionDisplay stage={finalStage} />
+                </div>
+              </div>
+            )}
+            <PdfLicitacionSummary flow={flow} />
+            <PdfSorteoSummary flow={flow} />
+          </React.Fragment>
+        );
+      })}
+
+      <div data-pdf-block style={{ marginTop: "12px", marginBottom: "8px" }}>
+        <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK }}>Proceso completo</div>
+      </div>
       {flowChain.map((flow) => (
-        <div key={flow.id} style={{ marginBottom: "20px" }}>
-          <div style={{ fontFamily: "Inter, sans-serif", fontSize: "14px", fontWeight: 700, color: INK, marginBottom: "10px" }}>{flowTemplateLabel(flow.template)}</div>
+        <React.Fragment key={flow.id}>
+          <div data-pdf-block style={{ marginBottom: "4px" }}>
+            <div style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", fontWeight: 700, color: INK }}>{flowTemplateLabel(flow.template)}</div>
+          </div>
           {flow.stages.map((s, i) => (
-            <div key={i} style={{ marginBottom: "12px", paddingLeft: "12px", borderLeft: `3px solid ${BLUE_SOFT}` }}>
-              <div style={{ fontFamily: "Inter, sans-serif", fontSize: "11.5px", fontWeight: 600, color: INK + "aa", marginBottom: "5px" }}>{s.text}</div>
-              <StageResultView stage={s} />
+            <div key={i} data-pdf-block style={{ marginBottom: "16px", paddingLeft: "14px", borderLeft: `3px solid ${BLUE_SOFT}` }}>
+              <div style={{ fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 600, color: INK + "aa", marginBottom: "8px", lineHeight: 1.5 }}>{s.text}</div>
+              <div style={{ marginTop: "4px" }}>
+                <StageResultView stage={s} />
+              </div>
               {showNames && s.result && s.result.individualResponses && s.result.individualResponses.length > 0 && (
-                <div style={{ marginTop: "6px", background: "#f7f8fa", borderRadius: "8px", padding: "8px 10px" }}>
-                  <div style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", fontWeight: 700, color: INK + "99", marginBottom: "3px" }}>Respuestas individuales:</div>
+                <div style={{ marginTop: "10px", background: "#f7f8fa", borderRadius: "8px", padding: "10px 12px" }}>
+                  <div style={{ fontFamily: "Inter, sans-serif", fontSize: "10.5px", fontWeight: 700, color: INK + "99", marginBottom: "5px" }}>Respuestas individuales:</div>
                   {s.result.individualResponses.map((r, ri) => (
-                    <div key={ri} style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", color: INK + "88" }}>
+                    <div key={ri} style={{ fontFamily: "Inter, sans-serif", fontSize: "10.5px", color: INK + "88", lineHeight: 1.6 }}>
                       <b>{r.memberName}:</b> {formatResponseValue(r.value)}
                     </div>
                   ))}
@@ -232,33 +315,76 @@ function PdfExportContent({ groupName, flowChain, showNames }) {
               )}
             </div>
           ))}
-        </div>
+          <PdfLicitacionDetail flow={flow} showNames={showNames} />
+        </React.Fragment>
       ))}
     </div>
   );
 }
 
-// Convierte el contenido de arriba en un PDF paginado (usando
-// html2canvas para "tomarle una foto" al contenido con la misma
-// estética que la app, y jsPDF para partirlo en hojas).
-async function generateResultsPdf(pdfNode, filename) {
-  const canvas = await window.html2canvas(pdfNode, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-  const imgData = canvas.toDataURL("image/png");
+// Convierte el contenido de arriba en un PDF paginado por BLOQUES (cada
+// pregunta+respuesta, cada gráfica, cada tarjeta es un bloque completo)
+// — así nunca se corte una gráfica a la mitad ni se separe una
+// pregunta de su resultado entre dos hojas. Deja márgenes en los 4
+// lados de cada hoja.
+async function generateResultsPdf(containerNode, filename) {
   const pdf = new window.jspdf.jsPDF("p", "pt", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const imgWidth = pageWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  let heightLeft = imgHeight;
-  let position = 0;
-  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-  heightLeft -= pageHeight;
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight;
-    pdf.addPage();
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+  const marginX = 34;
+  const marginTop = 34;
+  const marginBottom = 34;
+  const usableWidth = pageWidth - marginX * 2;
+  const maxBlockHeight = pageHeight - marginTop - marginBottom;
+
+  const blocks = Array.from(containerNode.querySelectorAll("[data-pdf-block]"));
+  let cursorY = marginTop;
+  let placedOnPage = false;
+
+  for (const block of blocks) {
+    const canvas = await window.html2canvas(block, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    const imgWidth = usableWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    if (placedOnPage && cursorY + imgHeight > pageHeight - marginBottom) {
+      pdf.addPage();
+      cursorY = marginTop;
+      placedOnPage = false;
+    }
+
+    if (imgHeight > maxBlockHeight) {
+      // Bloque más alto que una hoja completa (caso raro, ej. una lista
+      // muy larga de respuestas individuales) — se reparte en varias
+      // hojas, cortando por posición, en vez de encogerlo o dejarlo salir.
+      let remainingPx = canvas.height;
+      while (remainingPx > 0) {
+        if (!placedOnPage) cursorY = marginTop;
+        const availablePt = pageHeight - marginBottom - cursorY;
+        const availablePx = Math.floor((availablePt * canvas.width) / imgWidth);
+        const sliceHeightPx = Math.max(1, Math.min(availablePx, remainingPx));
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHeightPx;
+        sliceCanvas.getContext("2d").drawImage(canvas, 0, canvas.height - remainingPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
+        const sliceHeightPt = (sliceHeightPx * imgWidth) / canvas.width;
+        pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", marginX, cursorY, imgWidth, sliceHeightPt);
+        remainingPx -= sliceHeightPx;
+        cursorY += sliceHeightPt;
+        placedOnPage = true;
+        if (remainingPx > 0) {
+          pdf.addPage();
+          placedOnPage = false;
+        }
+      }
+      cursorY += 14;
+      continue;
+    }
+
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", marginX, cursorY, imgWidth, imgHeight);
+    cursorY += imgHeight + 14;
+    placedOnPage = true;
   }
+
   pdf.save(filename);
 }
 
