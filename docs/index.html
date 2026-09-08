@@ -1436,8 +1436,8 @@ function MunRiquezaTab({ onNext }) {
   }
 
   const comparisons = [
-    { label: "50% más bajo de la población", extra: "~66,000,000 hogares", value: 60000, color: INK },
-    { label: "El hombre más rico del país", extra: "", value: 839000000000, color: CORAL },
+    { label: "50% de la población con menos riqueza del país", extra: "~66,000,000 hogares", value: 60000, color: INK },
+    { label: "Riqueza del hombre más rico del país", extra: "", value: 839000000000, color: CORAL },
   ];
 
   return (
@@ -1466,7 +1466,7 @@ function MunRiquezaTab({ onNext }) {
         </div>
       </div>
       <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>
-        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 1% de las personas más ricas del país</b>, que son dueñas del 33% de la riqueza — a la mediana, y a casi todos los demás, no les toca nada.
+        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 1% de las personas más ricas del país</b>, que son dueñas del 33% de la riqueza.
       </div>
       <div className="dp-body text-[10px] rounded-lg p-2 mb-2.5" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
         <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
@@ -1602,9 +1602,6 @@ function MunPresupuestoTab({ onNext }) {
           </div>
         ))}
         <button onClick={onNext} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Continuar →</button>
-        <button disabled className="dp-body w-full mt-2 text-xs py-2 rounded-full font-medium flex items-center justify-center gap-1.5" style={{ background: "none", border: `1.5px dashed ${INK}33`, color: INK + "77" }}>
-          <i className="ti ti-sparkles"></i> Próximamente: Objetivocracia
-        </button>
       </div>
     );
   }
@@ -1721,6 +1718,10 @@ function MunOtrasResumen({ results, onBack }) {
         </div>
       ))}
       <button onClick={onBack} className="dp-body w-full mt-3 text-xs py-2 rounded-full font-medium" style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}>← Volver a las preguntas</button>
+      <button disabled className="dp-body w-full mt-3 text-xs py-2 rounded-full font-medium flex items-center justify-center gap-1.5" style={{ background: "none", border: `1.5px dashed ${INK}33`, color: INK + "77" }}>
+        <i className="ti ti-sparkles"></i> Próximamente: Objetivocracia
+      </button>
+      <div className="dp-body text-[10.5px] text-center mt-1.5" style={{ color: INK + "77" }}>Un sistema realmente democrático para remplazar a las repúblicas.</div>
     </div>
   );
 }
