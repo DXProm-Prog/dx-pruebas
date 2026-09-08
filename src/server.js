@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 
-const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile } = require("./store");
+const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
@@ -105,6 +105,18 @@ app.get("/api/my-groups", async (req, res) => {
     res.json({ groups });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// Endpoint sin datos sensibles, pensado para que un ping automático
+// (ej. GitHub Actions) lo visite cada pocos días y evite que Supabase
+// pause la base de datos por inactividad.
+app.get("/api/keepalive", async (req, res) => {
+  try {
+    await pingDatabase();
+    res.json({ ok: true, timestamp: new Date().toISOString() });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
   }
 });
 

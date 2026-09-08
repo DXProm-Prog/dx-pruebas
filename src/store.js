@@ -255,4 +255,13 @@ function generateId() {
   return crypto.randomUUID();
 }
 
-module.exports = { load, save, generateCode, generateId, getGroupsForUser, ensureProfile };
+// Consulta lo más ligera posible, solo para que Supabase registre
+// actividad y no pause el proyecto por inactividad (su plan gratis
+// pausa la base de datos si no recibe ninguna consulta en 7 días).
+async function pingDatabase() {
+  const { error } = await supabase.from("groups").select("id", { head: true, count: "exact" }).limit(1);
+  if (error) throw new Error(`Supabase (ping): ${error.message}`);
+  return true;
+}
+
+module.exports = { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase };
