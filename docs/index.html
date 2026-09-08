@@ -4971,8 +4971,36 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       )}
 
       {flow.status === "finished" && (
-        <div className="dp-body text-[12px]" style={{ color: GREEN }}>
-          ✅ Flujo completo — si dejaste tu correo, ahí te llega el resumen.
+        <div className="mb-3">
+          <div className="dp-body text-[12px] mb-2" style={{ color: GREEN }}>
+            ✅ Flujo completo — si dejaste tu correo, ahí te llega el resumen.
+          </div>
+          {(() => {
+            const nextFlow = (allFlows || []).find((f) => f.chainedFromFlowId === flow.id);
+            if (nextFlow && onSwitchFlow) {
+              return (
+                <button
+                  onClick={() => onSwitchFlow(nextFlow.id)}
+                  className="dp-body text-xs px-3 py-2 rounded-full text-white font-medium"
+                  style={{ background: BLUE }}
+                >
+                  Continuar hacia: {flowTemplateLabel(nextFlow.template)} →
+                </button>
+              );
+            }
+            if (!flow.chainNext && cooperativasMode && onFinishedStandalone) {
+              return (
+                <button
+                  onClick={() => onFinishedStandalone()}
+                  className="dp-body text-xs px-3 py-2 rounded-full text-white font-medium"
+                  style={{ background: BLUE }}
+                >
+                  ¿Hacer otro proceso? →
+                </button>
+              );
+            }
+            return null;
+          })()}
         </div>
       )}
 
