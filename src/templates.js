@@ -21,6 +21,28 @@ function approvalStage(label) {
   };
 }
 
+// Arma la etapa de "asignar % del presupuesto", combinando los gastos
+// fijos que ya puso el facilitador (con su % de referencia precargado,
+// según cuánto representan de los ingresos) con los rubros que el
+// grupo votó — estos últimos empiezan en 0%, para que el grupo decida
+// desde cero cómo repartir lo que no está comprometido en gastos fijos.
+function buildBudgetStage(stages, survivorCategories, label) {
+  const gastosStage = [...stages].reverse().find((s) => s.key === "gastosFijos");
+  const ingresos = gastosStage ? gastosStage.result.ingresos : 0;
+  const gastosFijos = gastosStage ? gastosStage.result.gastos : [];
+  const presetPercentages = {};
+  gastosFijos.forEach((g) => {
+    presetPercentages[g.nombre] = ingresos > 0 ? Math.round((g.monto / ingresos) * 10000) / 100 : 0;
+  });
+  const allCategories = [...gastosFijos.map((g) => g.nombre), ...survivorCategories];
+  return {
+    key: "budget",
+    type: "porcentaje_por_categoria",
+    text: `Asigna el % de ${label} que crees justo para cada rubro (si la suma pasa de 100%, se ajusta sola). Los gastos fijos ya vienen con su % de referencia, pero los puedes mover.`,
+    config: { categories: allCategories, totalBudget: ingresos, presetPercentages },
+  };
+}
+
 const cuotas = {
   defaultConfig: { categoryThresholdPercent: 10, quotaTrimPercent: 10 },
 
@@ -61,15 +83,41 @@ const cuotas = {
     }
 
     if (last.key === "names") {
-      const { pool, totalResponses } = last.result;
-      let survivors = pool.filter((p) => totalResponses > 0 && (p.count / totalResponses) * 100 >= thresholdPercent);
-      if (survivors.length === 0) survivors = pool.slice(0, 1);
-      const categoryCount = last.config.categoryCount;
+      const allNames = last.result.pool.map((p) => p.text);
+      return {
+        key: "fusionarCategorias",
+        type: "fusionar_categorias",
+        text: "¿Hay categorías propuestas que en realidad son la misma? Márquenlas juntas si creen que sí.",
+        config: { categories: allNames },
+      };
+    }
+
+    if (last.key === "fusionarCategorias") {
+      const namesStage = [...stages].reverse().find((s) => s.key === "names");
+      const { pool, totalResponses } = namesStage.result;
+      const countByText = {};
+      pool.forEach((p) => (countByText[p.text] = p.count));
+
+      // El "apoyo" de una categoría fusionada es la suma del apoyo de
+      // los nombres que se juntaron en ella.
+      const finalCounts = {};
+      last.result.mergedGroups.forEach((g) => {
+        const displayName = `${g.primary} (${g.aliases.join(", ")})`;
+        finalCounts[displayName] = [g.primary, ...g.aliases].reduce((s, n) => s + (countByText[n] || 0), 0);
+      });
+      const mergedRawNames = new Set(last.result.mergedGroups.flatMap((g) => [g.primary, ...g.aliases]));
+      pool.forEach((p) => {
+        if (!mergedRawNames.has(p.text)) finalCounts[p.text] = p.count;
+      });
+
+      let survivors = Object.keys(finalCounts).filter((name) => totalResponses > 0 && (finalCounts[name] / totalResponses) * 100 >= thresholdPercent);
+      if (survivors.length === 0) survivors = Object.keys(finalCounts).slice(0, 1);
+      const categoryCount = namesStage.config.categoryCount;
       return {
         key: "ranking",
         type: "ranking_multiganador",
         text: `Ordena estas categorías propuestas según tu preferencia (toca en orden: 1ª, 2ª…). Se descartaron las que no llegaron al ${thresholdPercent}% de apoyo.`,
-        config: { options: survivors.map((p) => p.text), winnersCount: Math.min(categoryCount, survivors.length) },
+        config: { options: survivors, winnersCount: Math.min(categoryCount, survivors.length) },
       };
     }
 
@@ -120,18 +168,27 @@ const cuotas = {
 const presupuesto = {
   defaultConfig: { selectionThresholdPercent: 10 },
 
-  getInitialStage() {
+  getInitialStage(flowConfig = {}) {
     return {
-      key: "categories",
-      type: "recoleccion_abierta",
-      text: "Propón categorías de gasto para el presupuesto (una por recuadro).",
-      config: { maxItemsPerPerson: 5 },
+      key: "gastosFijos",
+      type: "gastos_fijos",
+      text: "Ingresa los ingresos y desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y solo pon los ingresos).",
+      config: { suggestedIngresos: flowConfig.totalBudget || null },
     };
   },
 
   getNextStage(stages, flowConfig = {}) {
     const thresholdPercent = flowConfig.selectionThresholdPercent ?? 10;
     const last = stages[stages.length - 1];
+
+    if (last.key === "gastosFijos") {
+      return {
+        key: "categories",
+        type: "recoleccion_abierta",
+        text: "Propón categorías de gasto para el presupuesto (una por recuadro).",
+        config: { maxItemsPerPerson: 5, fixedExpenseNames: last.result.gastos.map((g) => g.nombre) },
+      };
+    }
 
     if (last.key === "categories") {
       const allNames = last.result.pool.map((p) => p.text);
@@ -159,12 +216,7 @@ const presupuesto = {
         const sorted = [...last.result.tally].sort((a, b) => b.percent - a.percent);
         survivors = sorted.slice(0, 1).map((t) => t.option);
       }
-      return {
-        key: "budget",
-        type: "porcentaje_por_categoria",
-        text: "Asigna el % del presupuesto que crees justo para cada categoría (si la suma pasa de 100%, se ajusta sola).",
-        config: { categories: survivors, totalBudget: flowConfig.totalBudget || null },
-      };
+      return buildBudgetStage(stages, survivors, "el presupuesto");
     }
 
     if (last.key === "budget") {
@@ -258,6 +310,16 @@ const responsabilidades = {
 
     if (last.key === "proponerPuestos") {
       const allNames = last.result.pool.map((p) => p.text);
+      return {
+        key: "fusionarPuestos",
+        type: "fusionar_categorias",
+        text: "¿Hay puestos propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
+        config: { categories: allNames },
+      };
+    }
+
+    if (last.key === "fusionarPuestos") {
+      const allNames = last.result.finalCategories;
       return {
         key: "votarPuestos",
         type: "seleccion_multiple",
@@ -486,29 +548,12 @@ const presupuestoCooperativa = {
     }
 
     if (last.key === "selection") {
-      const gastosStage = stages.find((s) => s.key === "gastosFijos");
-      return {
-        key: "ajustarFijos",
-        type: "ajustar_gastos_fijos",
-        text: "Estos son los gastos fijos de la cooperativa — puedes subirlos o bajarlos.",
-        config: { gastos: gastosStage.result.gastos },
-      };
-    }
-
-    if (last.key === "ajustarFijos") {
-      let survivors = stages.find((s) => s.key === "selection").result.tally.filter((t) => t.percent >= thresholdPercent).map((t) => t.option);
+      let survivors = last.result.tally.filter((t) => t.percent >= thresholdPercent).map((t) => t.option);
       if (survivors.length === 0) {
-        const sorted = [...stages.find((s) => s.key === "selection").result.tally].sort((a, b) => b.percent - a.percent);
+        const sorted = [...last.result.tally].sort((a, b) => b.percent - a.percent);
         survivors = sorted.slice(0, 1).map((t) => t.option);
       }
-      const gastosStage = stages.find((s) => s.key === "gastosFijos");
-      const restante = Math.max(0, gastosStage.result.ingresos - last.result.totalFinal);
-      return {
-        key: "budget",
-        type: "porcentaje_por_categoria",
-        text: `Asigna el % del disponible después de gastos fijos que crees justo para cada rubro (si la suma pasa de 100%, se ajusta sola).`,
-        config: { categories: survivors, totalBudget: restante },
-      };
+      return buildBudgetStage(stages, survivors, "el presupuesto de la cooperativa");
     }
 
     if (last.key === "budget") {

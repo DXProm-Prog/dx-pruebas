@@ -30,16 +30,14 @@ function secureShuffle(arr) {
 // Sortea los puestos entre los candidatos, ya sea una sola vez, o como
 // un calendario rotativo de 12 meses.
 //
-// Regla del calendario rotativo: cada mes se reparten TODOS los
-// puestos entre candidatos que no hayan salido en la "ronda" actual
-// (sin importar en qué puesto salieron antes — la bolsa es compartida
-// entre todos los puestos). Cuando ya no alcanzan candidatos frescos
-// para llenar los puestos de un mes, se vuelve a meter a todos a la
-// bolsa antes de repartir ese mes. Con grupos chicos donde la cantidad
-// de candidatos no es múltiplo exacto del número de puestos, esto
-// puede hacer que alguien repita antes de que TODOS hayan tenido un
-// puesto — es matemáticamente inevitable y, aun así, reparte de forma
-// justa con el tiempo.
+// Regla del calendario rotativo: cada PUESTO tiene su propia bolsa de
+// candidatos — nadie repite un puesto en particular hasta que todos
+// los integrantes ya lo hayan ocupado al menos una vez. Cuando la
+// bolsa de un puesto se vacía, se vuelve a llenar con todos los
+// candidatos antes de seguir repartiendo. Además, dentro de un mismo
+// mes se evita (cuando es posible) que una misma persona quede en dos
+// puestos a la vez — si no hay más remedio (pocos candidatos, muchos
+// puestos), se acepta la repetición ese mes.
 function drawResponsabilidades(roles, candidates, frequency) {
   if (roles.length === 0 || candidates.length === 0) {
     throw new Error("Se necesitan puestos y candidatos para poder sortear");
@@ -55,13 +53,30 @@ function drawResponsabilidades(roles, candidates, frequency) {
     return { frequency: "once", assignment };
   }
 
+  const poolsByRole = {};
+  roles.forEach((role) => {
+    poolsByRole[role.id] = secureShuffle(candidates);
+  });
+
   const months = [];
-  let pool = secureShuffle(candidates);
   for (let m = 1; m <= 12; m++) {
-    if (pool.length < roles.length) pool = secureShuffle(candidates);
     const assignment = {};
+    const takenThisMonth = new Set();
     roles.forEach((role) => {
-      assignment[role.id] = pool.pop();
+      if (poolsByRole[role.id].length === 0) {
+        poolsByRole[role.id] = secureShuffle(candidates);
+      }
+      // Busca, desde el final de la bolsa de ESTE puesto, a la primera
+      // persona que todavía no haya quedado en otro puesto este mismo
+      // mes — si todas ya salieron este mes (más puestos que
+      // candidatos), simplemente se acepta la repetición.
+      let idx = poolsByRole[role.id].length - 1;
+      while (idx > 0 && takenThisMonth.has(poolsByRole[role.id][idx])) {
+        idx--;
+      }
+      const person = poolsByRole[role.id].splice(idx, 1)[0];
+      assignment[role.id] = person;
+      takenThisMonth.add(person);
     });
     months.push({ month: m, assignment });
   }

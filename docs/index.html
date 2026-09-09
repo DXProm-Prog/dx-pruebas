@@ -3255,7 +3255,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
     return suggested.length ? [...suggested, ...blanks] : Array(stage.config.maxItemsPerPerson || 1).fill("");
   });
   const [rankOrder, setRankOrder] = useState([]);
-  const [catValues, setCatValues] = useState({});
+  const [catValues, setCatValues] = useState(() => stage.config.presetPercentages || {});
   const [selectedMulti, setSelectedMulti] = useState([]);
   const [myMergeGroups, setMyMergeGroups] = useState([]);
 
@@ -3325,6 +3325,12 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
   if (stage.type === "recoleccion_abierta") {
     return (
       <div className="mb-2">
+        {stage.config.fixedExpenseNames && stage.config.fixedExpenseNames.length > 0 && (
+          <div className="rounded-lg p-2.5 mb-3" style={{ background: PAGE_BG }}>
+            <div className="dp-body text-[10.5px] font-semibold mb-1" style={{ color: INK + "99" }}>Ya están cubiertos como gastos fijos (no hace falta proponerlos):</div>
+            <div className="dp-body text-[11px]" style={{ color: INK }}>{stage.config.fixedExpenseNames.join(", ")}</div>
+          </div>
+        )}
         {texts.map((t, i) => (
           <input
             key={i}
@@ -3674,7 +3680,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           style={{ background: GREEN }}
         >
           <i className="ti ti-send" style={{ marginRight: "4px" }}></i>
-          {sending ? "Enviando…" : myMergeGroups.length > 0 ? "Enviar" : "No hay rubros repetidos, enviar"}
+          {sending ? "Enviando…" : myMergeGroups.length > 0 ? "Enviar" : "Continuar sin fusionar nada"}
         </button>
       </div>
     );
@@ -4739,7 +4745,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const [memberCounts, setMemberCounts] = useState(flow.config?.memberCounts || {});
   const [roleDrafts, setRoleDrafts] = useState(null);
   const [candidateDrafts, setCandidateDrafts] = useState(null);
-  const [ingresosDraft, setIngresosDraft] = useState("");
+  const [ingresosDraft, setIngresosDraft] = useState(() => (flow.currentStage && flow.currentStage.config.suggestedIngresos) || "");
   const [mergeGroups, setMergeGroups] = useState([]);
   const [reopeningCandidatos, setReopeningCandidatos] = useState(false);
   const [selectedForMerge, setSelectedForMerge] = useState([]);
@@ -5802,6 +5808,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               <PreviousFlowSummary key={f.id} flow={f} />
             ))}
           <FlowRunner
+            key={activeFlow.id}
             backendUrl={backendUrl}
             groupCode={groupCode}
             memberId={memberId}
@@ -6234,7 +6241,7 @@ function DemocraciaPorPromedioConectada() {
             )}
             {view === "home" && (
               session ? (
-                <div className="flex flex-col items-end gap-1">
+                <div className="flex flex-col items-start gap-1">
                   <span className="dp-body text-[10px]" style={{ color: INK + "88" }}>
                     <i className="ti ti-user-circle" style={{ marginRight: "3px" }}></i>{session.user.email}
                   </span>
