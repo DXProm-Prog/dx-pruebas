@@ -355,6 +355,68 @@ function computeStageResult(stage, responses, flowConfig = {}) {
     return { type: "fusionar_candidatos", candidates, mergeGroups };
   }
 
+  // Cada quien propone qué rubros cree que son en realidad el mismo
+  // (puede marcar varios grupos). Un par de rubros se fusiona si más
+  // del 50% de quienes respondieron los marcó como el mismo — y si A
+  // se fusiona con B, y B con C, los tres quedan juntos (unión
+  // transitiva), aunque nadie haya marcado A y C directamente.
+  if (stage.type === "fusionar_categorias") {
+    const categories = stage.config.categories;
+    const totalResponses = responses.length || 1;
+    const pairCounts = {};
+    const pairKey = (a, b) => [a, b].sort().join("|||");
+
+    responses.forEach((r) => {
+      const groups = Array.isArray(r.value) ? r.value : [];
+      groups.forEach((group) => {
+        if (!Array.isArray(group)) return;
+        for (let i = 0; i < group.length; i++) {
+          for (let j = i + 1; j < group.length; j++) {
+            const key = pairKey(group[i], group[j]);
+            pairCounts[key] = (pairCounts[key] || 0) + 1;
+          }
+        }
+      });
+    });
+
+    const parent = {};
+    categories.forEach((c) => (parent[c] = c));
+    const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+    const union = (a, b) => {
+      const ra = find(a);
+      const rb = find(b);
+      if (ra !== rb) parent[ra] = rb;
+    };
+    Object.entries(pairCounts).forEach(([key, count]) => {
+      if (count / totalResponses > 0.5) {
+        const [a, b] = key.split("|||");
+        if (categories.includes(a) && categories.includes(b)) union(a, b);
+      }
+    });
+
+    const groupsMap = {};
+    categories.forEach((c) => {
+      const root = find(c);
+      if (!groupsMap[root]) groupsMap[root] = [];
+      groupsMap[root].push(c);
+    });
+
+    const mergedGroups = [];
+    const finalCategories = [];
+    Object.values(groupsMap).forEach((names) => {
+      if (names.length > 1) {
+        const primary = names[0];
+        const aliases = names.slice(1);
+        mergedGroups.push({ primary, aliases });
+        finalCategories.push(`${primary} (${aliases.join(", ")})`);
+      } else {
+        finalCategories.push(names[0]);
+      }
+    });
+
+    return { type: "fusionar_categorias", finalCategories, mergedGroups };
+  }
+
   throw new Error(`Tipo de etapa desconocido: ${stage.type}`);
 }
 

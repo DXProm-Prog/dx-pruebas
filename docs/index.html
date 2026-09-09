@@ -116,6 +116,95 @@ function formatMoney(n) {
   return "$" + Math.round(n).toLocaleString("es-MX");
 }
 
+// Reemplazo de window.confirm/window.alert nativos (que muestran el
+// dominio de GitHub Pages como remitente) por una ventana propia, con
+// la estética de la app. Se puede llamar desde cualquier función async
+// en cualquier parte del árbol, sin tener que pasar props de un lado a
+// otro — customConfirm/customAlert regresan una Promesa, igual que se
+// usaría window.confirm/alert, solo que hay que ponerles "await".
+let _dialogResolver = null;
+let _setDialogState = null;
+
+function customConfirm(message) {
+  return new Promise((resolve) => {
+    _dialogResolver = resolve;
+    if (_setDialogState) _setDialogState({ message, type: "confirm" });
+  });
+}
+
+function customAlert(message) {
+  return new Promise((resolve) => {
+    _dialogResolver = resolve;
+    if (_setDialogState) _setDialogState({ message, type: "alert" });
+  });
+}
+
+function customPrompt(message, defaultValue = "") {
+  return new Promise((resolve) => {
+    _dialogResolver = resolve;
+    if (_setDialogState) _setDialogState({ message, type: "prompt", value: defaultValue });
+  });
+}
+
+function DialogHost() {
+  const [dialog, setDialog] = React.useState(null);
+  const [promptValue, setPromptValue] = React.useState("");
+  React.useEffect(() => {
+    _setDialogState = (d) => {
+      setPromptValue(d && d.value !== undefined ? d.value : "");
+      setDialog(d);
+    };
+    return () => {
+      _setDialogState = null;
+    };
+  }, []);
+
+  const respond = (value) => {
+    if (_dialogResolver) _dialogResolver(value);
+    _dialogResolver = null;
+    setDialog(null);
+  };
+
+  if (!dialog) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-start justify-center p-4 py-10 overflow-y-auto" style={{ background: "rgba(20,33,61,0.55)", zIndex: 80 }}>
+      <div className="rounded-2xl p-5 max-w-[320px] w-full shadow-xl" style={{ background: WARM_WHITE }}>
+        <div className="dp-body text-sm mb-3 whitespace-pre-line" style={{ color: INK, lineHeight: 1.5 }}>{dialog.message}</div>
+        {dialog.type === "prompt" && (
+          <input
+            autoFocus
+            value={promptValue}
+            onChange={(e) => setPromptValue(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && respond(promptValue)}
+            className="dp-body w-full rounded-lg px-3 py-2 text-sm outline-none mb-4"
+            style={{ border: `1.5px solid ${BLUE}55`, color: INK }}
+          />
+        )}
+        {dialog.type !== "prompt" && <div className="mb-1" />}
+        <div className="flex gap-2">
+          {dialog.type !== "alert" && (
+            <button
+              onClick={() => respond(dialog.type === "prompt" ? null : false)}
+              className="dp-body flex-1 text-xs py-2 rounded-full font-medium"
+              style={{ background: "#fff", color: INK, border: `1.5px solid ${BLUE}55` }}
+            >
+              Cancelar
+            </button>
+          )}
+          <button
+            onClick={() => respond(dialog.type === "prompt" ? promptValue : true)}
+            className="dp-body flex-1 text-xs py-2 rounded-full text-white font-medium"
+            style={{ background: BLUE }}
+          >
+            {dialog.type === "alert" ? "Entendido" : "Confirmar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function flowTemplateLabel(template) {
   return (
     {
@@ -705,7 +794,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
   };
 
   const closeRound = async () => {
-    const ok = window.confirm(
+    const ok = await customConfirm(
       "¿Seguro que quieres cerrar esta ronda? Nadie más podrá votar en ella después de esto. Esta acción no se puede deshacer."
     );
     if (!ok) return;
@@ -1985,13 +2074,13 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
     const newSubs = dept.subs.map((s, idx) => (idx === si ? { ...s, pct: clamped } : s));
     setDeptos(deptos.map((d, idx) => (idx === di ? { ...d, subs: newSubs } : d)));
   };
-  const addSub = (di) => {
-    const name = prompt("Nombre de la sub-secretaría o proyecto:");
+  const addSub = async (di) => {
+    const name = await customPrompt("Nombre de la sub-secretaría o proyecto:");
     if (!name) return;
     setDeptos(deptos.map((d, idx) => (idx === di ? { ...d, subs: [...d.subs, { n: name, pct: 0 }] } : d)));
   };
-  const addDept = () => {
-    const name = prompt("Nombre de la nueva secretaría:");
+  const addDept = async () => {
+    const name = await customPrompt("Nombre de la nueva secretaría:");
     if (!name) return;
     setDeptos([...deptos, { id: `custom_${Date.now()}`, label: name, pct: 0, subs: [] }]);
   };
@@ -2131,9 +2220,9 @@ function MunOtraPreguntaTab({ title, unit, resultLabel, resultSuffix, defaultVal
         <span className="dp-body text-[11px]" style={{ color: INK + "77" }}>{unit}</span>
       </div>
       <button
-        onClick={() => {
+        onClick={async () => {
           if (min !== undefined && max !== undefined && (value < min || value > max)) {
-            alert(`Debe estar entre ${min} y ${max}.`);
+            await customAlert(`Debe estar entre ${min} y ${max}.`);
             return;
           }
           const collective = Math.round(((value + fictitiousResult * 3) / 4) * 10) / 10;
@@ -2421,6 +2510,38 @@ function MunicipiosDemo({ onBack }) {
   );
 }
 
+
+function InfoButton({ title, text }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <React.Fragment>
+      <button
+        onClick={() => setOpen(true)}
+        className="dp-body inline-flex items-center justify-center rounded-full ml-1.5 flex-shrink-0"
+        style={{ width: "16px", height: "16px", background: BLUE + "33", color: BLUE, fontSize: "10px", fontWeight: 700, lineHeight: 1 }}
+      >
+        ?
+      </button>
+      {open && (
+        <div
+          className="fixed inset-0 flex items-start justify-center p-4 py-10 overflow-y-auto"
+          style={{ background: "rgba(20,33,61,0.55)", zIndex: 75 }}
+          onClick={() => setOpen(false)}
+        >
+          <div className="rounded-2xl p-5 max-w-[320px] w-full shadow-xl" style={{ background: WARM_WHITE }} onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-2">
+              <div className="dp-display text-sm font-bold" style={{ color: INK }}>{title}</div>
+              <button onClick={() => setOpen(false)} className="dp-body text-sm" style={{ color: INK + "77" }}>
+                <i className="ti ti-x"></i>
+              </button>
+            </div>
+            <div className="dp-body text-[12.5px] whitespace-pre-line" style={{ color: INK + "99", lineHeight: 1.55 }}>{text}</div>
+          </div>
+        </div>
+      )}
+    </React.Fragment>
+  );
+}
 
 function BackButton({ onClick, label = "Volver" }) {
   return (
@@ -3136,6 +3257,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
   const [rankOrder, setRankOrder] = useState([]);
   const [catValues, setCatValues] = useState({});
   const [selectedMulti, setSelectedMulti] = useState([]);
+  const [myMergeGroups, setMyMergeGroups] = useState([]);
 
   if (stage.type === "promedio") {
     const singleMemberCount = stage.key === "singleQuota" ? flowConfig?.memberCounts?.single : null;
@@ -3426,13 +3548,13 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           {totalRounded === 100 ? " — ¡listo!" : ""}
         </div>
         <button
-          onClick={() => {
+          onClick={async () => {
             if (totalRounded > 100) {
-              window.alert(`Te pasaste por ${(totalRounded - 100).toFixed(1)}%. Ajusta tus porcentajes para que sumen exactamente 100% antes de enviar.`);
+              await customAlert(`Te pasaste por ${(totalRounded - 100).toFixed(1)}%. Ajusta tus porcentajes para que sumen exactamente 100% antes de enviar.`);
               return;
             }
             if (totalRounded < 100) {
-              window.alert(`Te faltan ${(100 - totalRounded).toFixed(1)}% para llegar a 100%. Ajusta tus porcentajes antes de enviar.`);
+              await customAlert(`Te faltan ${(100 - totalRounded).toFixed(1)}% para llegar a 100%. Ajusta tus porcentajes antes de enviar.`);
               return;
             }
             const obj = {};
@@ -3498,6 +3620,61 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           style={{ background: GREEN }}
         >
           <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+    );
+  }
+
+  if (stage.type === "fusionar_categorias") {
+    const groupedNames = new Set(myMergeGroups.flat());
+    const available = stage.config.categories.filter((c) => !groupedNames.has(c));
+    const toggleSelect = (name) => {
+      setSelectedMulti(selectedMulti.includes(name) ? selectedMulti.filter((n) => n !== name) : [...selectedMulti, name]);
+    };
+    const confirmGroup = () => {
+      if (selectedMulti.length < 2) return;
+      setMyMergeGroups([...myMergeGroups, selectedMulti]);
+      setSelectedMulti([]);
+    };
+    return (
+      <div className="mb-2">
+        {myMergeGroups.length > 0 && (
+          <div className="mb-3">
+            <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>Marcaste como el mismo rubro:</div>
+            {myMergeGroups.map((g, i) => (
+              <div key={i} className="flex items-center justify-between rounded-lg p-2 mb-1.5" style={{ background: BLUE_SOFT }}>
+                <span className="dp-body text-xs" style={{ color: INK }}>{g.join(" + ")}</span>
+                <button onClick={() => setMyMergeGroups(myMergeGroups.filter((_, idx) => idx !== i))} style={{ color: CORAL }}>
+                  <i className="ti ti-x"></i>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        {available.length > 0 && (
+          <React.Fragment>
+            <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Marca 2 o más rubros que creas que son el mismo:</div>
+            {available.map((c) => (
+              <label key={c} className="flex items-center gap-2 mb-1.5">
+                <input type="checkbox" checked={selectedMulti.includes(c)} disabled={disabled} onChange={() => toggleSelect(c)} />
+                <span className="dp-body text-sm" style={{ color: INK }}>{c}</span>
+              </label>
+            ))}
+            {selectedMulti.length >= 2 && (
+              <button onClick={confirmGroup} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>
+                Marcar estos {selectedMulti.length} como el mismo rubro →
+              </button>
+            )}
+          </React.Fragment>
+        )}
+        <button
+          onClick={() => onSend(myMergeGroups)}
+          disabled={sending || disabled}
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: GREEN }}
+        >
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>
+          {sending ? "Enviando…" : myMergeGroups.length > 0 ? "Enviar" : "No hay rubros repetidos, enviar"}
         </button>
       </div>
     );
@@ -3768,6 +3945,20 @@ function StageResultView({ stage }) {
             <span className="dp-mono font-semibold">{formatMoney(g.monto)}</span>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (stage.type === "fusionar_categorias") {
+    return (
+      <div className="dp-body text-xs" style={{ color: INK + "99" }}>
+        {r.mergedGroups.length === 0 && <div>No se fusionó ningún rubro.</div>}
+        {r.mergedGroups.map((g, i) => (
+          <div key={i} className="mb-1">
+            <span className="font-semibold" style={{ color: INK }}>{g.primary}</span> + {g.aliases.join(", ")}
+          </div>
+        ))}
+        <div className="mt-1.5"><span className="font-semibold" style={{ color: INK }}>Rubros finales:</span> {r.finalCategories.join(", ")}</div>
       </div>
     );
   }
@@ -4406,7 +4597,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   };
 
   const closeCollecting = async () => {
-    const ok = window.confirm("¿Cerrar la recepción de propuestas de todas las categorías? Nadie más podrá mandar o editar propuestas después de esto, y se revelan todas juntas.");
+    const ok = await customConfirm("¿Cerrar la recepción de propuestas de todas las categorías? Nadie más podrá mandar o editar propuestas después de esto, y se revelan todas juntas.");
     if (!ok) return;
     setClosingCollecting(true);
     setCollectingError("");
@@ -4428,7 +4619,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   };
 
   const closeVoting = async () => {
-    const ok = window.confirm("¿Cerrar la votación de las categorías listas? Se calculan los resultados y nadie más podrá votar en ellas.");
+    const ok = await customConfirm("¿Cerrar la votación de las categorías listas? Se calculan los resultados y nadie más podrá votar en ellas.");
     if (!ok) return;
     setClosingVoting(true);
     try {
@@ -4449,7 +4640,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   };
 
   const reopenEmpty = async () => {
-    const ok = window.confirm("¿Reabrir las categorías vacías para que reciban propuestas de nuevo?");
+    const ok = await customConfirm("¿Reabrir las categorías vacías para que reciban propuestas de nuevo?");
     if (!ok) return;
     setReopening(true);
     setReopenError("");
@@ -4550,6 +4741,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const [candidateDrafts, setCandidateDrafts] = useState(null);
   const [ingresosDraft, setIngresosDraft] = useState("");
   const [mergeGroups, setMergeGroups] = useState([]);
+  const [reopeningCandidatos, setReopeningCandidatos] = useState(false);
   const [selectedForMerge, setSelectedForMerge] = useState([]);
   const [choosingPrimaryFor, setChoosingPrimaryFor] = useState(null);
   const [gastosDraft, setGastosDraft] = useState([{ nombre: "", monto: "" }]);
@@ -4644,7 +4836,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   };
 
   const closeStage = async () => {
-    const ok = window.confirm("¿Seguro que quieres cerrar esta etapa? Nadie más podrá responder después de esto.");
+    const ok = await customConfirm("¿Seguro que quieres cerrar esta etapa? Nadie más podrá responder después de esto.");
     if (!ok) return;
     setClosingStage(true);
     try {
@@ -4742,7 +4934,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       {isAdmin && flow.status === "active" && flow.template !== "tabuladorSueldos" && (
         <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
           <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
-            {flow.template === "responsabilidades" ? "% mínimo de apoyo para que sobreviva un puesto propuesto" : "% mínimo de apoyo para que sobreviva una categoría"}
+            <span className="flex items-center">
+              {flow.template === "responsabilidades" ? "% mínimo de apoyo para que sobreviva un puesto propuesto" : "% mínimo de apoyo para que sobreviva una categoría"}
+              <InfoButton
+                title="% mínimo de apoyo"
+                text={`Cuando todos proponen opciones (${flow.template === "responsabilidades" ? "puestos" : "categorías"}) y después votan por las que les importan, esto decide qué tan popular tiene que ser una opción para quedarse.\n\nPor ejemplo, con 10%: si menos del 10% del grupo votó por una opción, se elimina — la idea es quitar del camino las propuestas casi sin apoyo, sin necesitar que el facilitador decida a mano cuáles sobreviven.\n\nSolo afecta las etapas que todavía no se han calculado — cambiarlo no revive ni elimina nada que ya se haya decidido antes.`}
+              />
+            </span>
             <input
               type="number" min="0" max="100" value={categoryThresholdPercent}
               onChange={(e) => setCategoryThresholdPercent(e.target.value)}
@@ -4752,7 +4950,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           </label>
           {flow.template === "cuotas" && (
             <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
-              % de recorte (alto y bajo) en las cuotas
+              <span className="flex items-center">
+                % de recorte (alto y bajo) en las cuotas
+                <InfoButton
+                  title="% de recorte"
+                  text={"Antes de promediar las propuestas de todos, se descartan las más extremas — las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas, y solo se promedia lo que queda en medio.\n\nEsto es el corazón de Democracia por Promedio: evita que una sola persona (o un grupito) jale el resultado hacia un extremo proponiendo un número absurdo a propósito."}
+                />
+              </span>
               <input
                 type="number" min="0" max="45" value={quotaTrimPercent}
                 onChange={(e) => setQuotaTrimPercent(e.target.value)}
@@ -4835,7 +5039,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       {isAdmin && flow.status === "active" && flow.template === "tabuladorSueldos" && (
         <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
           <label className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
-            % de recorte (alto y bajo) en los sueldos propuestos
+            <span className="flex items-center">
+              % de recorte (alto y bajo) en los sueldos propuestos
+              <InfoButton
+                title="% de recorte"
+                text={"Antes de promediar las propuestas de todos para cada puesto, se descartan las más extremas — las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas de ese puesto, y solo se promedia lo que queda en medio.\n\nEsto evita que una sola persona (o un grupito) jale el sueldo de un puesto hacia un extremo proponiendo un número absurdo a propósito."}
+              />
+            </span>
             <input
               type="number" min="0" max="45" value={sueldoTrimPercent}
               onChange={(e) => setSueldoTrimPercent(e.target.value)}
@@ -4995,7 +5205,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       })()}
 
       {stage && stage.type === "configurar_candidatos" && (() => {
-        const currentCandidates = candidateDrafts !== null ? candidateDrafts : [...new Set(approvedMemberNames || [])];
+        const currentCandidates = candidateDrafts !== null ? candidateDrafts : [...new Set(stage.config.prefillCandidates || approvedMemberNames || [])];
         const removeCandidate = (name) => setCandidateDrafts(currentCandidates.filter((c) => c !== name));
         const addCandidate = () => {
           const clean = newCandidateName.trim();
@@ -5003,9 +5213,16 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           setCandidateDrafts([...currentCandidates, clean]);
           setNewCandidateName("");
         };
+        const minCandidates = stage.config.minCandidates || 1;
+        const notEnough = currentCandidates.length < minCandidates;
         return (
           <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
             <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
+            {stage.config.minCandidates && (
+              <div className="dp-body text-[10.5px] mb-2" style={{ color: INK + "88" }}>
+                Se necesitan al menos {minCandidates} candidato{minCandidates === 1 ? "" : "s"} para los puestos que se van a sortear.
+              </div>
+            )}
             {isAdmin ? (
               <React.Fragment>
                 <div className="flex flex-wrap gap-1.5 mb-2">
@@ -5027,10 +5244,16 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   />
                   <button onClick={addCandidate} className="dp-body text-xs font-medium px-2" style={{ color: BLUE }}>+ agregar</button>
                 </div>
+                {notEnough && (
+                  <div className="dp-body text-[10.5px] mb-2" style={{ color: CORAL }}>
+                    <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>
+                    Te faltan {minCandidates - currentCandidates.length} candidato{minCandidates - currentCandidates.length === 1 ? "" : "s"} más.
+                  </div>
+                )}
                 {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
                 <button
                   onClick={() => submitAndClose(currentCandidates)}
-                  disabled={sending || currentCandidates.length === 0}
+                  disabled={sending || notEnough}
                   className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                   style={{ background: GREEN }}
                 >
@@ -5050,14 +5273,41 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           {isAdmin ? (
             <React.Fragment>
               {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
-              <button
-                onClick={() => submitAndClose({})}
-                disabled={sending}
-                className="dp-body flex items-center justify-center gap-1.5 w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
-                style={{ background: BLUE }}
-              >
-                <i className="ti ti-dice-5"></i> {sending ? "Sorteando…" : "Realizar sorteo"}
-              </button>
+              {sendError && sendError.includes("candidatos") ? (
+                <button
+                  onClick={async () => {
+                    setReopeningCandidatos(true);
+                    try {
+                      const res = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/reopen-candidatos`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ memberId }),
+                      });
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error || "No se pudo regresar");
+                      await onAdvance();
+                    } catch (e) {
+                      await customAlert(e.message);
+                    } finally {
+                      setReopeningCandidatos(false);
+                    }
+                  }}
+                  disabled={reopeningCandidatos}
+                  className="dp-body flex items-center justify-center gap-1.5 w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
+                  style={{ background: BLUE }}
+                >
+                  <i className="ti ti-arrow-back-up"></i> {reopeningCandidatos ? "Regresando…" : "Regresar a agregar candidatos"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => submitAndClose({})}
+                  disabled={sending}
+                  className="dp-body flex items-center justify-center gap-1.5 w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
+                  style={{ background: BLUE }}
+                >
+                  <i className="ti ti-dice-5"></i> {sending ? "Sorteando…" : "Realizar sorteo"}
+                </button>
+              )}
             </React.Fragment>
           ) : (
             <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador va a realizar el sorteo…</div>
@@ -5412,7 +5662,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   React.useEffect(() => {
     if (generatingPdf && pdfContentRef.current) {
       generateResultsPdf(pdfContentRef.current, `${(group && group.name) || "resultados"}.pdf`)
-        .catch((e) => window.alert("No se pudo generar el PDF: " + e.message))
+        .catch((e) => customAlert("No se pudo generar el PDF: " + e.message))
         .finally(() => setGeneratingPdf(false));
     }
   }, [generatingPdf]);
@@ -5938,7 +6188,7 @@ function DemocraciaPorPromedioConectada() {
     cooperativas: ["Arma tu grupo", "Elige un proceso", "Decidan juntos", "¡Listo!"],
   };
   const HOME_TAGLINE = "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? — Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.";
-  const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || "Organízate y decide";
+  const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || "Organicen y decidan";
   const sessionName = session ? (session.user.user_metadata && session.user.user_metadata.name) || "" : "";
   const sessionEmail = session ? session.user.email : "";
   const isHomeHeader = !connectedGroupName && !selectedOption;
@@ -5974,12 +6224,14 @@ function DemocraciaPorPromedioConectada() {
       <div className="w-full max-w-[420px] rounded-[32px] overflow-hidden shadow-xl" style={{ background: PAGE_BG, border: `1px solid ${BLUE}33` }}>
         <div className="px-6 pt-7 pb-5" style={{ background: WARM_WHITE }}>
           <div className="flex items-center justify-between mb-2.5">
-            <div
-              className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full"
-              style={{ background: BLUE_SOFT, color: INK + "aa" }}
-            >
-              ORGANICEN Y DECIDAN
-            </div>
+            {!isHomeHeader && (
+              <div
+                className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full"
+                style={{ background: BLUE_SOFT, color: INK + "aa" }}
+              >
+                ORGANICEN Y DECIDAN
+              </div>
+            )}
             {view === "home" && (
               session ? (
                 <div className="flex flex-col items-end gap-1">
@@ -5994,11 +6246,11 @@ function DemocraciaPorPromedioConectada() {
                     <i className="ti ti-users-group" style={{ fontSize: "11px" }}></i>Mis grupos
                   </button>
                 </div>
-              ) : (
+              ) : isHomeHeader ? (
                 <button onClick={() => setView("login")} className="dp-body text-[10px] font-semibold" style={{ color: BLUE }}>
                   <i className="ti ti-login" style={{ marginRight: "3px" }}></i>Iniciar sesión
                 </button>
-              )
+              ) : null
             )}
           </div>
           <h1 className="dp-display text-2xl font-bold leading-tight" style={{ color: INK }}>{headerTitle}</h1>
@@ -6214,6 +6466,7 @@ function DemocraciaPorPromedioConectada() {
       </div>
 
       {showWelcome && view === "home" && <OnboardingCarousel slides={ONBOARDING_SLIDES} onClose={closeWelcome} overlay={true} />}
+      <DialogHost />
     </div>
   );
 }

@@ -1107,6 +1107,16 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
       .map((g) => ({ primary: String(g.primary || "").trim(), aliases: Array.isArray(g.aliases) ? g.aliases.map((a) => String(a).trim()).filter(Boolean) : [] }))
       .filter((g) => g.primary && g.aliases.length > 0);
     storedValue = cleaned;
+  } else if (stage.type === "fusionar_categorias") {
+    if (!Array.isArray(value)) {
+      return res.status(400).json({ error: "value debe ser una lista de grupos de rubros" });
+    }
+    const validNames = new Set(stage.config.categories);
+    const cleaned = value
+      .filter((group) => Array.isArray(group))
+      .map((group) => [...new Set(group.map((n) => String(n).trim()).filter((n) => validNames.has(n)))])
+      .filter((group) => group.length >= 2);
+    storedValue = cleaned;
   } else {
     return res.status(400).json({ error: "Tipo de etapa desconocido" });
   }
@@ -1239,6 +1249,48 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
     }).catch((err) => console.error("Error de correo (flujo):", err.message));
   }
 
+  res.json(flow);
+});
+
+// Cuando ya no hay suficientes candidatos para los puestos que hay que
+// sortear (ej. alguien se salió del grupo después de aprobar la
+// lista), esto regresa el flujo a la etapa de agregar candidatos, en
+// vez de dejarlo atorado sin poder avanzar ni retroceder.
+app.post("/api/groups/:code/flows/:flowId/reopen-candidatos", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load(req.params.code);
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
+  const member = group.members.find((m) => m.id === memberId);
+  if (!member || member.id !== group.admin.id) {
+    return res.status(403).json({ error: "Solo el facilitador puede hacer esto" });
+  }
+  if (!flow.currentStage || flow.currentStage.type !== "realizar_sorteo") {
+    return res.status(400).json({ error: "Esta acción solo aplica justo antes de realizar el sorteo" });
+  }
+
+  let idx = -1;
+  for (let i = flow.stages.length - 1; i >= 0; i--) {
+    if (flow.stages[i].key === "configurarCandidatos" || flow.stages[i].key === "fusionarCandidatos") {
+      idx = i;
+      break;
+    }
+  }
+  if (idx === -1) return res.status(400).json({ error: "No se encontró la etapa de candidatos" });
+
+  const previousCandidates = flow.stages[idx].result.candidates || [];
+  const minCandidates = flow.stages[idx].config.minCandidates || 1;
+  flow.stages = flow.stages.slice(0, idx);
+  flow.currentStage = {
+    key: "configurarCandidatos",
+    type: "configurar_candidatos",
+    text: "Agrega más candidatos — no hay suficientes para todos los puestos que se van a sortear.",
+    config: { minCandidates, prefillCandidates: previousCandidates },
+    instanceIndex: flow.stages.length,
+  };
+  await save(db);
   res.json(flow);
 });
 

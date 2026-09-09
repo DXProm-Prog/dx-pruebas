@@ -136,6 +136,16 @@ const presupuesto = {
     if (last.key === "categories") {
       const allNames = last.result.pool.map((p) => p.text);
       return {
+        key: "fusionarCategorias",
+        type: "fusionar_categorias",
+        text: "¿Hay rubros propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
+        config: { categories: allNames },
+      };
+    }
+
+    if (last.key === "fusionarCategorias") {
+      const allNames = last.result.finalCategories;
+      return {
         key: "selection",
         type: "seleccion_multiple",
         text: `Elige las categorías que te importan (puedes elegir varias). Se descartan las que no lleguen al ${thresholdPercent}% de apoyo.`,
@@ -271,11 +281,21 @@ const responsabilidades = {
     }
 
     if (last.key === "frequencyVote") {
+      const votedStage = [...stages].reverse().find((s) => s.key === "votarPuestos");
+      let minCandidates = 1;
+      if (votedStage) {
+        let survivors = votedStage.result.tally.filter((t) => t.percent >= thresholdPercent).map((t) => t.option);
+        if (survivors.length === 0) {
+          const sorted = [...votedStage.result.tally].sort((a, b) => b.percent - a.percent);
+          survivors = sorted.slice(0, 1).map((t) => t.option);
+        }
+        minCandidates = survivors.length;
+      }
       return {
         key: "configurarCandidatos",
         type: "configurar_candidatos",
         text: "Lista de candidatos para el sorteo — se llena automáticamente con los miembros del grupo.",
-        config: {},
+        config: { minCandidates },
       };
     }
 
@@ -447,6 +467,16 @@ const presupuestoCooperativa = {
 
     if (last.key === "categories") {
       const allNames = last.result.pool.map((p) => p.text);
+      return {
+        key: "fusionarCategorias",
+        type: "fusionar_categorias",
+        text: "¿Hay rubros propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
+        config: { categories: allNames },
+      };
+    }
+
+    if (last.key === "fusionarCategorias") {
+      const allNames = last.result.finalCategories;
       return {
         key: "selection",
         type: "seleccion_multiple",
