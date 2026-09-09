@@ -415,7 +415,7 @@ function PdfExportContent({ groupName, flowChain, showNames }) {
         <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK }}>Resultados finales</div>
       </div>
       {flowChain.map((flow) => {
-        const finalStage = [...flow.stages].reverse().find((s) => ["singleQuota", "budget", "montoPorPuesto"].includes(s.key));
+        const finalStage = [...flow.stages].reverse().find((s) => ["quotas", "singleQuota", "budget", "montoPorPuesto"].includes(s.key));
         return (
           <React.Fragment key={flow.id}>
             {finalStage && (
@@ -486,12 +486,26 @@ async function generateResultsPdf(containerNode, filename) {
   // marcado "pegado al siguiente" (ej. el título de una sección) puede
   // revisar si el bloque que sigue cabe junto con él en lo que queda
   // de la hoja, sin tener que volver a capturarlo dos veces.
+  //
+  // Para los bloques que resultan más altos que una hoja completa
+  // (ej. una lista larga de respuestas individuales), además se
+  // guardan las posiciones de sus hijos DIRECTOS en el DOM — así, si
+  // hay que repartirlos en varias hojas, el corte cae siempre justo
+  // entre dos elementos, nunca a la mitad de un renglón de texto.
   const blockNodes = Array.from(containerNode.querySelectorAll("[data-pdf-block]"));
   const blocks = [];
   for (const node of blockNodes) {
     const canvas = await window.html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
     const imgHeight = (canvas.height * usableWidth) / canvas.width;
-    blocks.push({ canvas, imgHeight, keepWithNext: node.getAttribute("data-pdf-keep-with-next") === "true" });
+    let safeBreaksPx = null;
+    if (imgHeight > maxBlockHeight && node.children.length > 1) {
+      const rect = node.getBoundingClientRect();
+      const scaleFactor = rect.height > 0 ? canvas.height / rect.height : 2;
+      safeBreaksPx = Array.from(node.children)
+        .map((child) => Math.round(child.offsetTop * scaleFactor))
+        .filter((y) => y > 0 && y < canvas.height);
+    }
+    blocks.push({ canvas, imgHeight, keepWithNext: node.getAttribute("data-pdf-keep-with-next") === "true", safeBreaksPx });
   }
 
   let cursorY = marginTop;
@@ -499,21 +513,27 @@ async function generateResultsPdf(containerNode, filename) {
 
   const placeBlock = (block) => {
     if (block.imgHeight > maxBlockHeight) {
-      // Bloque más alto que una hoja completa (caso raro, ej. una lista
-      // muy larga de respuestas individuales) — se reparte en varias
-      // hojas, cortando por posición, en vez de encogerlo o dejarlo salir.
       let remainingPx = block.canvas.height;
+      let consumedPx = 0;
       while (remainingPx > 0) {
         if (!placedOnPage) cursorY = marginTop;
         const availablePt = pageHeight - marginBottom - cursorY;
-        const availablePx = Math.floor((availablePt * block.canvas.width) / usableWidth);
+        let availablePx = Math.floor((availablePt * block.canvas.width) / usableWidth);
+        // Si hay puntos de corte seguros (entre hijos del bloque), se
+        // usa el más grande que quepa en el espacio disponible, en vez
+        // de cortar a ciegas por posición de pixel.
+        if (block.safeBreaksPx && availablePx < remainingPx) {
+          const candidates = block.safeBreaksPx.filter((y) => y > consumedPx && y - consumedPx <= availablePx);
+          if (candidates.length > 0) availablePx = candidates[candidates.length - 1] - consumedPx;
+        }
         const sliceHeightPx = Math.max(1, Math.min(availablePx, remainingPx));
         const sliceCanvas = document.createElement("canvas");
         sliceCanvas.width = block.canvas.width;
         sliceCanvas.height = sliceHeightPx;
-        sliceCanvas.getContext("2d").drawImage(block.canvas, 0, block.canvas.height - remainingPx, block.canvas.width, sliceHeightPx, 0, 0, block.canvas.width, sliceHeightPx);
+        sliceCanvas.getContext("2d").drawImage(block.canvas, 0, consumedPx, block.canvas.width, sliceHeightPx, 0, 0, block.canvas.width, sliceHeightPx);
         const sliceHeightPt = (sliceHeightPx * usableWidth) / block.canvas.width;
         pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", marginX, cursorY, usableWidth, sliceHeightPt);
+        consumedPx += sliceHeightPx;
         remainingPx -= sliceHeightPx;
         cursorY += sliceHeightPt;
         placedOnPage = true;
@@ -2581,7 +2601,7 @@ function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
   );
 }
 
-function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones, onChooseResponsables, onChooseMunicipios, onChooseCooperativas }) {
+function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones, onChooseResponsables, onChooseMunicipios, onChooseCooperativas, onChooseShare }) {
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
       <HomeIconButton
@@ -2632,6 +2652,61 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
         subtitle="Demo interactiva: impuestos y presupuesto participativo a la escala de un país, con datos reales."
         onClick={onChooseMunicipios}
       />
+      <HomeIconButton
+        icon="ti-share"
+        title="Invita a otros"
+        subtitle="Comparte la app con tu comunidad — código QR y link listos para mandar."
+        onClick={onChooseShare}
+      />
+    </div>
+  );
+}
+
+const APP_SHARE_URL = "https://dxprom-prog.github.io/dx-pruebas/";
+
+function SharePromoScreen({ onBack }) {
+  const cardRef = React.useRef(null);
+  const [downloading, setDownloading] = useState(false);
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(APP_SHARE_URL)}`;
+
+  const downloadImage = async () => {
+    setDownloading(true);
+    try {
+      const canvas = await window.html2canvas(cardRef.current, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+      const link = document.createElement("a");
+      link.download = "organicen-y-decidan.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (e) {
+      await customAlert("No se pudo generar la imagen: " + e.message);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="px-4 py-6 flex flex-col gap-4">
+      <BackButton onClick={onBack} />
+      <div ref={cardRef} className="rounded-2xl p-6 text-center" style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}33` }}>
+        <div className="dp-display text-xl font-bold mb-2" style={{ color: INK }}>Organicen y decidan</div>
+        <div className="dp-body text-[13px] mb-4" style={{ color: INK + "aa", lineHeight: 1.5 }}>
+          La forma más justa de decidir en grupo — sin jefes, sin política. Solo ustedes, decidiendo parejo.
+        </div>
+        <div className="flex justify-center mb-4">
+          <img src={qrUrl} alt="Código QR" style={{ width: "160px", height: "160px", borderRadius: "12px" }} />
+        </div>
+        <a href={APP_SHARE_URL} target="_blank" rel="noreferrer" className="dp-mono text-[11px] font-medium" style={{ color: BLUE, wordBreak: "break-all" }}>
+          {APP_SHARE_URL}
+        </a>
+      </div>
+      <button
+        onClick={downloadImage}
+        disabled={downloading}
+        className="dp-body flex items-center justify-center gap-1.5 w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
+        style={{ background: BLUE }}
+      >
+        <i className="ti ti-download"></i> {downloading ? "Generando…" : "Descargar imagen"}
+      </button>
     </div>
   );
 }
@@ -5509,32 +5584,43 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           <div className="dp-body text-[12px] mb-2" style={{ color: GREEN }}>
             <i className="ti ti-circle-check" style={{ marginRight: "4px" }}></i>Flujo completo — si dejaste tu correo, ahí te llega el resumen.
           </div>
-          {(() => {
-            const nextFlow = (allFlows || []).find((f) => f.chainedFromFlowId === flow.id);
-            if (nextFlow && onSwitchFlow) {
-              return (
-                <button
-                  onClick={() => onSwitchFlow(nextFlow.id)}
-                  className="dp-body text-xs px-3 py-2 rounded-full text-white font-medium"
-                  style={{ background: BLUE }}
-                >
-                  Continuar hacia: {flowTemplateLabel(nextFlow.template)} →
-                </button>
-              );
-            }
-            if (!flow.chainNext && cooperativasMode && onFinishedStandalone) {
-              return (
-                <button
-                  onClick={() => onFinishedStandalone()}
-                  className="dp-body text-xs px-3 py-2 rounded-full text-white font-medium"
-                  style={{ background: BLUE }}
-                >
-                  ¿Hacer otro proceso? →
-                </button>
-              );
-            }
-            return null;
-          })()}
+          <div className="flex flex-wrap gap-2">
+            {(() => {
+              const nextFlow = (allFlows || []).find((f) => f.chainedFromFlowId === flow.id);
+              if (nextFlow && onSwitchFlow) {
+                return (
+                  <button
+                    onClick={() => onSwitchFlow(nextFlow.id)}
+                    className="dp-body text-xs px-3 py-2 rounded-full text-white font-medium"
+                    style={{ background: BLUE }}
+                  >
+                    Continuar hacia: {flowTemplateLabel(nextFlow.template)} →
+                  </button>
+                );
+              }
+              if (!flow.chainNext && cooperativasMode && onFinishedStandalone) {
+                return (
+                  <button
+                    onClick={() => onFinishedStandalone()}
+                    className="dp-body text-xs px-3 py-2 rounded-full text-white font-medium"
+                    style={{ background: BLUE }}
+                  >
+                    ¿Hacer otro proceso? →
+                  </button>
+                );
+              }
+              return null;
+            })()}
+            {onDownloadPdf && (
+              <button
+                onClick={() => onDownloadPdf()}
+                className="dp-body text-xs px-3 py-2 rounded-full font-medium"
+                style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}
+              >
+                <i className="ti ti-download" style={{ marginRight: "4px" }}></i>Descargar resultados (PDF)
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -6340,8 +6426,10 @@ function DemocraciaPorPromedioConectada() {
               setSelectedOption("cooperativas");
               setView("custom");
             }}
+            onChooseShare={() => setView("share")}
           />
         )}
+        {view === "share" && <SharePromoScreen onBack={() => setView("home")} />}
         {view === "municipios" && (
           <MunicipiosDemo
             onBack={() => {
