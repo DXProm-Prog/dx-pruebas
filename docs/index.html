@@ -322,7 +322,7 @@ function PdfExportContent({ groupName, flowChain, showNames }) {
         <div style={{ height: "1px", background: BLUE + "33", marginTop: "16px" }}></div>
       </div>
 
-      <div data-pdf-block style={{ marginBottom: "8px" }}>
+      <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginBottom: "8px" }}>
         <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK }}>Resultados finales</div>
       </div>
       {flowChain.map((flow) => {
@@ -343,12 +343,12 @@ function PdfExportContent({ groupName, flowChain, showNames }) {
         );
       })}
 
-      <div data-pdf-block style={{ marginTop: "12px", marginBottom: "8px" }}>
+      <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginTop: "12px", marginBottom: "8px" }}>
         <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK }}>Proceso completo</div>
       </div>
       {flowChain.map((flow) => (
         <React.Fragment key={flow.id}>
-          <div data-pdf-block style={{ marginBottom: "4px" }}>
+          <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginBottom: "4px" }}>
             <div style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", fontWeight: 700, color: INK }}>{flowTemplateLabel(flow.template)}</div>
           </div>
           {flow.stages.map((s, i) => (
@@ -390,38 +390,41 @@ async function generateResultsPdf(containerNode, filename) {
   const marginBottom = 34;
   const usableWidth = pageWidth - marginX * 2;
   const maxBlockHeight = pageHeight - marginTop - marginBottom;
+  const gap = 14;
 
-  const blocks = Array.from(containerNode.querySelectorAll("[data-pdf-block]"));
+  // Primero se "toma foto" a cada bloque y se mide su altura ya
+  // escalada a la hoja — antes de empezar a colocarlos. Así, un bloque
+  // marcado "pegado al siguiente" (ej. el título de una sección) puede
+  // revisar si el bloque que sigue cabe junto con él en lo que queda
+  // de la hoja, sin tener que volver a capturarlo dos veces.
+  const blockNodes = Array.from(containerNode.querySelectorAll("[data-pdf-block]"));
+  const blocks = [];
+  for (const node of blockNodes) {
+    const canvas = await window.html2canvas(node, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+    const imgHeight = (canvas.height * usableWidth) / canvas.width;
+    blocks.push({ canvas, imgHeight, keepWithNext: node.getAttribute("data-pdf-keep-with-next") === "true" });
+  }
+
   let cursorY = marginTop;
   let placedOnPage = false;
 
-  for (const block of blocks) {
-    const canvas = await window.html2canvas(block, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
-    const imgWidth = usableWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    if (placedOnPage && cursorY + imgHeight > pageHeight - marginBottom) {
-      pdf.addPage();
-      cursorY = marginTop;
-      placedOnPage = false;
-    }
-
-    if (imgHeight > maxBlockHeight) {
+  const placeBlock = (block) => {
+    if (block.imgHeight > maxBlockHeight) {
       // Bloque más alto que una hoja completa (caso raro, ej. una lista
       // muy larga de respuestas individuales) — se reparte en varias
       // hojas, cortando por posición, en vez de encogerlo o dejarlo salir.
-      let remainingPx = canvas.height;
+      let remainingPx = block.canvas.height;
       while (remainingPx > 0) {
         if (!placedOnPage) cursorY = marginTop;
         const availablePt = pageHeight - marginBottom - cursorY;
-        const availablePx = Math.floor((availablePt * canvas.width) / imgWidth);
+        const availablePx = Math.floor((availablePt * block.canvas.width) / usableWidth);
         const sliceHeightPx = Math.max(1, Math.min(availablePx, remainingPx));
         const sliceCanvas = document.createElement("canvas");
-        sliceCanvas.width = canvas.width;
+        sliceCanvas.width = block.canvas.width;
         sliceCanvas.height = sliceHeightPx;
-        sliceCanvas.getContext("2d").drawImage(canvas, 0, canvas.height - remainingPx, canvas.width, sliceHeightPx, 0, 0, canvas.width, sliceHeightPx);
-        const sliceHeightPt = (sliceHeightPx * imgWidth) / canvas.width;
-        pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", marginX, cursorY, imgWidth, sliceHeightPt);
+        sliceCanvas.getContext("2d").drawImage(block.canvas, 0, block.canvas.height - remainingPx, block.canvas.width, sliceHeightPx, 0, 0, block.canvas.width, sliceHeightPx);
+        const sliceHeightPt = (sliceHeightPx * usableWidth) / block.canvas.width;
+        pdf.addImage(sliceCanvas.toDataURL("image/png"), "PNG", marginX, cursorY, usableWidth, sliceHeightPt);
         remainingPx -= sliceHeightPx;
         cursorY += sliceHeightPt;
         placedOnPage = true;
@@ -430,13 +433,34 @@ async function generateResultsPdf(containerNode, filename) {
           placedOnPage = false;
         }
       }
-      cursorY += 14;
-      continue;
+      cursorY += gap;
+      return;
+    }
+    pdf.addImage(block.canvas.toDataURL("image/png"), "PNG", marginX, cursorY, usableWidth, block.imgHeight);
+    cursorY += block.imgHeight + gap;
+    placedOnPage = true;
+  };
+
+  for (let i = 0; i < blocks.length; i++) {
+    const block = blocks[i];
+    const next = blocks[i + 1];
+
+    // Si este bloque debe quedarse pegado al siguiente (ej. un título
+    // de sección con su primer contenido), se calcula el espacio que
+    // ocupan LOS DOS juntos — así nunca queda un título solo al final
+    // de una hoja, con su contenido brincando a la siguiente.
+    let neededHeight = block.imgHeight;
+    if (block.keepWithNext && next && next.imgHeight <= maxBlockHeight) {
+      neededHeight += gap + next.imgHeight;
     }
 
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", marginX, cursorY, imgWidth, imgHeight);
-    cursorY += imgHeight + 14;
-    placedOnPage = true;
+    if (placedOnPage && block.imgHeight <= maxBlockHeight && cursorY + neededHeight > pageHeight - marginBottom) {
+      pdf.addPage();
+      cursorY = marginTop;
+      placedOnPage = false;
+    }
+
+    placeBlock(block);
   }
 
   pdf.save(filename);
