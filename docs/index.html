@@ -182,7 +182,7 @@ function LicitacionResultsDisplay({ flow, detailed }) {
             {catProposals.length === 0 && <div className="dp-body text-[10.5px]" style={{ color: INK + "77" }}>Sin propuestas.</div>}
             {catProposals.map((p) => (
               <div key={p.id} className="flex justify-between text-[10.5px]" style={{ color: p.id === s.winner ? GREEN : INK + "99", fontWeight: p.id === s.winner ? 700 : 400 }}>
-                <span>{p.id === s.winner ? "🏆 " : ""}{p.name}</span>
+                <span>{p.id === s.winner && <i className="ti ti-trophy" style={{ marginRight: "3px", color: "#E0A458" }}></i>}{p.name}</span>
                 <span>{p.cost !== undefined ? formatMoney(p.cost) : ""}</span>
               </div>
             ))}
@@ -300,7 +300,7 @@ function PdfLicitacionDetail({ flow, showNames }) {
             {catProposals.length === 0 && <div style={{ fontFamily: "Inter, sans-serif", fontSize: "10.5px", color: INK + "77" }}>Sin propuestas.</div>}
             {catProposals.map((p) => (
               <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontFamily: "Inter, sans-serif", fontSize: "10.5px", color: p.id === s.winner ? GREEN : INK + "99", fontWeight: p.id === s.winner ? 700 : 400, padding: "2px 0" }}>
-                <span>{p.id === s.winner ? "🏆 " : ""}{p.name}{showNames && p.memberName ? ` — ${p.memberName}` : ""}</span>
+                <span>{p.id === s.winner && <i className="ti ti-trophy" style={{ marginRight: "3px", color: "#E0A458" }}></i>}{p.name}{showNames && p.memberName ? ` — ${p.memberName}` : ""}</span>
                 <span>{p.cost !== undefined ? formatMoney(p.cost) : ""}</span>
               </div>
             ))}
@@ -525,7 +525,7 @@ function OptionBar({ option, count, percent, highlight }) {
   return (
     <div className="mb-2.5">
       <div className="flex justify-between dp-body text-xs mb-1" style={{ color: INK }}>
-        <span>{highlight ? "🏆 " : ""}{option}</span>
+        <span>{highlight && <i className="ti ti-trophy" style={{ marginRight: "3px", color: "#E0A458" }}></i>}{option}</span>
         <span className="dp-mono" style={{ color: INK + "99" }}>{count} · {percent}%</span>
       </div>
       <div className="rounded-full h-2 overflow-hidden" style={{ background: "#fff" }}>
@@ -971,7 +971,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
             style={{ background: GREEN }}
           >
-            📤 {sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
           </button>
         </div>
       )}
@@ -995,7 +995,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
             style={{ background: GREEN }}
           >
-            📤 {sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
           </button>
         </div>
       )}
@@ -1021,7 +1021,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
             style={{ background: GREEN }}
           >
-            📤 {sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
           </button>
         </div>
       )}
@@ -1050,14 +1050,14 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
             style={{ background: GREEN }}
           >
-            📤 {sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
           </button>
         </div>
       )}
 
       {sent && (
         <div className="dp-body text-[11px] flex items-center gap-1 mb-2" style={{ color: GREEN }}>
-          ✅ {question.type === "promedio" ? "Propuesta guardada" : "Voto guardado"}
+          <i className="ti ti-circle-check" style={{ marginRight: "4px" }}></i>{question.type === "promedio" ? "Propuesta guardada" : "Voto guardado"}
         </div>
       )}
       {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
@@ -1069,7 +1069,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
           style={{ background: BLUE }}
         >
-          🔒 {closingRound ? "Cerrando…" : "Cerrar ronda y avanzar"}
+          <i className="ti ti-lock" style={{ marginRight: "4px" }}></i>{closingRound ? "Cerrando…" : "Cerrar ronda y avanzar"}
         </button>
       )}
       {inTieBreak && isAdmin && (
@@ -1079,7 +1079,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
           style={{ background: BLUE }}
         >
-          🔒 {closingRound ? "Cerrando…" : "Cerrar ronda de desempate"}
+          <i className="ti ti-lock" style={{ marginRight: "4px" }}></i>{closingRound ? "Cerrando…" : "Cerrar ronda de desempate"}
         </button>
       )}
 
@@ -1090,7 +1090,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full font-medium disabled:opacity-40"
           style={{ background: BLUE, color: "#fff" }}
         >
-          ✨ {computing ? "Calculando…" : "Calcular decisión colectiva"}
+          <i className="ti ti-sparkles" style={{ marginRight: "4px" }}></i>{computing ? "Calculando…" : "Calcular decisión colectiva"}
         </button>
       )}
       {isRankeado && !freshTieBreak && !result && (
@@ -1100,7 +1100,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full font-medium disabled:opacity-40"
           style={{ background: BLUE, color: "#fff" }}
         >
-          ✨ {computing ? "Calculando…" : "Calcular decisión colectiva"}
+          <i className="ti ti-sparkles" style={{ marginRight: "4px" }}></i>{computing ? "Calculando…" : "Calcular decisión colectiva"}
         </button>
       )}
       {resultError && <div className="dp-body text-[11px] mt-2" style={{ color: CORAL }}>{resultError}</div>}
@@ -1109,10 +1109,10 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
         <div className="fixed inset-0 flex items-start justify-center p-4 py-10 overflow-y-auto" style={{ background: "rgba(20,33,61,0.55)", zIndex: 50 }}>
           <div className="rounded-2xl p-5 max-w-[320px] w-full shadow-xl" style={{ background: WARM_WHITE }}>
             <div className="flex justify-end mb-1">
-              <button onClick={() => setShowStatusCard(false)} className="dp-body text-sm" style={{ color: INK + "77" }}>✕</button>
+              <button onClick={() => setShowStatusCard(false)} className="dp-body text-sm" style={{ color: INK + "77" }}><i className="ti ti-x"></i></button>
             </div>
             <div className="text-center mb-2">
-              <div style={{ fontSize: "36px" }}>{decisionStatus === "resolved" ? "🎉" : "⚖️"}</div>
+              <div style={{ fontSize: "36px" }}>{decisionStatus === "resolved" ? <i className="ti ti-confetti" style={{ color: GREEN }}></i> : <i className="ti ti-scale" style={{ color: INK }}></i>}</div>
               <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>
                 {decisionStatus === "resolved" ? "¡Felicidades!" : "¡Empate!"}
               </div>
@@ -1145,7 +1145,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
 function ExplanationScreen({ onBack }) {
   return (
     <div className="px-4 py-6">
-      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <BackButton onClick={onBack} />
       <OnboardingCarousel slides={ONBOARDING_SLIDES} onClose={onBack} overlay={false} />
     </div>
   );
@@ -1178,7 +1178,7 @@ function AdminReturnScreen({ backendUrl, onBack, onEntered }) {
 
   return (
     <div className="px-4 py-6">
-      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <BackButton onClick={onBack} />
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Ingresar a un grupo que administras</div>
         <p className="dp-body text-[12px] mb-3" style={{ color: INK + "77" }}>
@@ -1225,13 +1225,13 @@ function ShareGroup({ groupName, code }) {
       <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: BLUE_SOFT }}>
         <span className="dp-mono text-sm font-semibold" style={{ color: INK }}>{code}</span>
         <button onClick={() => copy(code, setCopiedCode)} className="dp-body text-[11px] font-medium" style={{ color: BLUE }}>
-          {copiedCode ? "✓ copiado" : "copiar código"}
+          {copiedCode ? <span><i className="ti ti-check" style={{ marginRight: "3px" }}></i>copiado</span> : "copiar código"}
         </button>
       </div>
       <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: BLUE_SOFT }}>
         <span className="dp-mono text-[11px] truncate mr-2" style={{ color: INK + "aa" }}>{link}</span>
         <button onClick={() => copy(link, setCopiedLink)} className="dp-body text-[11px] font-medium shrink-0" style={{ color: BLUE }}>
-          {copiedLink ? "✓ copiado" : "copiar link"}
+          {copiedLink ? <span><i className="ti ti-check" style={{ marginRight: "3px" }}></i>copiado</span> : "copiar link"}
         </button>
       </div>
       <a
@@ -1239,7 +1239,7 @@ function ShareGroup({ groupName, code }) {
         className="dp-body text-center text-[12px] px-2.5 py-2 rounded-full font-medium"
         style={{ background: BLUE, color: "#fff" }}
       >
-        ✉ Enviar código y link por correo
+        <i className="ti ti-mail" style={{ marginRight: "4px" }}></i>Enviar código y link por correo
       </a>
     </div>
   );
@@ -1282,7 +1282,7 @@ function OnbProposalExample({ question, people, calc, result, closing }) {
           <span className="dp-mono text-[11px] font-semibold" style={{ color: INK, textDecoration: p.trimmed ? "line-through" : "none" }}>{p.amount}</span>
         </div>
       ))}
-      {people.some((p) => p.trimmed) && <div className="dp-body text-[9px] my-1" style={{ color: CORAL }}>✕ se recortan el más alto y el más bajo</div>}
+      {people.some((p) => p.trimmed) && <div className="dp-body text-[9px] my-1 flex items-center gap-1" style={{ color: CORAL }}><i className="ti ti-x" style={{ fontSize: "10px" }}></i>se recortan el más alto y el más bajo</div>}
       <div className="dp-mono text-[11px] mt-1 pt-1.5" style={{ color: INK + "cc", borderTop: `1px dashed ${BLUE}33` }}>{calc}</div>
       <div className="flex items-baseline justify-between mt-1.5">
         <span className="dp-body text-[10px]" style={{ color: INK + "99" }}>Decisión colectiva</span>
@@ -1323,7 +1323,7 @@ function OnbSorteoExample() {
           <span className="dp-body text-[11px]" style={{ color: INK }}>{n}</span>
         </div>
       ))}
-      <div className="dp-body text-[9px] my-1.5" style={{ color: INK + "77" }}>🎲 se elige al azar, con la misma probabilidad para cada quien</div>
+      <div className="dp-body text-[9px] my-1.5 flex items-center gap-1" style={{ color: INK + "77" }}><i className="ti ti-dice-5"></i>se elige al azar, con la misma probabilidad para cada quien</div>
       <div className="flex items-baseline justify-between pt-1.5" style={{ borderTop: `1px dashed ${BLUE}33` }}>
         <span className="dp-body text-[10px]" style={{ color: INK + "99" }}>Elegido por sorteo</span>
         <span className="dp-display text-base font-bold" style={{ color: GREEN }}>Luis</span>
@@ -1522,7 +1522,7 @@ function OnboardingCarousel({ slides, onClose, overlay = true }) {
       {overlay && (
         <div className="flex justify-between items-center mb-1.5">
           <span className="dp-mono text-[10px]" style={{ color: INK + "66" }}>{idx + 1} / {slides.length}</span>
-          <button onClick={onClose} className="dp-body text-sm" style={{ color: INK + "88" }}>✕</button>
+          <button onClick={onClose} className="dp-body text-sm" style={{ color: INK + "88" }}><i className="ti ti-x"></i></button>
         </div>
       )}
       <div className="mb-2.5"><OnbIcon name={s.icon} /></div>
@@ -1737,7 +1737,7 @@ function MunIngresosTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
         style={{ background: BLUE }}
       >
-        📤 Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
       </button>
     </div>
   );
@@ -1782,7 +1782,7 @@ function MunViviendaTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        📤 Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
       </button>
     </div>
   );
@@ -1827,7 +1827,7 @@ function MunProductosTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        📤 Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
       </button>
     </div>
   );
@@ -1915,7 +1915,7 @@ function MunRiquezaTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        📤 Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
       </button>
     </div>
   );
@@ -2080,7 +2080,7 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        📤 Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
       </button>
     </div>
   );
@@ -2143,7 +2143,7 @@ function MunOtraPreguntaTab({ title, unit, resultLabel, resultSuffix, defaultVal
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        📤 Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
       </button>
     </div>
   );
@@ -2300,7 +2300,7 @@ function MunicipiosDemo({ onBack }) {
 
   return (
     <div className="px-4 py-6">
-      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <BackButton onClick={onBack} />
       <div className="flex gap-1.5 mb-2.5">
         {mainTabs.map((t) => (
           <button
@@ -2422,6 +2422,19 @@ function MunicipiosDemo({ onBack }) {
 }
 
 
+function BackButton({ onClick, label = "Volver" }) {
+  return (
+    <button
+      onClick={onClick}
+      className="dp-body self-start flex items-center gap-1.5 text-xs font-medium mb-1 px-3 py-1.5 rounded-full"
+      style={{ background: BLUE_SOFT, color: INK }}
+    >
+      <i className="ti ti-home" style={{ fontSize: "13px" }}></i>
+      {label}
+    </button>
+  );
+}
+
 function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
   return (
     <button
@@ -2505,37 +2518,25 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
 function CustomEntryScreen({ onBack, onChooseCreate, onChooseAdminReturn, onChooseJoin }) {
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
-      <button onClick={onBack} className="dp-body text-xs text-left mb-1" style={{ color: INK + "88" }}>← Volver</button>
-      <button
+      <BackButton onClick={onBack} />
+      <HomeIconButton
+        icon="ti-square-plus"
+        title="Crear un grupo nuevo"
+        subtitle="Serás el facilitador. Podrás agregar preguntas y aprobar a quienes se unan."
         onClick={onChooseCreate}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>➕ Crear un grupo nuevo</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Serás el facilitador. Podrás agregar preguntas y aprobar a quienes se unan.
-        </div>
-      </button>
-      <button
+      />
+      <HomeIconButton
+        icon="ti-settings"
+        title="Ingresar a un grupo que administras"
+        subtitle="Ya creaste este grupo antes y necesitas volver a entrar."
         onClick={onChooseAdminReturn}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🔧 Ingresar a un grupo que administras</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Ya creaste este grupo antes y necesitas volver a entrar.
-        </div>
-      </button>
-      <button
+      />
+      <HomeIconButton
+        icon="ti-key"
+        title="Unirme a un grupo con un código"
+        subtitle="Alguien ya creó un grupo y te compartió su código."
         onClick={onChooseJoin}
-        className="dp-body text-left rounded-2xl p-4 shadow-sm"
-        style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}55` }}
-      >
-        <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🔑 Unirme a un grupo con un código</div>
-        <div className="text-xs" style={{ color: INK + "88" }}>
-          Alguien ya creó un grupo y te compartió su código.
-        </div>
-      </button>
+      />
     </div>
   );
 }
@@ -2575,7 +2576,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
 
   return (
     <div className="px-4 py-6">
-      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <BackButton onClick={onBack} />
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>Crear un grupo nuevo</div>
         <div className="flex flex-col gap-2.5 mb-3">
@@ -2729,7 +2730,7 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
 
   return (
     <div className="px-4 py-6">
-      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <BackButton onClick={onBack} />
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Unirme con un código</div>
         {previewName && (
@@ -2899,7 +2900,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
                 style={{ background: BLUE_SOFT, color: INK }}
               />
               {options.length > 2 && (
-                <button onClick={() => removeOption(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
+                <button onClick={() => removeOption(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}><i className="ti ti-x"></i></button>
               )}
             </div>
           ))}
@@ -2920,7 +2921,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
                   style={{ background: BLUE_SOFT, color: INK }}
                 />
                 {options.length > 2 && (
-                  <button onClick={() => removeOption(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
+                  <button onClick={() => removeOption(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}><i className="ti ti-x"></i></button>
                 )}
               </div>
             ))}
@@ -3041,7 +3042,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         className="dp-body w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-full font-medium mb-2"
         style={{ background: BLUE_SOFT, color: INK }}
       >
-        👁 {showPreview ? "Ocultar vista previa" : "Vista previa"}
+        <i className="ti ti-eye" style={{ marginRight: "4px" }}></i>{showPreview ? "Ocultar vista previa" : "Vista previa"}
       </button>
 
       {showPreview && (
@@ -3070,7 +3071,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
             {type === "promedio" && (
               <div className="flex items-center gap-2">
                 <div className="flex-1 rounded-lg px-2.5 py-1.5 text-sm dp-mono" style={{ background: BLUE_SOFT, color: INK + "77" }}>tu propuesta</div>
-                <div className="text-xs px-3 py-2 rounded-full text-white font-medium" style={{ background: GREEN, opacity: 0.6 }}>📤 Enviar</div>
+                <div className="text-xs px-3 py-2 rounded-full text-white font-medium" style={{ background: GREEN, opacity: 0.6 }}><i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar</div>
               </div>
             )}
 
@@ -3081,7 +3082,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
                     {opt}
                   </div>
                 ))}
-                <div className="text-xs px-3 py-2 rounded-full text-white font-medium text-center" style={{ background: BLUE, opacity: 0.6 }}>🎲 Sortear</div>
+                <div className="text-xs px-3 py-2 rounded-full text-white font-medium text-center" style={{ background: BLUE, opacity: 0.6 }}><i className="ti ti-dice-5" style={{ marginRight: "4px" }}></i>Sortear</div>
               </div>
             )}
 
@@ -3117,7 +3118,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         className="dp-body w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
         style={{ background: BLUE }}
       >
-        ➕ {adding ? "Agregando…" : "Agregar pregunta"}
+        <i className="ti ti-plus" style={{ marginRight: "4px" }}></i>{adding ? "Agregando…" : "Agregar pregunta"}
       </button>
     </div>
   );
@@ -3156,7 +3157,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
             className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
             style={{ background: GREEN }}
           >
-            📤 {sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
           </button>
         </div>
         {singleMemberCount > 0 && numValue !== "" && (
@@ -3193,7 +3194,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3232,7 +3233,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3263,7 +3264,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3320,7 +3321,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3339,7 +3340,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               className="dp-body flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg mb-1.5 disabled:opacity-50 w-full"
               style={isSelected ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
             >
-              {isSelected ? "☑" : "☐"} {opt}
+              <i className={`ti ${isSelected ? "ti-square-check" : "ti-square"}`} style={{ marginRight: "5px" }}></i>{opt}
             </button>
           );
         })}
@@ -3349,7 +3350,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3445,7 +3446,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3496,7 +3497,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3542,7 +3543,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -3570,7 +3571,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               />
               {lowered && (
                 <div className="dp-body text-[10px] mt-1" style={{ color: CORAL }}>
-                  ⚠ Estás bajando este gasto fijo — confirma que la cooperativa pueda cubrirlo con ese monto.
+                  <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>Estás bajando este gasto fijo — confirma que la cooperativa pueda cubrirlo con ese monto.
                 </div>
               )}
             </div>
@@ -3589,7 +3590,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          📤 {sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
         </button>
       </div>
     );
@@ -4222,7 +4223,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
                       className="dp-body text-[11px] font-medium mt-1"
                       style={{ color: BLUE }}
                     >
-                      ✏️ editar mi propuesta
+                      <i className="ti ti-pencil" style={{ marginRight: "4px" }}></i>editar mi propuesta
                     </button>
                   )}
                 </div>
@@ -4298,7 +4299,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
               className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
               style={{ background: GREEN }}
             >
-              📤 {sending ? "Enviando…" : "Enviar propuesta"}
+              <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar propuesta"}
             </button>
           </div>
 
@@ -4357,7 +4358,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
         if (!winnerProposal) return null;
         return (
           <div className="rounded-lg p-2.5" style={{ background: GREEN + "15" }}>
-            <div className="dp-body text-sm font-semibold" style={{ color: GREEN }}>🏆 {winnerProposal.name}</div>
+            <div className="dp-body text-sm font-semibold flex items-center gap-1" style={{ color: GREEN }}><i className="ti ti-trophy"></i>{winnerProposal.name}</div>
             <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>propuesto por {winnerProposal.memberName}</div>
           </div>
         );
@@ -4474,7 +4475,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
         Propuestas para el presupuesto{allDone ? " · terminado" : ""}
       </div>
       <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
-        💬 Recomendación: discutan las propuestas en persona antes de votar, si pueden.
+        <i className="ti ti-message-circle" style={{ marginRight: "4px" }}></i>Recomendación: discutan las propuestas en persona antes de votar, si pueden.
       </div>
 
       {categoryNames.map((cat) => (
@@ -4503,7 +4504,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
           className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
           style={{ background: BLUE }}
         >
-          🔒 {closingCollecting ? "Cerrando…" : "Cerrar recepción de propuestas y pasar a votación"}
+          <i className="ti ti-lock" style={{ marginRight: "4px" }}></i>{closingCollecting ? "Cerrando…" : "Cerrar recepción de propuestas y pasar a votación"}
         </button>
       )}
 
@@ -4514,7 +4515,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
           className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40 mb-2"
           style={{ background: BLUE }}
         >
-          🔒 {closingVoting ? "Cerrando…" : "Cerrar votación de las categorías listas"}
+          <i className="ti ti-lock" style={{ marginRight: "4px" }}></i>{closingVoting ? "Cerrando…" : "Cerrar votación de las categorías listas"}
         </button>
       )}
 
@@ -4525,7 +4526,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
           className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: CORAL }}
         >
-          🔁 {reopening ? "Reabriendo…" : "Reabrir categorías vacías"}
+          <i className="ti ti-refresh" style={{ marginRight: "4px" }}></i>{reopening ? "Reabriendo…" : "Reabrir categorías vacías"}
         </button>
       )}
     </div>
@@ -4859,7 +4860,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       {flow.stages.map((s, i) => (
         <div key={i} className="mb-3 pb-3" style={{ borderBottom: `1px dashed ${BLUE}33`, opacity: 0.55 }}>
           <div className="dp-body text-[12px] font-medium mb-1 flex items-center gap-1.5" style={{ color: INK }}>
-            <span>🔒</span>
+            <i className="ti ti-lock"></i>
             <span>{s.text}</span>
           </div>
           <StageResultView stage={s} />
@@ -4963,7 +4964,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                         className="dp-body flex-1 rounded-lg px-2 py-1.5 text-sm outline-none"
                         style={{ background: BLUE_SOFT, color: INK }}
                       />
-                      <button onClick={() => removeRole(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
+                      <button onClick={() => removeRole(i)} className="dp-body text-xs px-1" style={{ color: CORAL }}><i className="ti ti-x"></i></button>
                     </div>
                     <textarea
                       value={r.description}
@@ -5011,7 +5012,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   {currentCandidates.map((c) => (
                     <span key={c} className="dp-body text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: "#fff", color: INK }}>
                       {c}
-                      <button onClick={() => removeCandidate(c)} style={{ color: CORAL }}>✕</button>
+                      <button onClick={() => removeCandidate(c)} style={{ color: CORAL }}><i className="ti ti-x"></i></button>
                     </span>
                   ))}
                 </div>
@@ -5099,7 +5100,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                     style={{ width: "90px", background: "#fff", color: INK, fontWeight: 700, border: `1px solid ${BLUE}33` }}
                   />
                   {gastosDraft.length > 1 && (
-                    <button onClick={() => setGastosDraft(gastosDraft.filter((_, idx) => idx !== i))} className="dp-body text-xs px-1" style={{ color: CORAL }}>✕</button>
+                    <button onClick={() => setGastosDraft(gastosDraft.filter((_, idx) => idx !== i))} className="dp-body text-xs px-1" style={{ color: CORAL }}><i className="ti ti-x"></i></button>
                   )}
                 </div>
               ))}
@@ -5220,7 +5221,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             {liveCount} de {approvedMemberCount} miembro(s) han respondido
           </div>
           <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={{ ...flow.config, totalBudget: effectiveTotalBudget }} approvedMemberNames={approvedMemberNames} />
-          {sent && <div className="dp-body text-[11px] mb-2" style={{ color: GREEN }}>✅ Guardado</div>}
+          {sent && <div className="dp-body text-[11px] mb-2 flex items-center gap-1" style={{ color: GREEN }}><i className="ti ti-circle-check"></i>Guardado</div>}
           {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
           {isAdmin && (
             <button
@@ -5229,7 +5230,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
               style={{ background: BLUE }}
             >
-              🔒 {closingStage ? "Cerrando…" : "Cerrar etapa y avanzar"}
+              <i className="ti ti-lock" style={{ marginRight: "4px" }}></i>{closingStage ? "Cerrando…" : "Cerrar etapa y avanzar"}
             </button>
           )}
         </div>
@@ -5250,7 +5251,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       {flow.status === "finished" && (
         <div className="mb-3">
           <div className="dp-body text-[12px] mb-2" style={{ color: GREEN }}>
-            ✅ Flujo completo — si dejaste tu correo, ahí te llega el resumen.
+            <i className="ti ti-circle-check" style={{ marginRight: "4px" }}></i>Flujo completo — si dejaste tu correo, ahí te llega el resumen.
           </div>
           {(() => {
             const nextFlow = (allFlows || []).find((f) => f.chainedFromFlowId === flow.id);
@@ -5285,10 +5286,10 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         <div className="fixed inset-0 flex items-start justify-center p-4 py-10 overflow-y-auto" style={{ background: "rgba(32,48,43,0.55)", zIndex: 50 }}>
           <div className="rounded-2xl p-5 max-w-[320px] w-full shadow-xl" style={{ background: WARM_WHITE }}>
             <div className="flex justify-end mb-1">
-              <button onClick={() => setShowCelebration(false)} className="dp-body text-sm" style={{ color: INK + "77" }}>✕</button>
+              <button onClick={() => setShowCelebration(false)} className="dp-body text-sm" style={{ color: INK + "77" }}><i className="ti ti-x"></i></button>
             </div>
             <div className="text-center mb-3">
-              <div style={{ fontSize: "36px" }}>🎉</div>
+              <div style={{ fontSize: "36px" }}><i className="ti ti-confetti" style={{ color: GREEN }}></i></div>
               <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>¡Felicidades!</div>
               <div className="dp-body text-[13px] mt-1" style={{ color: INK + "99" }}>
                 Decidieron {{
@@ -5458,7 +5459,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
     return (
       <div className="px-4 py-6">
         <div className="dp-body text-[13px]" style={{ color: CORAL }}>{error}</div>
-        <button onClick={onExit} className="dp-body text-xs mt-3" style={{ color: INK + "88" }}>← Volver</button>
+        <BackButton onClick={onExit} />
       </div>
     );
   }
@@ -5583,7 +5584,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>💰 Iniciar Cuotas participativas</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-coin"></i>Iniciar Cuotas participativas</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
                 Un flujo guiado de varias etapas para decidir las cuotas del grupo.
               </div>
@@ -5601,7 +5602,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>📊 Iniciar Presupuesto participativo</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-chart-pie"></i>Iniciar Presupuesto participativo</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
                 Un flujo guiado para decidir en qué se gasta el presupuesto del grupo.
               </div>
@@ -5619,7 +5620,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🏘️ Iniciar Asociaciones (Cuotas + Presupuesto)</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-building-community"></i>Iniciar Asociaciones (Cuotas + Presupuesto)</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
                 Corre los dos flujos, uno después del otro.
               </div>
@@ -5650,7 +5651,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>💵 Tabulador de sueldos</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-cash"></i>Tabulador de sueldos</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
                 Definan los puestos y decidan cuánto gana cada uno, con o sin límite de desigualdad.
               </div>
@@ -5669,7 +5670,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>📊 Presupuesto participativo</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-chart-pie"></i>Presupuesto participativo</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
                 Con gastos fijos que se pueden ajustar, y el resto repartido entre los rubros que propongan.
               </div>
@@ -5688,7 +5689,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1" style={{ color: INK }}>🎲 Selección de responsables</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-dice-5"></i>Selección de responsables</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
                 Repartan cargos y responsabilidades por sorteo, con o sin rotación mensual.
               </div>
@@ -5757,7 +5758,7 @@ function MyGroupsScreen({ backendUrl, userId, onBack, onEnterGroup, onGoJoin, on
 
   return (
     <div className="px-4 py-6">
-      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <BackButton onClick={onBack} />
 
       {error && <div className="dp-body text-[12px] mb-3" style={{ color: CORAL }}>{error}</div>}
 
@@ -5848,7 +5849,7 @@ function LoginScreen({ onBack }) {
           </div>
           <div className="rounded-lg p-2.5 mt-3 text-left" style={{ background: CORAL + "15" }}>
             <span className="dp-body text-[11px]" style={{ color: CORAL }}>
-              ⚠️ Cuida ese link — es tu forma de entrar a tu cuenta. No lo compartas ni lo borres hasta haber entrado.
+              <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>Cuida ese link — es tu forma de entrar a tu cuenta. No lo compartas ni lo borres hasta haber entrado.
             </span>
           </div>
         </div>
@@ -5858,7 +5859,7 @@ function LoginScreen({ onBack }) {
 
   return (
     <div className="px-4 py-6">
-      <button onClick={onBack} className="dp-body text-xs mb-4" style={{ color: INK + "88" }}>← Volver</button>
+      <BackButton onClick={onBack} />
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Iniciar sesión</div>
         <p className="dp-body text-[12px] mb-3" style={{ color: INK + "88" }}>
@@ -5972,7 +5973,7 @@ function DemocraciaPorPromedioConectada() {
     <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
       <div className="w-full max-w-[420px] rounded-[32px] overflow-hidden shadow-xl" style={{ background: PAGE_BG, border: `1px solid ${BLUE}33` }}>
         <div className="px-6 pt-7 pb-5" style={{ background: WARM_WHITE }}>
-          <div className="flex items-start justify-between mb-2.5">
+          <div className="flex items-center justify-between mb-2.5">
             <div
               className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full"
               style={{ background: BLUE_SOFT, color: INK + "aa" }}
@@ -5981,9 +5982,18 @@ function DemocraciaPorPromedioConectada() {
             </div>
             {view === "home" && (
               session ? (
-                <button onClick={() => setView("myGroups")} className="dp-body text-[10px] font-medium" style={{ color: INK + "88" }}>
-                  <i className="ti ti-user-circle" style={{ marginRight: "3px" }}></i>{session.user.email}
-                </button>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="dp-body text-[10px]" style={{ color: INK + "88" }}>
+                    <i className="ti ti-user-circle" style={{ marginRight: "3px" }}></i>{session.user.email}
+                  </span>
+                  <button
+                    onClick={() => setView("myGroups")}
+                    className="dp-body flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: BLUE_SOFT, color: BLUE }}
+                  >
+                    <i className="ti ti-users-group" style={{ fontSize: "11px" }}></i>Mis grupos
+                  </button>
+                </div>
               ) : (
                 <button onClick={() => setView("login")} className="dp-body text-[10px] font-semibold" style={{ color: BLUE }}>
                   <i className="ti ti-login" style={{ marginRight: "3px" }}></i>Iniciar sesión
