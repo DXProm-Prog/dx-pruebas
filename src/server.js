@@ -969,7 +969,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
 
   const stage = flow.currentStage;
   if (
-    ["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos"].includes(stage.type) &&
+    ["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos", "fusionar_candidatos"].includes(stage.type) &&
     group.admin.id !== memberId
   ) {
     return res.status(403).json({ error: "Solo el facilitador responde esta etapa" });
@@ -1092,6 +1092,21 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
       cleaned[g.nombre] = !isNaN(n) && n >= 0 ? n : g.monto;
     });
     storedValue = cleaned;
+  } else if (stage.type === "ajustar_candidatos") {
+    if (typeof value !== "object" || Array.isArray(value) || value === null) {
+      return res.status(400).json({ error: "value debe ser un objeto {remove: [...], add: [...]}" });
+    }
+    const remove = Array.isArray(value.remove) ? value.remove.map((n) => String(n).trim()).filter(Boolean) : [];
+    const add = Array.isArray(value.add) ? value.add.map((n) => String(n).trim()).filter(Boolean) : [];
+    storedValue = { remove, add };
+  } else if (stage.type === "fusionar_candidatos") {
+    if (!Array.isArray(value)) {
+      return res.status(400).json({ error: "value debe ser una lista de grupos {primary, aliases}" });
+    }
+    const cleaned = value
+      .map((g) => ({ primary: String(g.primary || "").trim(), aliases: Array.isArray(g.aliases) ? g.aliases.map((a) => String(a).trim()).filter(Boolean) : [] }))
+      .filter((g) => g.primary && g.aliases.length > 0);
+    storedValue = cleaned;
   } else {
     return res.status(400).json({ error: "Tipo de etapa desconocido" });
   }
@@ -1137,7 +1152,7 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
     const configuredRolesStage = [...flow.stages].reverse().find((s) => s.key === "configurarPuestos");
     const votedRolesStage = [...flow.stages].reverse().find((s) => s.key === "votarPuestos");
     const freqStage = [...flow.stages].reverse().find((s) => s.key === "frequencyVote");
-    const candStage = [...flow.stages].reverse().find((s) => s.key === "configurarCandidatos");
+    const candStage = [...flow.stages].reverse().find((s) => s.key === "fusionarCandidatos" || s.key === "configurarCandidatos");
     if ((!configuredRolesStage && !votedRolesStage) || !freqStage || !candStage) {
       return res.status(400).json({ error: "Faltan datos de etapas anteriores para poder sortear" });
     }

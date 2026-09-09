@@ -3454,6 +3454,52 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
     );
   }
 
+  if (stage.type === "ajustar_candidatos") {
+    const toggleRemove = (name) => {
+      setSelectedMulti(selectedMulti.includes(name) ? selectedMulti.filter((n) => n !== name) : [...selectedMulti, name]);
+    };
+    return (
+      <div className="mb-2">
+        <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Marca a quién quieres quitar de la lista:</div>
+        {stage.config.candidates.map((c) => (
+          <label key={c} className="flex items-center gap-2 mb-1.5">
+            <input type="checkbox" checked={selectedMulti.includes(c)} disabled={disabled} onChange={() => toggleRemove(c)} />
+            <span className="dp-body text-sm" style={{ color: INK, textDecoration: selectedMulti.includes(c) ? "line-through" : "none" }}>{c}</span>
+          </label>
+        ))}
+        <div className="dp-body text-[11px] font-semibold mt-3 mb-1.5" style={{ color: INK }}>¿Quieres proponer candidatos nuevos? (opcional)</div>
+        {texts.map((t, i) => (
+          <input
+            key={i}
+            value={t}
+            disabled={disabled}
+            onChange={(e) => {
+              const arr = [...texts];
+              arr[i] = e.target.value;
+              setTexts(arr);
+            }}
+            placeholder={`Nuevo candidato ${i + 1}`}
+            className="dp-body w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-1.5 disabled:opacity-50"
+            style={{ background: BLUE_SOFT, color: INK }}
+          />
+        ))}
+        {!disabled && (
+          <button onClick={() => setTexts([...texts, ""])} className="dp-body text-xs font-medium mb-2" style={{ color: BLUE }}>
+            + agregar candidato nuevo
+          </button>
+        )}
+        <button
+          onClick={() => onSend({ remove: selectedMulti, add: texts.filter((t) => t.trim()) })}
+          disabled={sending || disabled}
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
+          style={{ background: GREEN }}
+        >
+          📤 {sending ? "Enviando…" : "Enviar"}
+        </button>
+      </div>
+    );
+  }
+
   if (stage.type === "ajustar_gastos_fijos") {
     return (
       <div className="mb-2">
@@ -3673,6 +3719,38 @@ function StageResultView({ stage }) {
             <span className="dp-mono font-semibold">{formatMoney(g.monto)}</span>
           </div>
         ))}
+      </div>
+    );
+  }
+
+  if (stage.type === "ajustar_candidatos") {
+    return (
+      <div className="dp-body text-xs" style={{ color: INK + "99" }}>
+        {r.removed.length > 0 && (
+          <div className="mb-1.5">
+            <span className="font-semibold" style={{ color: CORAL }}>Se quitaron:</span> {r.removed.join(", ")}
+          </div>
+        )}
+        {r.added.length > 0 && (
+          <div className="mb-1.5">
+            <span className="font-semibold" style={{ color: GREEN }}>Se agregaron:</span> {r.added.join(", ")}
+          </div>
+        )}
+        <div><span className="font-semibold" style={{ color: INK }}>Lista final:</span> {r.finalCandidates.join(", ")}</div>
+      </div>
+    );
+  }
+
+  if (stage.type === "fusionar_candidatos") {
+    return (
+      <div className="dp-body text-xs" style={{ color: INK + "99" }}>
+        {r.mergeGroups.length === 0 && <div>No se fusionó ningún nombre.</div>}
+        {r.mergeGroups.map((g, i) => (
+          <div key={i} className="mb-1">
+            <span className="font-semibold" style={{ color: INK }}>{g.primary}</span> ← {g.aliases.join(", ")}
+          </div>
+        ))}
+        <div className="mt-1.5"><span className="font-semibold" style={{ color: INK }}>Lista final:</span> {r.candidates.join(", ")}</div>
       </div>
     );
   }
@@ -4422,6 +4500,9 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const [roleDrafts, setRoleDrafts] = useState(null);
   const [candidateDrafts, setCandidateDrafts] = useState(null);
   const [ingresosDraft, setIngresosDraft] = useState("");
+  const [mergeGroups, setMergeGroups] = useState([]);
+  const [selectedForMerge, setSelectedForMerge] = useState([]);
+  const [choosingPrimaryFor, setChoosingPrimaryFor] = useState(null);
   const [gastosDraft, setGastosDraft] = useState([{ nombre: "", monto: "" }]);
   const [montoPorPuestoDrafts, setMontoPorPuestoDrafts] = useState({});
   const [ajusteFijosDrafts, setAjusteFijosDrafts] = useState(null);
@@ -4996,7 +5077,95 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         </div>
       )}
 
-      {stage && !["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos"].includes(stage.type) && (
+      {stage && stage.type === "fusionar_candidatos" && (() => {
+        const mergedNames = new Set(mergeGroups.flatMap((g) => [g.primary, ...g.aliases]));
+        const available = stage.config.candidates.filter((c) => !mergedNames.has(c));
+        const toggleSelect = (name) => {
+          setSelectedForMerge(selectedForMerge.includes(name) ? selectedForMerge.filter((n) => n !== name) : [...selectedForMerge, name]);
+        };
+        const confirmMerge = (primary) => {
+          const aliases = selectedForMerge.filter((n) => n !== primary);
+          setMergeGroups([...mergeGroups, { primary, aliases }]);
+          setSelectedForMerge([]);
+          setChoosingPrimaryFor(null);
+        };
+        return (
+          <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+            <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
+            {isAdmin ? (
+              <React.Fragment>
+                {mergeGroups.length > 0 && (
+                  <div className="mb-3">
+                    <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>Ya fusionados:</div>
+                    {mergeGroups.map((g, i) => (
+                      <div key={i} className="flex items-center justify-between rounded-lg p-2 mb-1.5" style={{ background: "#fff" }}>
+                        <span className="dp-body text-xs" style={{ color: INK }}>
+                          {g.primary} <span style={{ color: INK + "77" }}>({g.aliases.join(", ")})</span>
+                        </span>
+                        <button onClick={() => setMergeGroups(mergeGroups.filter((_, idx) => idx !== i))} className="dp-body text-xs" style={{ color: CORAL }}>deshacer</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {choosingPrimaryFor ? (
+                  <div className="mb-3">
+                    <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>¿Cuál es el nombre correcto?</div>
+                    {choosingPrimaryFor.map((name) => (
+                      <button
+                        key={name}
+                        onClick={() => confirmMerge(name)}
+                        className="dp-body block w-full text-left text-xs px-3 py-2 rounded-lg mb-1.5"
+                        style={{ background: "#fff", color: INK, border: `1.5px solid ${BLUE}55` }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                    <button onClick={() => setChoosingPrimaryFor(null)} className="dp-body text-xs" style={{ color: INK + "77" }}>cancelar</button>
+                  </div>
+                ) : (
+                  <React.Fragment>
+                    <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>
+                      Marca 2 o más nombres que sean la misma persona:
+                    </div>
+                    {available.map((c) => (
+                      <label key={c} className="flex items-center gap-2 mb-1.5">
+                        <input type="checkbox" checked={selectedForMerge.includes(c)} onChange={() => toggleSelect(c)} />
+                        <span className="dp-body text-sm" style={{ color: INK }}>{c}</span>
+                      </label>
+                    ))}
+                    {selectedForMerge.length >= 2 && (
+                      <button
+                        onClick={() => setChoosingPrimaryFor(selectedForMerge)}
+                        className="dp-body text-xs font-medium mb-3"
+                        style={{ color: BLUE }}
+                      >
+                        Fusionar los {selectedForMerge.length} seleccionados →
+                      </button>
+                    )}
+                  </React.Fragment>
+                )}
+                {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+                <button
+                  onClick={async () => {
+                    await submitAndClose(mergeGroups);
+                    setMergeGroups([]);
+                    setSelectedForMerge([]);
+                  }}
+                  disabled={sending}
+                  className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+                  style={{ background: GREEN }}
+                >
+                  {sending ? "Guardando…" : mergeGroups.length > 0 ? "Guardar y continuar" : "No hay nombres repetidos, continuar"}
+                </button>
+              </React.Fragment>
+            ) : (
+              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está revisando la lista de candidatos…</div>
+            )}
+          </div>
+        );
+      })()}
+
+      {stage && !["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos", "fusionar_candidatos"].includes(stage.type) && (
         <div>
           <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>

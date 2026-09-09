@@ -305,6 +305,56 @@ function computeStageResult(stage, responses, flowConfig = {}) {
     return { type: "ajustar_gastos_fijos", gastos, totalFinal: Math.round(totalFinal * 100) / 100 };
   }
 
+  // Cuando el grupo rechazó la lista de candidatos: cada quien propone
+  // a quién quitar (de la lista actual) y a quién agregar (nombres
+  // nuevos). Un candidato se quita si más del 50% lo marcó para
+  // eliminar; un nombre nuevo se agrega si más del 50% lo propuso.
+  if (stage.type === "ajustar_candidatos") {
+    const totalResponses = responses.length || 1;
+    const removeCounts = {};
+    const addCounts = {};
+    const addDisplay = {};
+    responses.forEach((r) => {
+      const val = r.value || {};
+      (val.remove || []).forEach((name) => {
+        const key = String(name).trim();
+        if (key) removeCounts[key] = (removeCounts[key] || 0) + 1;
+      });
+      (val.add || []).forEach((name) => {
+        const trimmed = String(name).trim();
+        if (!trimmed) return;
+        const key = trimmed.toLowerCase();
+        addCounts[key] = (addCounts[key] || 0) + 1;
+        if (!addDisplay[key]) addDisplay[key] = trimmed;
+      });
+    });
+    const removed = stage.config.candidates.filter((c) => (removeCounts[c] || 0) / totalResponses > 0.5);
+    const added = Object.keys(addCounts)
+      .filter((key) => addCounts[key] / totalResponses > 0.5)
+      .map((key) => addDisplay[key]);
+    const finalCandidates = [...stage.config.candidates.filter((c) => !removed.includes(c)), ...added];
+    return { type: "ajustar_candidatos", finalCandidates, removed, added };
+  }
+
+  // El facilitador revisa la lista y puede fusionar nombres que en
+  // realidad son la misma persona (ej. "Ana García" y "Ana G."). El
+  // nombre que se ve primero es el que el facilitador marcó como
+  // correcto; los demás aparecen entre paréntesis.
+  if (stage.type === "fusionar_candidatos") {
+    const mergeGroups = values.length ? values[values.length - 1] : [];
+    const mergedNames = new Set();
+    mergeGroups.forEach((g) => {
+      mergedNames.add(g.primary);
+      (g.aliases || []).forEach((a) => mergedNames.add(a));
+    });
+    const untouched = stage.config.candidates.filter((c) => !mergedNames.has(c));
+    const candidates = [
+      ...mergeGroups.map((g) => (g.aliases && g.aliases.length ? `${g.primary} (${g.aliases.join(", ")})` : g.primary)),
+      ...untouched,
+    ];
+    return { type: "fusionar_candidatos", candidates, mergeGroups };
+  }
+
   throw new Error(`Tipo de etapa desconocido: ${stage.type}`);
 }
 

@@ -290,7 +290,33 @@ const responsabilidades = {
     }
 
     if (last.key === "approvalVote") {
-      if (last.result.winner !== "Sí") return null;
+      if (last.result.winner === "Sí") {
+        return {
+          key: "realizarSorteo",
+          type: "realizar_sorteo",
+          text: "Todo listo — el facilitador puede realizar el sorteo cuando quiera.",
+          config: {},
+        };
+      }
+      const candStage = [...stages].reverse().find((s) => s.key === "configurarCandidatos");
+      return {
+        key: "ajustarCandidatos",
+        type: "ajustar_candidatos",
+        text: "No se aprobó la lista — selecciona a quién quitarías, y propón nuevos candidatos si quieres.",
+        config: { candidates: candStage.result.candidates },
+      };
+    }
+
+    if (last.key === "ajustarCandidatos") {
+      return {
+        key: "fusionarCandidatos",
+        type: "fusionar_candidatos",
+        text: "Revisa la lista final: si dos nombres son en realidad la misma persona (por una errata o apodo), fusiónalos en uno solo.",
+        config: { candidates: last.result.finalCandidates },
+      };
+    }
+
+    if (last.key === "fusionarCandidatos") {
       return {
         key: "realizarSorteo",
         type: "realizar_sorteo",
