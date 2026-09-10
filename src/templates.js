@@ -28,7 +28,7 @@ function approvalStage(labelKey, lang) {
 // según cuánto representan de los ingresos) con los rubros que el
 // grupo votó — estos últimos empiezan en 0%, para que el grupo decida
 // desde cero cómo repartir lo que no está comprometido en gastos fijos.
-function buildBudgetStage(stages, survivorCategories, label) {
+function buildBudgetStage(stages, survivorCategories, labelKey, lang) {
   const gastosStage = [...stages].reverse().find((s) => s.key === "gastosFijos");
   const ingresos = gastosStage ? gastosStage.result.ingresos : 0;
   const gastosFijos = gastosStage ? gastosStage.result.gastos : [];
@@ -40,7 +40,7 @@ function buildBudgetStage(stages, survivorCategories, label) {
   return {
     key: "budget",
     type: "porcentaje_por_categoria",
-    text: `Asigna el % de ${label} que crees justo para cada rubro (si la suma pasa de 100%, se ajusta sola). Los gastos fijos ya vienen con su % de referencia, pero los puedes mover.`,
+    text: t("presupuesto.budget", lang, { label: t(`approval.label.${labelKey}`, lang) }),
     config: { categories: allCategories, totalBudget: ingresos, presetPercentages },
   };
 }
@@ -177,21 +177,22 @@ const presupuesto = {
       key: "gastosFijos",
       type: "gastos_fijos",
       text: ingresosFromCuotas
-        ? "Desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y continúa)."
-        : "Desglosa los gastos fijos del presupuesto (si no hay, deja la lista vacía). Ingresar los ingresos totales es opcional — si los pones, se usan para calcular a cuánto equivale cada % más adelante.",
+        ? t("presupuesto.gastosFijos.chained", flowConfig.lang)
+        : t("presupuesto.gastosFijos.standalone", flowConfig.lang),
       config: { suggestedIngresos: flowConfig.totalBudget || null, ingresosFromCuotas },
     };
   },
 
   getNextStage(stages, flowConfig = {}) {
     const thresholdPercent = flowConfig.selectionThresholdPercent ?? 10;
+    const lang = flowConfig.lang;
     const last = stages[stages.length - 1];
 
     if (last.key === "gastosFijos") {
       return {
         key: "categories",
         type: "recoleccion_abierta",
-        text: "Propón categorías de gasto para el presupuesto (una por recuadro).",
+        text: t("presupuesto.categories", lang),
         config: { maxItemsPerPerson: 5, fixedExpenseNames: last.result.gastos.map((g) => g.nombre) },
       };
     }
@@ -201,7 +202,7 @@ const presupuesto = {
       return {
         key: "fusionarCategorias",
         type: "fusionar_categorias",
-        text: "¿Hay rubros propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
+        text: t("presupuesto.fusionarCategorias", lang),
         config: { categories: allNames },
       };
     }
@@ -211,7 +212,7 @@ const presupuesto = {
       return {
         key: "selection",
         type: "seleccion_multiple",
-        text: `Elige las categorías que te importan (puedes elegir varias). Se descartan las que no lleguen al ${thresholdPercent}% de apoyo.`,
+        text: t("presupuesto.selection", lang, { threshold: thresholdPercent }),
         config: { options: allNames },
       };
     }
@@ -222,7 +223,7 @@ const presupuesto = {
         const sorted = [...last.result.tally].sort((a, b) => b.percent - a.percent);
         survivors = sorted.slice(0, 1).map((t) => t.option);
       }
-      return buildBudgetStage(stages, survivors, "el presupuesto");
+      return buildBudgetStage(stages, survivors, "presupuesto", flowConfig.lang);
     }
 
     if (last.key === "budget") {
@@ -234,7 +235,7 @@ const presupuesto = {
         return {
           key: "openBids",
           type: "mayoria",
-          text: "¿Quieren abrir el proceso de propuestas para hacer uso del presupuesto de cada categoría?",
+          text: t("presupuesto.openBids", lang),
           config: { options: ["Sí", "No"], majorityRule: "simple" },
         };
       }
@@ -270,11 +271,11 @@ function rolesFromNames(names) {
   });
 }
 
-function responsabilidadesProponerPuestosStage() {
+function responsabilidadesProponerPuestosStage(lang) {
   return {
     key: "proponerPuestos",
     type: "recoleccion_abierta",
-    text: "Propongan los puestos o responsabilidades que debería tener este grupo — ya tienen algunos sugeridos, pueden editarlos o agregar más.",
+    text: t("responsabilidades.proponerPuestos", lang),
     config: { maxItemsPerPerson: 5, suggestedItems: RESPONSABILIDADES_SUGGESTED_ROLES.map((r) => r.name) },
   };
 }
@@ -289,18 +290,18 @@ const responsabilidades = {
   // (donde esto es una función extra, opcional, sugerida al final del
   // proceso) sí se le pregunta al grupo primero.
   getInitialStage(flowConfig) {
+    const lang = flowConfig && flowConfig.lang;
     if (flowConfig && flowConfig.skipOpenVote) {
-      return responsabilidadesProponerPuestosStage();
+      return responsabilidadesProponerPuestosStage(lang);
     }
     return {
       key: "openRoles",
       type: "mayoria",
-      text: "¿Quieren asignar puestos y responsabilidades por sorteo?",
+      text: t("responsabilidades.openRoles", lang),
       config: {
         options: ["Sí", "No"],
         majorityRule: "absoluta",
-        explanation:
-          "En vez de que el facilitador asigne los puestos a mano, la app elige al azar entre los candidatos, de forma segura e imposible de manipular. Nadie repite el mismo puesto dos veces seguidas, ni tiene dos puestos en el mismo periodo.\n\nEsto solo se activa si más del 50% del grupo vota que sí. Si no se llega a esa mayoría, el grupo sigue como está, sin puestos asignados.",
+        explanation: t("responsabilidades.openRoles.explanation", lang),
       },
     };
   },
@@ -308,10 +309,11 @@ const responsabilidades = {
   getNextStage(stages, flowConfig = {}) {
     const last = stages[stages.length - 1];
     const thresholdPercent = flowConfig.puestosThresholdPercent ?? 10;
+    const lang = flowConfig.lang;
 
     if (last.key === "openRoles") {
       if (last.result.winner !== "Sí") return null;
-      return responsabilidadesProponerPuestosStage();
+      return responsabilidadesProponerPuestosStage(lang);
     }
 
     if (last.key === "proponerPuestos") {
@@ -319,7 +321,7 @@ const responsabilidades = {
       return {
         key: "fusionarPuestos",
         type: "fusionar_categorias",
-        text: "¿Hay puestos propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
+        text: t("responsabilidades.fusionarPuestos", lang),
         config: { categories: allNames },
       };
     }
@@ -329,7 +331,7 @@ const responsabilidades = {
       return {
         key: "votarPuestos",
         type: "seleccion_multiple",
-        text: `Elijan los puestos que crean que este grupo debería tener (pueden elegir varios). Se descartan los que no lleguen al ${thresholdPercent}% de apoyo.`,
+        text: t("responsabilidades.votarPuestos", lang, { threshold: thresholdPercent }),
         config: { options: allNames },
       };
     }
@@ -338,12 +340,11 @@ const responsabilidades = {
       return {
         key: "frequencyVote",
         type: "mayoria",
-        text: "¿Reparten los puestos una sola vez, o arman un calendario rotativo (12 meses)?",
+        text: t("responsabilidades.frequencyVote", lang),
         config: {
           options: ["Calendario rotativo", "Una sola vez"],
           majorityRule: "absoluta",
-          explanation:
-            "Calendario rotativo: se sortea de una sola vez un calendario completo (12 meses) que dice quién tiene cada puesto, mes por mes. Cada quien va saliendo del sorteo conforme le toca un puesto, hasta que todos hayan ocupado alguno — ahí se vuelve a incluir a todos y se sigue repartiendo.\n\nUna sola vez: se sortea una sola vez por puesto (sin calendario), y esa persona se queda de forma indefinida.",
+          explanation: t("responsabilidades.frequencyVote.explanation", lang),
         },
       };
     }
@@ -362,7 +363,7 @@ const responsabilidades = {
       return {
         key: "configurarCandidatos",
         type: "configurar_candidatos",
-        text: "Lista de candidatos para el sorteo — se llena automáticamente con los miembros del grupo.",
+        text: t("responsabilidades.configurarCandidatos", lang),
         config: { minCandidates },
       };
     }
@@ -372,7 +373,7 @@ const responsabilidades = {
       return {
         key: "approvalVote",
         type: "mayoria",
-        text: `¿Aprueban esta lista de candidatos para el sorteo de puestos? ${names}`,
+        text: t("responsabilidades.approvalVote", lang, { names }),
         config: { options: ["Sí", "No"], majorityRule: "absoluta" },
       };
     }
@@ -382,7 +383,7 @@ const responsabilidades = {
         return {
           key: "realizarSorteo",
           type: "realizar_sorteo",
-          text: "Todo listo — el facilitador puede realizar el sorteo cuando quiera.",
+          text: t("responsabilidades.realizarSorteo", lang),
           config: {},
         };
       }
@@ -390,7 +391,7 @@ const responsabilidades = {
       return {
         key: "ajustarCandidatos",
         type: "ajustar_candidatos",
-        text: "No se aprobó la lista — selecciona a quién quitarías, y propón nuevos candidatos si quieres.",
+        text: t("responsabilidades.ajustarCandidatos", lang),
         config: { candidates: candStage.result.candidates },
       };
     }
@@ -399,7 +400,7 @@ const responsabilidades = {
       return {
         key: "fusionarCandidatos",
         type: "fusionar_candidatos",
-        text: "Revisa la lista final: si dos nombres son en realidad la misma persona (por una errata o apodo), fusiónalos en uno solo.",
+        text: t("responsabilidades.fusionarCandidatos", lang),
         config: { candidates: last.result.finalCandidates },
       };
     }
@@ -408,7 +409,7 @@ const responsabilidades = {
       return {
         key: "realizarSorteo",
         type: "realizar_sorteo",
-        text: "Todo listo — el facilitador puede realizar el sorteo cuando quiera.",
+        text: t("responsabilidades.realizarSorteo", lang),
         config: {},
       };
     }
@@ -559,7 +560,7 @@ const presupuestoCooperativa = {
         const sorted = [...last.result.tally].sort((a, b) => b.percent - a.percent);
         survivors = sorted.slice(0, 1).map((t) => t.option);
       }
-      return buildBudgetStage(stages, survivors, "el presupuesto de la cooperativa");
+      return buildBudgetStage(stages, survivors, "presupuestoCooperativa", flowConfig.lang);
     }
 
     if (last.key === "budget") {
