@@ -91,6 +91,7 @@ async function loadGroupByCode(code) {
     _dbId: groupRow.id,
     code: groupRow.code,
     name: groupRow.name,
+    lang: groupRow.lang || "es",
     admin: adminRow ? { id: adminRow.id, name: adminRow.name, email: adminRow.email || null } : null,
     requireApproval: groupRow.require_approval,
     secretResponses: groupRow.secret_responses,
@@ -116,6 +117,7 @@ async function saveGroup(group) {
       .insert({
         code: group.code,
         name: group.name,
+        lang: group.lang || "es",
         require_approval: group.requireApproval,
         secret_responses: group.secretResponses,
       })
@@ -129,6 +131,7 @@ async function saveGroup(group) {
       .from("groups")
       .update({
         name: group.name,
+        lang: group.lang || "es",
         require_approval: group.requireApproval,
         secret_responses: group.secretResponses,
       })
