@@ -32,7 +32,7 @@ const STRINGS = {
 
     // Presupuesto participativo
     "presupuesto.gastosFijos.chained": "Desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y continúa).",
-    "presupuesto.gastosFijos.standalone": "Desglosa los gastos fijos del presupuesto (si no hay, deja la lista vacía). Ingresar los ingresos totales es opcional — si los pones, se usan para calcular a cuánto equivale cada % más adelante.",
+    "presupuesto.gastosFijos.standalone": "Desglosa los gastos fijos del presupuesto (si no hay, deja la lista vacía). Ingresar el presupuesto disponible es opcional — si lo pones, se usa para calcular a cuánto equivale cada % más adelante.",
     "presupuesto.categories": "Propón categorías de gasto para el presupuesto (una por recuadro).",
     "presupuesto.fusionarCategorias": "¿Hay rubros propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
     "presupuesto.selection": "Elige las categorías que te importan (puedes elegir varias). Se descartan las que no lleguen al {threshold}% de apoyo.",
@@ -70,7 +70,7 @@ const STRINGS = {
 
     // Participatory budget
     "presupuesto.gastosFijos.chained": "Break down the budget's fixed expenses (if there are none, leave the list empty and continue).",
-    "presupuesto.gastosFijos.standalone": "Break down the budget's fixed expenses (if there are none, leave the list empty). Entering the total income is optional — if you do, it's used to calculate what each % is worth further along.",
+    "presupuesto.gastosFijos.standalone": "Break down the budget's fixed expenses (if there are none, leave the list empty). Entering the available budget is optional — if you do, it's used to calculate what each % is worth further along.",
     "presupuesto.categories": "Propose spending categories for the budget (one per box).",
     "presupuesto.fusionarCategorias": "Are there any proposed categories that are actually the same? Mark them together if you think so.",
     "presupuesto.selection": "Choose the categories that matter to you (you can pick several). Categories that don't reach {threshold}% support are discarded.",

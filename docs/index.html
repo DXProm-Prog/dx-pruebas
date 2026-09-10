@@ -148,6 +148,8 @@ const FRONTEND_STRINGS = {
     "home.share.subtitle": "Comparte la app con tu comunidad — código QR y link listos para mandar.",
     "home.title": "Organicen y decidan",
     "home.tagline": "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? — Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.",
+    "flow.availableBudget": "Presupuesto disponible (opcional)",
+    "flow.availableBudget.label": "Presupuesto disponible",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -170,6 +172,8 @@ const FRONTEND_STRINGS = {
     "home.share.subtitle": "Share the app with your community — QR code and link ready to send.",
     "home.title": "Organicen y decidan",
     "home.tagline": "How much do we need to pay? What should we spend our resources on? Who's responsible for what? — Decide together, with horizontal, fast, and effective processes, without giving power to anyone or dividing the group.",
+    "flow.availableBudget": "Available budget (optional)",
+    "flow.availableBudget.label": "Available budget",
   },
 };
 
@@ -4128,9 +4132,10 @@ function StageResultView({ stage }) {
   }
 
   if (stage.type === "gastos_fijos") {
+    const rLang = useLang();
     return (
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
-        <div className="mb-1">Ingresos: <b style={{ color: GREEN }}>{formatMoney(r.ingresos)}</b>/mes</div>
+        <div className="mb-1">{tf("flow.availableBudget.label", rLang)}: <b style={{ color: GREEN }}>{formatMoney(r.ingresos)}</b></div>
         {r.gastos.map((g) => (
           <div key={g.nombre} className="flex justify-between py-0.5">
             <span>{g.nombre}</span>
@@ -4905,6 +4910,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
 }
 
 function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, approvedMemberNames, onAdvance, onSwitchFlow, cooperativasMode, onFinishedStandalone, onDownloadPdf }) {
+  const uiLang = useLang();
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState("");
   const [sent, setSent] = useState(false);
@@ -5134,7 +5140,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               />
             </label>
           )}
-          {flow.template === "presupuesto" && isChainedBudget && (
+          {flow.template === "presupuesto" && isChainedBudget && flow.stages.length === 0 && (
             <div className="mb-3">
               <div className="dp-body text-xs mb-1.5" style={{ color: INK }}>Presupuesto total (de Cuotas + extra)</div>
               <div className="dp-mono text-[11px] mb-1.5" style={{ color: INK + "99" }}>
@@ -5154,18 +5160,6 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 Total: {formatMoney(effectiveTotalBudget)}
               </div>
             </div>
-          )}
-          {flow.template === "presupuesto" && !isChainedBudget && (
-            <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
-              Presupuesto total (opcional, para ver $)
-              <input
-                type="number" min="0" value={totalBudget}
-                onChange={(e) => setTotalBudget(e.target.value)}
-                placeholder="ej. 20000"
-                className="dp-mono w-24 rounded-lg px-2 py-1 text-center outline-none ml-2"
-                style={{ background: "#fff" }}
-              />
-            </label>
           )}
           {flow.licitacion && (
             <React.Fragment>
@@ -5489,7 +5483,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
           {stage.config.ingresosFromCuotas && (
             <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>
-              Recuerda que este flujo está conectado con las cuotas — los ingresos ya salen de ahí (
+              Recuerda que este flujo está conectado con las cuotas — el presupuesto disponible ya sale de ahí (
               {formatMoney(stage.config.suggestedIngresos || 0)}). Si quieres sumar un monto extra (ahorros, otros ingresos), lo puedes ajustar en la configuración del facilitador.
             </div>
           )}
@@ -5497,7 +5491,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             <React.Fragment>
               {!stage.config.ingresosFromCuotas && (
                 <div className="flex items-center gap-2 mb-2.5">
-                  <span className="dp-body text-xs flex-1" style={{ color: INK }}>Ingresos totales (opcional)</span>
+                  <span className="dp-body text-xs flex-1" style={{ color: INK }}>{tf("flow.availableBudget", uiLang)}</span>
                   <input
                     type="number"
                     value={ingresosDraft}
