@@ -116,6 +116,85 @@ function formatMoney(n) {
   return "$" + Math.round(n).toLocaleString("es-MX");
 }
 
+// Sistema de idiomas del frontend — mismo patrón que el backend
+// (strings.js): un diccionario por idioma, y una función que busca la
+// clave pedida, cayendo de regreso al español si falta en el otro
+// idioma. LangContext hace que cualquier componente pueda leer el
+// idioma actual sin tener que pasarlo a mano por cada nivel.
+const LangContext = React.createContext("es");
+function useLang() {
+  return React.useContext(LangContext);
+}
+
+const FRONTEND_STRINGS = {
+  es: {
+    "home.explain.title": "Explicación y ejemplos",
+    "home.explain.subtitle": "Cómo funciona la democracia por promedio y la app.",
+    "home.cuotas.title": "Cuotas participativas",
+    "home.cuotas.subtitle": "Decidamos juntos si todos pagamos la misma cuota, y cuánto es lo que hay que pagar.",
+    "home.presupuesto.title": "Presupuestos participativos",
+    "home.presupuesto.subtitle": "Decidamos juntos en qué invertir o gastar el dinero que tenemos.",
+    "home.responsables.title": "Selección de responsables",
+    "home.responsables.subtitle": "Para asignar responsabilidades no hace falta votar por personas — asignemos responsabilidades por sorteo.",
+    "home.asociaciones.title": "Asociaciones, clubes y orgs",
+    "home.asociaciones.subtitle": "Cuotas, presupuesto, proyectos y responsables — un solo proceso conectado.",
+    "home.cooperativas.title": "Cooperativas",
+    "home.cooperativas.subtitle": "Tabulador de sueldos y presupuesto participativo, pensados para cooperativas.",
+    "home.custom.title": "Crea tu grupo y tus propias preguntas",
+    "home.custom.subtitle": "Arma tu propio grupo, preguntas y reglas, sin plantilla.",
+    "home.municipios.title": "Municipios o países",
+    "home.municipios.subtitle": "Demo interactiva: impuestos y presupuesto participativo a la escala de un país, con datos reales.",
+    "home.share.title": "Invita a otros",
+    "home.share.subtitle": "Comparte la app con tu comunidad — código QR y link listos para mandar.",
+  },
+  en: {
+    "home.explain.title": "Explanation and examples",
+    "home.explain.subtitle": "How average-based democracy and the app work.",
+    "home.cuotas.title": "Participatory dues",
+    "home.cuotas.subtitle": "Decide together whether everyone pays the same dues, and how much to pay.",
+    "home.presupuesto.title": "Participatory budgets",
+    "home.presupuesto.subtitle": "Decide together where to invest or spend the money you have.",
+    "home.responsables.title": "Selecting who's responsible",
+    "home.responsables.subtitle": "You don't need to vote for people to assign responsibilities — assign them by lottery instead.",
+    "home.asociaciones.title": "Associations, clubs & orgs",
+    "home.asociaciones.subtitle": "Dues, budget, projects, and responsibilities — one connected process.",
+    "home.cooperativas.title": "Cooperatives",
+    "home.cooperativas.subtitle": "Wage tables and participatory budgets, built for cooperatives.",
+    "home.custom.title": "Create your own group and questions",
+    "home.custom.subtitle": "Build your own group, questions, and rules, without a template.",
+    "home.municipios.title": "Municipalities or countries",
+    "home.municipios.subtitle": "Interactive demo: taxes and participatory budgeting at a country scale, with real data.",
+    "home.share.title": "Invite others",
+    "home.share.subtitle": "Share the app with your community — QR code and link ready to send.",
+  },
+};
+
+function tf(key, lang, vars = {}) {
+  const dict = FRONTEND_STRINGS[lang] || FRONTEND_STRINGS.es;
+  let str = dict[key] || FRONTEND_STRINGS.es[key] || key;
+  Object.entries(vars).forEach(([k, v]) => {
+    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+  });
+  return str;
+}
+
+function LangToggle({ lang, onChange }) {
+  return (
+    <div className="flex rounded-full overflow-hidden" style={{ border: `1px solid ${BLUE}55` }}>
+      {["es", "en"].map((code) => (
+        <button
+          key={code}
+          onClick={() => onChange(code)}
+          className="dp-mono text-[10px] font-semibold px-2 py-1"
+          style={lang === code ? { background: BLUE, color: "#fff" } : { background: "#fff", color: BLUE }}
+        >
+          {code.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // Reemplazo de window.confirm/window.alert nativos (que muestran el
 // dominio de GitHub Pages como remitente) por una ventana propia, con
 // la estética de la app. Se puede llamar desde cualquier función async
@@ -2610,60 +2689,61 @@ function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
 }
 
 function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones, onChooseResponsables, onChooseMunicipios, onChooseCooperativas, onChooseShare }) {
+  const lang = useLang();
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
       <HomeIconButton
         icon="ti-book-2"
-        title="Explicación y ejemplos"
-        subtitle="Cómo funciona la democracia por promedio y la app."
+        title={tf("home.explain.title", lang)}
+        subtitle={tf("home.explain.subtitle", lang)}
         onClick={onChooseExplain}
       />
       <HomeIconButton
         icon="ti-coin"
-        title="Cuotas participativas"
-        subtitle="Decidamos juntos si todos pagamos la misma cuota, y cuánto es lo que hay que pagar."
+        title={tf("home.cuotas.title", lang)}
+        subtitle={tf("home.cuotas.subtitle", lang)}
         onClick={onChooseCuotas}
       />
       <HomeIconButton
         icon="ti-chart-pie"
-        title="Presupuestos participativos"
-        subtitle="Decidamos juntos en qué invertir o gastar el dinero que tenemos."
+        title={tf("home.presupuesto.title", lang)}
+        subtitle={tf("home.presupuesto.subtitle", lang)}
         onClick={onChoosePresupuesto}
       />
       <HomeIconButton
         icon="ti-dice-5"
-        title="Selección de responsables"
-        subtitle="Para asignar responsabilidades no hace falta votar por personas — asignemos responsabilidades por sorteo."
+        title={tf("home.responsables.title", lang)}
+        subtitle={tf("home.responsables.subtitle", lang)}
         onClick={onChooseResponsables}
       />
       <HomeIconButton
         icon="ti-building-community"
-        title="Asociaciones, clubes y orgs"
-        subtitle="Cuotas, presupuesto, proyectos y responsables — un solo proceso conectado."
+        title={tf("home.asociaciones.title", lang)}
+        subtitle={tf("home.asociaciones.subtitle", lang)}
         onClick={onChooseAsociaciones}
       />
       <HomeIconButton
         icon="ti-users-group"
-        title="Cooperativas"
-        subtitle="Tabulador de sueldos y presupuesto participativo, pensados para cooperativas."
+        title={tf("home.cooperativas.title", lang)}
+        subtitle={tf("home.cooperativas.subtitle", lang)}
         onClick={onChooseCooperativas}
       />
       <HomeIconButton
         icon="ti-pencil"
-        title="Crea tu grupo y tus propias preguntas"
-        subtitle="Arma tu propio grupo, preguntas y reglas, sin plantilla."
+        title={tf("home.custom.title", lang)}
+        subtitle={tf("home.custom.subtitle", lang)}
         onClick={onChooseCustom}
       />
       <HomeIconButton
         icon="ti-building-bank"
-        title="Municipios o países"
-        subtitle="Demo interactiva: impuestos y presupuesto participativo a la escala de un país, con datos reales."
+        title={tf("home.municipios.title", lang)}
+        subtitle={tf("home.municipios.subtitle", lang)}
         onClick={onChooseMunicipios}
       />
       <HomeIconButton
         icon="ti-share"
-        title="Invita a otros"
-        subtitle="Comparte la app con tu comunidad — código QR y link listos para mandar."
+        title={tf("home.share.title", lang)}
+        subtitle={tf("home.share.subtitle", lang)}
         onClick={onChooseShare}
       />
     </div>
@@ -2760,6 +2840,7 @@ function CustomEntryScreen({ onBack, onChooseCreate, onChooseAdminReturn, onChoo
 }
 
 function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefillEmail, userId }) {
+  const currentLang = useLang();
   const [name, setName] = useState("");
   const [adminName, setAdminName] = useState(prefillName || "");
   const [adminEmail, setAdminEmail] = useState(prefillEmail || "");
@@ -2776,7 +2857,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
       const res = await fetch(`${backendUrl}/api/groups`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, adminName, adminEmail, requireApproval, secretResponses, userId: userId || null }),
+        body: JSON.stringify({ name, adminName, adminEmail, requireApproval, secretResponses, userId: userId || null, lang: currentLang }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo crear el grupo");
@@ -6248,6 +6329,11 @@ function DemocraciaPorPromedioConectada() {
   const [connectedGroupName, setConnectedGroupName] = useState("");
   const [session, setSession] = useState(null);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [lang, setLang] = useState(() => localStorage.getItem("org_lang") || "es");
+  const changeLang = (code) => {
+    localStorage.setItem("org_lang", code);
+    setLang(code);
+  };
 
   const closeWelcome = () => {
     localStorage.setItem("org_onboarding_seen", "true");
@@ -6325,18 +6411,22 @@ function DemocraciaPorPromedioConectada() {
   };
 
   return (
+    <LangContext.Provider value={lang}>
     <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
       <div className="w-full max-w-[420px] rounded-[32px] overflow-hidden shadow-xl" style={{ background: PAGE_BG, border: `1px solid ${BLUE}33` }}>
         <div className="px-6 pt-7 pb-5" style={{ background: WARM_WHITE }}>
           <div className="flex items-center justify-between mb-2.5">
-            {!isHomeHeader && (
-              <div
-                className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full"
-                style={{ background: BLUE_SOFT, color: INK + "aa" }}
-              >
-                ORGANICEN Y DECIDAN
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <LangToggle lang={lang} onChange={changeLang} />
+              {!isHomeHeader && (
+                <div
+                  className="dp-body inline-block text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full"
+                  style={{ background: BLUE_SOFT, color: INK + "aa" }}
+                >
+                  ORGANICEN Y DECIDAN
+                </div>
+              )}
+            </div>
             {view === "home" && (
               session ? (
                 <div className="flex flex-col items-start gap-1">
@@ -6575,6 +6665,7 @@ function DemocraciaPorPromedioConectada() {
       {showWelcome && view === "home" && <OnboardingCarousel slides={ONBOARDING_SLIDES} onClose={closeWelcome} overlay={true} />}
       <DialogHost />
     </div>
+    </LangContext.Provider>
   );
 }
 

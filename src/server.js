@@ -60,7 +60,7 @@ app.use(express.json());
 // ---------- Grupos ----------
 
 app.post("/api/groups", async (req, res) => {
-  const { name, adminName, adminEmail, requireApproval, secretResponses, userId } = req.body;
+  const { name, adminName, adminEmail, requireApproval, secretResponses, userId, lang } = req.body;
   if (!name || !adminName) {
     return res.status(400).json({ error: "Faltan campos: name, adminName" });
   }
@@ -74,6 +74,7 @@ app.post("/api/groups", async (req, res) => {
   db.groups[code] = {
     code,
     name,
+    lang: lang === "en" ? "en" : "es",
     admin: { id: adminId, name: adminName, email: adminEmail || null },
     requireApproval: requireApproval !== false,
     secretResponses: secretResponses !== false,
@@ -773,12 +774,13 @@ function finishFlowIfLicitacionDone(group, flow) {
   flow.status = "finished";
   if (flow.chainNext && TEMPLATES[flow.chainNext]) {
     const nextTemplate = flow.chainNext;
+    const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}), lang: group.lang || "es" };
     group.flows.push({
       id: generateId(),
       template: nextTemplate,
       status: "active",
-      config: { ...(TEMPLATES[nextTemplate].defaultConfig || {}) },
-      currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}), instanceIndex: 0 },
+      config: nextConfig,
+      currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(nextConfig), instanceIndex: 0 },
       stages: [],
       chainNext: null,
       chainedFromFlowId: flow.id,
@@ -795,7 +797,7 @@ function finishFlowIfLicitacionDone(group, flow) {
 // encadenado con ese cálculo, se usa el "totalBudget" que el admin haya
 // escrito a mano (comportamiento normal de Presupuesto suelto).
 function getEffectiveFlowConfig(group, flow) {
-  const config = { ...flow.config };
+  const config = { ...flow.config, lang: group.lang || "es" };
   if (flow.template === "presupuesto" && flow.chainedFromFlowId) {
     const cuotasFlow = (group.flows || []).find((f) => f.id === flow.chainedFromFlowId);
     if (cuotasFlow) {
@@ -899,6 +901,7 @@ app.post("/api/groups/:code/flows", async (req, res) => {
   const initialConfig = {
     ...(TEMPLATES[template].defaultConfig || {}),
     ...(template === "responsabilidades" ? { skipOpenVote: true } : {}),
+    lang: group.lang || "es",
   };
 
   const flow = {
@@ -1218,7 +1221,7 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
 
     if (flow.chainNext && TEMPLATES[flow.chainNext]) {
       const nextTemplate = flow.chainNext;
-      const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}) };
+      const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}), lang: group.lang || "es" };
       // Si es Cuotas → Presupuesto (Asociaciones), el presupuesto ya
       // nace sabiendo cuánto se recaudó — así su primera etapa
       // (gastos fijos) no vuelve a pedir "ingresos". Misma lógica que

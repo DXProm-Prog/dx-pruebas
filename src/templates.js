@@ -4,6 +4,8 @@
 // (flow.config), que el administrador puede ajustar — aquí solo se usan
 // los valores, con 10% como default si no se ha configurado nada.
 
+const { t } = require("./strings");
+
 // Redondea hacia abajo en los empates de .5 (2.5 → 2, no 3), a
 // diferencia de Math.round que siempre sube en los .5. Solo sube si la
 // parte decimal pasa de .5 (ej. 2.51 → 3).
@@ -12,11 +14,11 @@ function roundHalfDown(n) {
   return n - floor > 0.5 ? floor + 1 : floor;
 }
 
-function approvalStage(label) {
+function approvalStage(labelKey, lang) {
   return {
     key: "approval",
     type: "mayoria",
-    text: `¿Apruebas el resultado colectivo de ${label}?`,
+    text: t("approval", lang, { label: t(`approval.label.${labelKey}`, lang) }),
     config: { options: ["Sí", "No"], majorityRule: "simple" },
   };
 }
@@ -51,7 +53,7 @@ const cuotas = {
     return {
       key: "count",
       type: "promedio",
-      text: "¿Cuántos tipos de cuota debe haber? (todos pagan igual, o distintos grupos de personas pagan diferente)",
+      text: t("cuotas.count", flowConfig.lang),
       config: { trimPercent },
     };
   },
@@ -62,6 +64,7 @@ const cuotas = {
   getNextStage(stages, flowConfig = {}) {
     const trimPercent = flowConfig.quotaTrimPercent ?? 10;
     const thresholdPercent = flowConfig.categoryThresholdPercent ?? 10;
+    const lang = flowConfig.lang;
     const last = stages[stages.length - 1];
 
     if (last.key === "count") {
@@ -70,14 +73,14 @@ const cuotas = {
         return {
           key: "memberSetup",
           type: "conteo_miembros",
-          text: "¿Cuántos miembros van a pagar la cuota? (opcional, solo para ver cuánto se recauda — el administrador puede omitir este paso)",
+          text: t("cuotas.memberSetup.single", lang),
           config: { mode: "single" },
         };
       }
       return {
         key: "names",
         type: "recoleccion_abierta",
-        text: `Propón nombres para las ${countValue} categorías de cuota que se necesitan (una por recuadro).`,
+        text: t("cuotas.names", lang, { count: countValue }),
         config: { maxItemsPerPerson: countValue, categoryCount: countValue },
       };
     }
@@ -87,7 +90,7 @@ const cuotas = {
       return {
         key: "fusionarCategorias",
         type: "fusionar_categorias",
-        text: "¿Hay categorías propuestas que en realidad son la misma? Márquenlas juntas si creen que sí.",
+        text: t("cuotas.fusionarCategorias", lang),
         config: { categories: allNames },
       };
     }
@@ -116,7 +119,7 @@ const cuotas = {
       return {
         key: "ranking",
         type: "ranking_multiganador",
-        text: `Ordena estas categorías propuestas según tu preferencia (toca en orden: 1ª, 2ª…). Se descartaron las que no llegaron al ${thresholdPercent}% de apoyo.`,
+        text: t("cuotas.ranking", lang, { threshold: thresholdPercent }),
         config: { options: survivors, winnersCount: Math.min(categoryCount, survivors.length) },
       };
     }
@@ -130,7 +133,7 @@ const cuotas = {
       return {
         key: "memberSetup",
         type: "conteo_miembros",
-        text: "¿Cuántos miembros hay en cada categoría? (opcional, solo para ver cuánto se recauda — el administrador puede omitir este paso)",
+        text: t("cuotas.memberSetup.categories", lang),
         config: { mode: "categories", categories },
       };
     }
@@ -140,20 +143,20 @@ const cuotas = {
         return {
           key: "singleQuota",
           type: "promedio",
-          text: "¿Cuánto debe ser la cuota?",
+          text: t("cuotas.singleQuota", lang),
           config: { trimPercent },
         };
       }
       return {
         key: "quotas",
         type: "promedio_por_categoria",
-        text: "Propón la cuota que crees justa para cada categoría.",
+        text: t("cuotas.quotas", lang),
         config: { categories: last.config.categories, trimPercent },
       };
     }
 
     if (last.key === "singleQuota" || last.key === "quotas") {
-      return approvalStage("las cuotas");
+      return approvalStage("cuotas", flowConfig.lang);
     }
 
     if (last.key === "approval") {
@@ -223,7 +226,7 @@ const presupuesto = {
     }
 
     if (last.key === "budget") {
-      return approvalStage("el presupuesto");
+      return approvalStage("presupuesto", flowConfig.lang);
     }
 
     if (last.key === "approval") {
@@ -560,7 +563,7 @@ const presupuestoCooperativa = {
     }
 
     if (last.key === "budget") {
-      return approvalStage("el presupuesto de la cooperativa");
+      return approvalStage("presupuestoCooperativa", flowConfig.lang);
     }
 
     if (last.key === "approval") {
