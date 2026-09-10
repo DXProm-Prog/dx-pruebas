@@ -146,6 +146,8 @@ const FRONTEND_STRINGS = {
     "home.municipios.subtitle": "Demo interactiva: impuestos y presupuesto participativo a la escala de un país, con datos reales.",
     "home.share.title": "Invita a otros",
     "home.share.subtitle": "Comparte la app con tu comunidad — código QR y link listos para mandar.",
+    "home.title": "Organicen y decidan",
+    "home.tagline": "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? — Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -166,6 +168,8 @@ const FRONTEND_STRINGS = {
     "home.municipios.subtitle": "Interactive demo: taxes and participatory budgeting at a country scale, with real data.",
     "home.share.title": "Invite others",
     "home.share.subtitle": "Share the app with your community — QR code and link ready to send.",
+    "home.title": "Organicen y decidan",
+    "home.tagline": "How much do we need to pay? What should we spend our resources on? Who's responsible for what? — Decide together, with horizontal, fast, and effective processes, without giving power to anyone or dividing the group.",
   },
 };
 
@@ -6378,8 +6382,8 @@ function DemocraciaPorPromedioConectada() {
     municipios: ["Impuestos", "Presupuesto", "Otras preguntas"],
     cooperativas: ["Arma tu grupo", "Elige un proceso", "Decidan juntos", "¡Listo!"],
   };
-  const HOME_TAGLINE = "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? — Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.";
-  const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || "Organicen y decidan";
+  const HOME_TAGLINE = tf("home.tagline", lang);
+  const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || tf("home.title", lang);
   const sessionName = session ? (session.user.user_metadata && session.user.user_metadata.name) || "" : "";
   const sessionEmail = session ? session.user.email : "";
   const isHomeHeader = !connectedGroupName && !selectedOption;
