@@ -1080,7 +1080,6 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
     const gastos = Array.isArray(value.gastos)
       ? value.gastos.map((g) => ({ nombre: String(g.nombre || "").trim(), monto: Number(g.monto) || 0 })).filter((g) => g.nombre)
       : [];
-    if (ingresos <= 0) return res.status(400).json({ error: "Ingresa un monto de ingresos mayor a 0" });
     storedValue = { ingresos, gastos };
   } else if (stage.type === "ajustar_gastos_fijos") {
     if (typeof value !== "object" || Array.isArray(value) || value === null) {
@@ -1219,12 +1218,25 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
 
     if (flow.chainNext && TEMPLATES[flow.chainNext]) {
       const nextTemplate = flow.chainNext;
+      const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}) };
+      // Si es Cuotas → Presupuesto (Asociaciones), el presupuesto ya
+      // nace sabiendo cuánto se recaudó — así su primera etapa
+      // (gastos fijos) no vuelve a pedir "ingresos". Misma lógica que
+      // getEffectiveFlowConfig usa para flujos ya existentes, pero
+      // aplicada aquí al momento exacto de crear el flujo nuevo.
+      if (nextTemplate === "presupuesto" && flow.template === "cuotas") {
+        const finalStage = [...flow.stages].reverse().find((s) => s.key === "quotas" || s.key === "singleQuota");
+        if (finalStage && finalStage.result.totalCollected) {
+          nextConfig.totalBudget = Math.round(finalStage.result.totalCollected * 100) / 100;
+          nextConfig.cuotasTotal = nextConfig.totalBudget;
+        }
+      }
       group.flows.push({
         id: generateId(),
         template: nextTemplate,
         status: "active",
-        config: { ...(TEMPLATES[nextTemplate].defaultConfig || {}) },
-        currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(TEMPLATES[nextTemplate].defaultConfig || {}), instanceIndex: 0 },
+        config: nextConfig,
+        currentStage: { ...TEMPLATES[nextTemplate].getInitialStage(nextConfig), instanceIndex: 0 },
         stages: [],
         // El presupuesto de Asociaciones sigue encadenando hacia
         // "responsabilidades" — se le pregunta al grupo después de que

@@ -175,7 +175,7 @@ const presupuesto = {
       type: "gastos_fijos",
       text: ingresosFromCuotas
         ? "Desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y continúa)."
-        : "Ingresa los ingresos y desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y solo pon los ingresos).",
+        : "Desglosa los gastos fijos del presupuesto (si no hay, deja la lista vacía). Ingresar los ingresos totales es opcional — si los pones, se usan para calcular a cuánto equivale cada % más adelante.",
       config: { suggestedIngresos: flowConfig.totalBudget || null, ingresosFromCuotas },
     };
   },

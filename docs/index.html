@@ -4852,9 +4852,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const [savingConfig, setSavingConfig] = useState(false);
   const lastClosedStage = flow.stages[flow.stages.length - 1];
   const justApproved = Boolean(lastClosedStage && lastClosedStage.key === "approval" && lastClosedStage.result.winner === "Sí");
-  const [showCelebration, setShowCelebration] = useState(justApproved || flow.status === "finished");
-  const prevApproved = React.useRef(justApproved);
-  const prevStatus = React.useRef(flow.status);
+  // Se deriva directamente del estado actual del flujo (en vez de
+  // "detectar" la transición con referencias a un valor anterior) —
+  // así nunca se pierde el aviso por una carrera entre actualizaciones,
+  // sin importar quién haya sido el que cerró la etapa.
+  const [celebrationDismissed, setCelebrationDismissed] = useState(false);
+  const showCelebration = (justApproved || flow.status === "finished") && !celebrationDismissed;
+  const setShowCelebration = (value) => setCelebrationDismissed(!value);
   const stage = flow.status === "active" ? flow.currentStage : null;
   const TEMPLATE_LABELS = { cuotas: "Cuotas participativas", presupuesto: "Presupuesto participativo" };
   const nextStepLabel = stage ? stage.text : flow.chainNext ? TEMPLATE_LABELS[flow.chainNext] || flow.chainNext : null;
@@ -4867,17 +4871,6 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   const cuotasTotal = cuotasFinalStage && cuotasFinalStage.result.totalCollected ? cuotasFinalStage.result.totalCollected : null;
   const isChainedBudget = flow.template === "presupuesto" && cuotasTotal !== null;
   const effectiveTotalBudget = isChainedBudget ? Math.round((cuotasTotal + (Number(extraAmount) || 0)) * 100) / 100 : (totalBudget === "" ? null : Number(totalBudget));
-
-  useEffect(() => {
-    if (!prevApproved.current && justApproved) {
-      setShowCelebration(true);
-    }
-    if (prevStatus.current !== "finished" && flow.status === "finished") {
-      setShowCelebration(true);
-    }
-    prevApproved.current = justApproved;
-    prevStatus.current = flow.status;
-  }, [flow.status, justApproved]);
 
   const saveConfig = async () => {
     setSavingConfig(true);
@@ -5427,7 +5420,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             <React.Fragment>
               {!stage.config.ingresosFromCuotas && (
                 <div className="flex items-center gap-2 mb-2.5">
-                  <span className="dp-body text-xs flex-1" style={{ color: INK }}>Ingresos mensuales</span>
+                  <span className="dp-body text-xs flex-1" style={{ color: INK }}>Ingresos totales (opcional)</span>
                   <input
                     type="number"
                     value={ingresosDraft}
@@ -5471,7 +5464,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   setIngresosDraft("");
                   setGastosDraft([{ nombre: "", monto: "" }]);
                 }}
-                disabled={sending || (!stage.config.ingresosFromCuotas && (!ingresosDraft || Number(ingresosDraft) <= 0))}
+                disabled={sending}
                 className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                 style={{ background: GREEN }}
               >
