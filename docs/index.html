@@ -2688,16 +2688,30 @@ function SharePromoScreen({ onBack }) {
     <div className="px-4 py-6 flex flex-col gap-4">
       <BackButton onClick={onBack} />
       <div ref={cardRef} className="rounded-2xl p-6 text-center" style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}33` }}>
-        <div className="dp-display text-xl font-bold mb-2" style={{ color: INK }}>Organicen y decidan</div>
-        <div className="dp-body text-[13px] mb-4" style={{ color: INK + "aa", lineHeight: 1.5 }}>
-          La forma más justa de decidir en grupo — sin jefes, sin política. Solo ustedes, decidiendo parejo.
+        <div className="dp-display text-xl font-bold mb-3" style={{ color: INK }}>Organicen y decidan</div>
+        <div className="dp-body text-[12.5px] mb-4 text-left" style={{ color: INK + "aa", lineHeight: 1.55 }}>
+          <p className="mb-2.5">¿Eres parte de, o quieres formar, una asociación vecinal, un club, una cooperativa o cualquier organización?</p>
+          <p className="mb-2.5">Esta aplicación te ayuda a organizar a tu grupo para tomar decisiones de forma transparente, horizontal, justa y eficiente.</p>
+          <p>No es necesario tener líderes, jefes, o políticos. Podemos tomar decisiones complejas como: ¿Cuánto queremos pagar de cuotas o impuestos? ¿En qué vamos a invertir nuestros recursos? y ¿Quiénes serán encargados de qué responsabilidades? — usando procesos como la democracia por promedio, por sorteo, mayorías, voto ranqueado y segundas vueltas.</p>
         </div>
-        <div className="flex justify-center mb-4">
+        <a
+          href={APP_SHARE_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="dp-body flex items-center justify-center gap-1.5 w-full text-sm py-2.5 rounded-full text-white font-semibold mb-4"
+          style={{ background: BLUE }}
+        >
+          <i className="ti ti-external-link"></i> Abrir app para organizarnos
+        </a>
+        <div className="flex justify-center mb-3">
           <img src={qrUrl} alt="Código QR" style={{ width: "160px", height: "160px", borderRadius: "12px" }} />
         </div>
         <a href={APP_SHARE_URL} target="_blank" rel="noreferrer" className="dp-mono text-[11px] font-medium" style={{ color: BLUE, wordBreak: "break-all" }}>
           {APP_SHARE_URL}
         </a>
+      </div>
+      <div className="dp-body text-[10.5px] rounded-lg p-2.5" style={{ background: BLUE_SOFT, color: INK + "88", lineHeight: 1.5 }}>
+        El botón de arriba solo funciona mientras ves esta pantalla en el navegador. Al descargar la imagen (o si la imprimes o la mandas como PDF), deja de ser clickeable — por eso el código QR y el link de abajo siguen ahí: esos sí funcionan en papel o en cualquier imagen, escaneándolos o copiándolos a mano.
       </div>
       <button
         onClick={downloadImage}
@@ -3562,7 +3576,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
   if (stage.type === "porcentaje_por_categoria") {
     const total = Object.values(catValues).reduce((a, v) => a + (Number(v) || 0), 0);
     const totalRounded = Math.round(total * 10) / 10;
-    const totalBudget = flowConfig?.totalBudget ?? stage.config.totalBudget;
+    const totalBudget = stage.config.totalBudget ?? flowConfig?.totalBudget;
     const pieData = stage.config.categories.map((cat) => ({ label: cat, value: Number(catValues[cat]) || 0 }));
     return (
       <div className="mb-2">
@@ -3742,8 +3756,12 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               </label>
             ))}
             {selectedMulti.length >= 2 && (
-              <button onClick={confirmGroup} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>
-                Marcar estos {selectedMulti.length} como el mismo rubro →
+              <button
+                onClick={confirmGroup}
+                className="dp-body flex items-center justify-center gap-1.5 w-full text-sm py-2.5 rounded-full text-white font-semibold mb-3"
+                style={{ background: "#E0A458" }}
+              >
+                <i className="ti ti-git-merge"></i> Fusionar rubros ({selectedMulti.length})
               </button>
             )}
           </React.Fragment>
@@ -5399,19 +5417,27 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       {stage && stage.type === "gastos_fijos" && (
         <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
           <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
+          {stage.config.ingresosFromCuotas && (
+            <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>
+              Recuerda que este flujo está conectado con las cuotas — los ingresos ya salen de ahí (
+              {formatMoney(stage.config.suggestedIngresos || 0)}). Si quieres sumar un monto extra (ahorros, otros ingresos), lo puedes ajustar en la configuración del facilitador.
+            </div>
+          )}
           {isAdmin ? (
             <React.Fragment>
-              <div className="flex items-center gap-2 mb-2.5">
-                <span className="dp-body text-xs flex-1" style={{ color: INK }}>Ingresos mensuales</span>
-                <input
-                  type="number"
-                  value={ingresosDraft}
-                  onChange={(e) => setIngresosDraft(e.target.value)}
-                  placeholder="$"
-                  className="dp-mono rounded-lg px-2.5 py-1.5 text-sm outline-none"
-                  style={{ width: "110px", background: "#fff", color: GREEN, fontWeight: 700, border: `1px solid ${BLUE}33` }}
-                />
-              </div>
+              {!stage.config.ingresosFromCuotas && (
+                <div className="flex items-center gap-2 mb-2.5">
+                  <span className="dp-body text-xs flex-1" style={{ color: INK }}>Ingresos mensuales</span>
+                  <input
+                    type="number"
+                    value={ingresosDraft}
+                    onChange={(e) => setIngresosDraft(e.target.value)}
+                    placeholder="$"
+                    className="dp-mono rounded-lg px-2.5 py-1.5 text-sm outline-none"
+                    style={{ width: "110px", background: "#fff", color: GREEN, fontWeight: 700, border: `1px solid ${BLUE}33` }}
+                  />
+                </div>
+              )}
               <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>Gastos fijos:</div>
               {gastosDraft.map((g, i) => (
                 <div key={i} className="flex items-center gap-2 mb-1.5">
@@ -5440,11 +5466,12 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               <button
                 onClick={async () => {
                   const gastos = gastosDraft.filter((g) => g.nombre.trim() && Number(g.monto) > 0).map((g) => ({ nombre: g.nombre.trim(), monto: Number(g.monto) }));
-                  await submitAndClose({ ingresos: Number(ingresosDraft) || 0, gastos });
+                  const ingresos = stage.config.ingresosFromCuotas ? Number(stage.config.suggestedIngresos) || 0 : Number(ingresosDraft) || 0;
+                  await submitAndClose({ ingresos, gastos });
                   setIngresosDraft("");
                   setGastosDraft([{ nombre: "", monto: "" }]);
                 }}
-                disabled={sending || !ingresosDraft || Number(ingresosDraft) <= 0}
+                disabled={sending || (!stage.config.ingresosFromCuotas && (!ingresosDraft || Number(ingresosDraft) <= 0))}
                 className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                 style={{ background: GREEN }}
               >
@@ -5452,7 +5479,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               </button>
             </React.Fragment>
           ) : (
-            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está ingresando los ingresos y gastos fijos…</div>
+            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está ingresando los gastos fijos…</div>
           )}
         </div>
       )}
@@ -5516,10 +5543,10 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                     {selectedForMerge.length >= 2 && (
                       <button
                         onClick={() => setChoosingPrimaryFor(selectedForMerge)}
-                        className="dp-body text-xs font-medium mb-3"
-                        style={{ color: BLUE }}
+                        className="dp-body flex items-center justify-center gap-1.5 w-full text-sm py-2.5 rounded-full text-white font-semibold mb-3"
+                        style={{ background: "#E0A458" }}
                       >
-                        Fusionar los {selectedForMerge.length} seleccionados →
+                        <i className="ti ti-git-merge"></i> Fusionar seleccionados ({selectedForMerge.length})
                       </button>
                     )}
                   </React.Fragment>

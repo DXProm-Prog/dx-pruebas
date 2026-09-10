@@ -236,7 +236,7 @@ function computeStageResult(stage, responses, flowConfig = {}) {
       raw[cat] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     });
     const sum = Object.values(raw).reduce((a, b) => a + b, 0);
-    const totalBudget = flowConfig.totalBudget || stage.config.totalBudget || null;
+    const totalBudget = stage.config.totalBudget || flowConfig.totalBudget || null;
     const categories = {};
     stage.config.categories.forEach((cat) => {
       const normalizedPercent = sum > 100 && sum > 0 ? Math.round(((raw[cat] / sum) * 100) * 10) / 10 : Math.round(raw[cat] * 10) / 10;

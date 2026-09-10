@@ -169,11 +169,14 @@ const presupuesto = {
   defaultConfig: { selectionThresholdPercent: 10 },
 
   getInitialStage(flowConfig = {}) {
+    const ingresosFromCuotas = flowConfig.totalBudget != null;
     return {
       key: "gastosFijos",
       type: "gastos_fijos",
-      text: "Ingresa los ingresos y desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y solo pon los ingresos).",
-      config: { suggestedIngresos: flowConfig.totalBudget || null },
+      text: ingresosFromCuotas
+        ? "Desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y continúa)."
+        : "Ingresa los ingresos y desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y solo pon los ingresos).",
+      config: { suggestedIngresos: flowConfig.totalBudget || null, ingresosFromCuotas },
     };
   },
 
