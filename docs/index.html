@@ -411,8 +411,10 @@ function PdfExportContent({ groupName, flowChain, showNames }) {
         <div style={{ height: "1px", background: BLUE + "33", marginTop: "16px" }}></div>
       </div>
 
-      <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginBottom: "8px" }}>
-        <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK }}>Resultados finales</div>
+      <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginBottom: "10px" }}>
+        <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "14px 16px" }}>
+          <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK, lineHeight: 1.4 }}>Resultados finales</div>
+        </div>
       </div>
       {flowChain.map((flow) => {
         const finalStage = [...flow.stages].reverse().find((s) => ["quotas", "singleQuota", "budget", "montoPorPuesto"].includes(s.key));
@@ -420,7 +422,9 @@ function PdfExportContent({ groupName, flowChain, showNames }) {
           <React.Fragment key={flow.id}>
             {finalStage && (
               <div data-pdf-block style={{ marginBottom: "20px" }}>
-                <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: BLUE, marginBottom: "10px" }}>{flowTemplateLabel(flow.template)}</div>
+                <div style={{ background: "#EAF0FA", borderRadius: "8px", padding: "8px 12px", marginBottom: "10px" }}>
+                  <div style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: BLUE, lineHeight: 1.4 }}>{flowTemplateLabel(flow.template)}</div>
+                </div>
                 <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "16px" }}>
                   <BigDecisionDisplay stage={finalStage} />
                 </div>
@@ -432,13 +436,17 @@ function PdfExportContent({ groupName, flowChain, showNames }) {
         );
       })}
 
-      <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginTop: "12px", marginBottom: "8px" }}>
-        <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK }}>Proceso completo</div>
+      <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginTop: "16px", marginBottom: "10px" }}>
+        <div style={{ background: BLUE_SOFT, borderRadius: "10px", padding: "14px 16px" }}>
+          <div style={{ fontFamily: "Sora, sans-serif", fontSize: "19px", fontWeight: 700, color: INK, lineHeight: 1.4 }}>Proceso completo</div>
+        </div>
       </div>
       {flowChain.map((flow) => (
         <React.Fragment key={flow.id}>
-          <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginBottom: "4px" }}>
-            <div style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", fontWeight: 700, color: INK }}>{flowTemplateLabel(flow.template)}</div>
+          <div data-pdf-block data-pdf-keep-with-next="true" style={{ marginBottom: "8px" }}>
+            <div style={{ background: "#EAF0FA", borderRadius: "8px", padding: "8px 12px" }}>
+              <div style={{ fontFamily: "Inter, sans-serif", fontSize: "15px", fontWeight: 700, color: INK, lineHeight: 1.4 }}>{flowTemplateLabel(flow.template)}</div>
+            </div>
           </div>
           {flow.stages.map((s, i) => (
             <div key={i} data-pdf-block style={{ marginBottom: "16px", paddingLeft: "14px", borderLeft: `3px solid ${BLUE_SOFT}` }}>
@@ -2692,7 +2700,7 @@ function SharePromoScreen({ onBack }) {
         <div className="dp-body text-[12.5px] mb-4 text-left" style={{ color: INK + "aa", lineHeight: 1.55 }}>
           <p className="mb-2.5">¿Eres parte de, o quieres formar, una asociación vecinal, un club, una cooperativa o cualquier organización?</p>
           <p className="mb-2.5">Esta aplicación te ayuda a organizar a tu grupo para tomar decisiones de forma transparente, horizontal, justa y eficiente.</p>
-          <p>No es necesario tener líderes, jefes, o políticos. Podemos tomar decisiones complejas como: ¿Cuánto queremos pagar de cuotas o impuestos? ¿En qué vamos a invertir nuestros recursos? y ¿Quiénes serán encargados de qué responsabilidades? — usando procesos como la democracia por promedio, por sorteo, mayorías, voto ranqueado y segundas vueltas.</p>
+          <p>¡Incluye cuotas e impuestos participativos, presupuestos participativos, selección de responsabilidades por sorteo y más!</p>
         </div>
         <a
           href={APP_SHARE_URL}
@@ -4685,16 +4693,6 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   const anyReopenableEmpty = !anyActive && categoryNames.some((c) => lic.categories[c].status === "empty");
   const allDone = categoryNames.every((c) => ["resolved", "empty_closed", "tie_final"].includes(lic.categories[c].status));
 
-  // Si al avanzar la licitación termina por completo, el backend puede
-  // haber encadenado un flujo nuevo (ej. Selección de responsables,
-  // dentro de Asociaciones) — si es así, saltamos a mostrarlo de una
-  // vez, en vez de dejar a la persona viendo el flujo ya terminado.
-  const switchToChainedFlowIfAny = (freshData) => {
-    if (!freshData || !onSwitchFlow) return;
-    const nextFlow = (freshData.flows || []).find((f) => f.chainedFromFlowId === flow.id);
-    if (nextFlow) onSwitchFlow(nextFlow.id);
-  };
-
   const closeCollecting = async () => {
     const ok = await customConfirm("¿Cerrar la recepción de propuestas de todas las categorías? Nadie más podrá mandar o editar propuestas después de esto, y se revelan todas juntas.");
     if (!ok) return;
@@ -4708,8 +4706,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cerrar");
-      const freshData = await onAdvance();
-      switchToChainedFlowIfAny(freshData);
+      await onAdvance();
     } catch (e) {
       setCollectingError(e.message);
     } finally {
@@ -4729,8 +4726,7 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cerrar");
-      const freshData = await onAdvance();
-      switchToChainedFlowIfAny(freshData);
+      await onAdvance();
     } catch (e) {
       setVotingError(e.message);
     } finally {
@@ -4939,11 +4935,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al cerrar la etapa");
-      const freshData = await onAdvance();
-      if (freshData && onSwitchFlow) {
-        const nextFlow = (freshData.flows || []).find((f) => f.chainedFromFlowId === flow.id);
-        if (nextFlow) onSwitchFlow(nextFlow.id);
-      }
+      await onAdvance();
     } catch (e) {
       setSendError(e.message);
     } finally {
