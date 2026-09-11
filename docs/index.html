@@ -150,12 +150,41 @@ const FRONTEND_STRINGS = {
     "home.tagline": "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? — Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.",
     "flow.availableBudget": "Presupuesto disponible (opcional)",
     "flow.availableBudget.label": "Presupuesto disponible",
+    "flow.send": "Enviar",
+    "flow.sending": "Enviando…",
+    "flow.closeStage": "Cerrar etapa y avanzar",
+    "flow.closing": "Cerrando…",
+    "flow.confirmClose": "¿Seguro que quieres cerrar esta etapa? Nadie más podrá responder después de esto.",
+    "flow.completed": "Flujo completo. Si dejaste tu correo, ahí te llega el resumen.",
+    "flow.downloadPdf": "Descargar resultados (PDF)",
+    "flow.generatingPdf": "Generando PDF…",
+    "flow.congrats": "¡Felicidades!",
+    "flow.collectiveDecision": "Decisión colectiva:",
+    "flow.viewFullProcess": "Ver todo el proceso",
+    "flow.thresholdLabel": "% mínimo de apoyo para que sobreviva una categoría",
+    "flow.thresholdLabel.puestos": "% mínimo de apoyo para que sobreviva un puesto propuesto",
+    "flow.onlyAffectsFuture": "Solo afecta las etapas que todavía no se han calculado.",
+    "flow.save": "Guardar",
+    "flow.saving": "Guardando…",
+    "flow.decidedCollectively": "Decidieron {what} de forma colectiva.",
+    "flow.decided.cuotas": "las cuotas",
+    "flow.decided.presupuesto": "el presupuesto",
+    "flow.decided.tabuladorSueldos": "los sueldos",
+    "flow.decided.presupuestoCooperativa": "el presupuesto",
+    "flow.decided.responsabilidades": "los responsables",
+    "flow.decided.default": "el resultado",
+    "flow.thresholdInfo.title": "% mínimo de apoyo",
+    "flow.thresholdInfo.text.categorias": "Cuando todos proponen opciones (categorías) y después votan por las que les importan, esto decide qué tan popular tiene que ser una opción para quedarse.\n\nPor ejemplo, con 10%: si menos del 10% del grupo votó por una opción, se elimina. La idea es quitar del camino las propuestas casi sin apoyo, sin necesitar que el facilitador decida a mano cuáles sobreviven.\n\nSolo afecta las etapas que todavía no se han calculado. Cambiarlo no revive ni elimina nada que ya se haya decidido antes.",
+    "flow.thresholdInfo.text.puestos": "Cuando todos proponen opciones (puestos) y después votan por las que les importan, esto decide qué tan popular tiene que ser una opción para quedarse.\n\nPor ejemplo, con 10%: si menos del 10% del grupo votó por una opción, se elimina. La idea es quitar del camino las propuestas casi sin apoyo, sin necesitar que el facilitador decida a mano cuáles sobreviven.\n\nSolo afecta las etapas que todavía no se han calculado. Cambiarlo no revive ni elimina nada que ya se haya decidido antes.",
+    "flow.trimLabel.cuotas": "% de recorte (alto y bajo) en las cuotas",
+    "flow.trimInfo.title": "% de recorte",
+    "flow.trimInfo.text.cuotas": "Antes de promediar las propuestas de todos, se descartan las más extremas: las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas, y solo se promedia lo que queda en medio.\n\nEsto es el corazón de Democracia por Promedio, evita que una sola persona (o un grupito) jale el resultado hacia un extremo proponiendo un número absurdo a propósito.",
   },
   en: {
     "home.explain.title": "Explanation and examples",
     "home.explain.subtitle": "How average-based democracy and the app work.",
-    "home.cuotas.title": "Participatory dues",
-    "home.cuotas.subtitle": "Decide together whether everyone pays the same dues, and how much to pay.",
+    "home.cuotas.title": "Participatory dues or fees",
+    "home.cuotas.subtitle": "Decide together whether everyone pays the same dues or fees, and how much to pay.",
     "home.presupuesto.title": "Participatory budgets",
     "home.presupuesto.subtitle": "Decide together where to invest or spend the money you have.",
     "home.responsables.title": "Selecting who's responsible",
@@ -169,11 +198,40 @@ const FRONTEND_STRINGS = {
     "home.municipios.title": "Municipalities or countries",
     "home.municipios.subtitle": "Interactive demo: taxes and participatory budgeting at a country scale, with real data.",
     "home.share.title": "Invite others",
-    "home.share.subtitle": "Share the app with your community — QR code and link ready to send.",
+    "home.share.subtitle": "Share the app with your community. QR code and link ready to send.",
     "home.title": "Organicen y decidan",
-    "home.tagline": "How much do we need to pay? What should we spend our resources on? Who's responsible for what? — Decide together, with horizontal, fast, and effective processes, without giving power to anyone or dividing the group.",
+    "home.tagline": "How much do we need to pay? What should we spend our resources on? Who's responsible for what? Decide together, with horizontal, fast, and effective processes, without giving power to anyone or dividing the group.",
     "flow.availableBudget": "Available budget (optional)",
     "flow.availableBudget.label": "Available budget",
+    "flow.send": "Send",
+    "flow.sending": "Sending…",
+    "flow.closeStage": "Close stage and move on",
+    "flow.closing": "Closing…",
+    "flow.confirmClose": "Are you sure you want to close this stage? No one will be able to respond after this.",
+    "flow.completed": "Stage complete. If you left your email, the summary will be sent there.",
+    "flow.downloadPdf": "Download results (PDF)",
+    "flow.generatingPdf": "Generating PDF…",
+    "flow.congrats": "Congratulations!",
+    "flow.collectiveDecision": "Collective decision:",
+    "flow.viewFullProcess": "View the full process",
+    "flow.thresholdLabel": "Minimum support % for a category to survive",
+    "flow.thresholdLabel.puestos": "Minimum support % for a proposed role to survive",
+    "flow.onlyAffectsFuture": "Only affects stages that haven't been calculated yet.",
+    "flow.save": "Save",
+    "flow.saving": "Saving…",
+    "flow.decidedCollectively": "You decided {what} collectively.",
+    "flow.decided.cuotas": "the dues or fees",
+    "flow.decided.presupuesto": "the budget",
+    "flow.decided.tabuladorSueldos": "the wages",
+    "flow.decided.presupuestoCooperativa": "the budget",
+    "flow.decided.responsabilidades": "who's responsible for what",
+    "flow.decided.default": "the result",
+    "flow.thresholdInfo.title": "Minimum support %",
+    "flow.thresholdInfo.text.categorias": "When everyone proposes options (categories) and then votes for the ones that matter to them, this decides how popular an option needs to be to survive.\n\nFor example, with 10%: if less than 10% of the group voted for an option, it gets removed. The idea is to clear away proposals with almost no support, without the facilitator having to decide by hand which ones survive.\n\nThis only affects stages that haven't been calculated yet. Changing it doesn't revive or remove anything already decided.",
+    "flow.thresholdInfo.text.puestos": "When everyone proposes options (roles) and then votes for the ones that matter to them, this decides how popular an option needs to be to survive.\n\nFor example, with 10%: if less than 10% of the group voted for an option, it gets removed. The idea is to clear away proposals with almost no support, without the facilitator having to decide by hand which ones survive.\n\nThis only affects stages that haven't been calculated yet. Changing it doesn't revive or remove anything already decided.",
+    "flow.trimLabel.cuotas": "Trim % (highest and lowest) on the dues or fees",
+    "flow.trimInfo.title": "Trim %",
+    "flow.trimInfo.text.cuotas": "Before averaging everyone's proposals, the most extreme ones are discarded: the highest and the lowest, in the same proportion.\n\nFor example, with 10%: the top 10% of proposals and the bottom 10% are discarded, and only what's left in the middle gets averaged.\n\nThis is the heart of Average-Based Democracy. It stops a single person (or a small group) from pulling the result toward an extreme by proposing an absurd number on purpose.",
   },
 };
 
@@ -1175,7 +1233,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
             style={{ background: GREEN }}
           >
-            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
           </button>
         </div>
       )}
@@ -1199,7 +1257,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
             style={{ background: GREEN }}
           >
-            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
           </button>
         </div>
       )}
@@ -1225,7 +1283,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
             style={{ background: GREEN }}
           >
-            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
           </button>
         </div>
       )}
@@ -1254,7 +1312,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
             style={{ background: GREEN }}
           >
-            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
           </button>
         </div>
       )}
@@ -1607,6 +1665,11 @@ function OnbPresupuestoTable() {
 }
 
 const ONBOARDING_SLIDES = [
+  {
+    icon: "ti-heart-handshake",
+    title: "¡Bienvenido a Organicen y decidan!",
+    text: "¡Vamos a organizarnos y tomar decisiones de forma justa, transparente y eficiente, sin votar para darle poder a una o varias personas, y sin dividir a la sociedad!",
+  },
   {
     icon: "ti-scale",
     title: "¿Qué es la verdadera democracia?",
@@ -2790,24 +2853,12 @@ function SharePromoScreen({ onBack }) {
           <p className="mb-2.5">Esta aplicación te ayuda a organizar a tu grupo para tomar decisiones de forma transparente, horizontal, justa y eficiente.</p>
           <p>¡Incluye cuotas e impuestos participativos, presupuestos participativos, selección de responsabilidades por sorteo y más!</p>
         </div>
-        <a
-          href={APP_SHARE_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="dp-body flex items-center justify-center gap-1.5 w-full text-sm py-2.5 rounded-full text-white font-semibold mb-4"
-          style={{ background: BLUE }}
-        >
-          <i className="ti ti-external-link"></i> Abrir app para organizarnos
-        </a>
         <div className="flex justify-center mb-3">
           <img src={qrUrl} alt="Código QR" style={{ width: "160px", height: "160px", borderRadius: "12px" }} />
         </div>
         <a href={APP_SHARE_URL} target="_blank" rel="noreferrer" className="dp-mono text-[11px] font-medium" style={{ color: BLUE, wordBreak: "break-all" }}>
           {APP_SHARE_URL}
         </a>
-      </div>
-      <div className="dp-body text-[10.5px] rounded-lg p-2.5" style={{ background: BLUE_SOFT, color: INK + "88", lineHeight: 1.5 }}>
-        El botón de arriba solo funciona mientras ves esta pantalla en el navegador. Al descargar la imagen (o si la imprimes o la mandas como PDF), deja de ser clickeable — por eso el código QR y el link de abajo siguen ahí: esos sí funcionan en papel o en cualquier imagen, escaneándolos o copiándolos a mano.
       </div>
       <button
         onClick={downloadImage}
@@ -3433,6 +3484,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 
 
 function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemberNames }) {
+  const siLang = useLang();
   const [numValue, setNumValue] = useState("");
   const [selected, setSelected] = useState("");
   const [texts, setTexts] = useState(() => {
@@ -3465,7 +3517,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
             className="dp-body flex items-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
             style={{ background: GREEN }}
           >
-            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+            <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
           </button>
         </div>
         {singleMemberCount > 0 && numValue !== "" && (
@@ -3502,7 +3554,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3547,7 +3599,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3578,7 +3630,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40 mt-1"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3635,7 +3687,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3664,7 +3716,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3760,7 +3812,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3811,7 +3863,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3916,7 +3968,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -3963,7 +4015,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           className="dp-body flex items-center justify-center gap-1.5 w-full text-xs px-3 py-2 rounded-full text-white font-medium disabled:opacity-40"
           style={{ background: GREEN }}
         >
-          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? "Enviando…" : "Enviar"}
+          <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{sending ? tf("flow.sending", siLang) : tf("flow.send", siLang)}
         </button>
       </div>
     );
@@ -5015,7 +5067,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   };
 
   const closeStage = async () => {
-    const ok = await customConfirm("¿Seguro que quieres cerrar esta etapa? Nadie más podrá responder después de esto.");
+    const ok = await customConfirm(tf("flow.confirmClose", uiLang));
     if (!ok) return;
     setClosingStage(true);
     try {
@@ -5110,10 +5162,10 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
           <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
             <span className="flex items-center">
-              {flow.template === "responsabilidades" ? "% mínimo de apoyo para que sobreviva un puesto propuesto" : "% mínimo de apoyo para que sobreviva una categoría"}
+              {flow.template === "responsabilidades" ? tf("flow.thresholdLabel.puestos", uiLang) : tf("flow.thresholdLabel", uiLang)}
               <InfoButton
-                title="% mínimo de apoyo"
-                text={`Cuando todos proponen opciones (${flow.template === "responsabilidades" ? "puestos" : "categorías"}) y después votan por las que les importan, esto decide qué tan popular tiene que ser una opción para quedarse.\n\nPor ejemplo, con 10%: si menos del 10% del grupo votó por una opción, se elimina — la idea es quitar del camino las propuestas casi sin apoyo, sin necesitar que el facilitador decida a mano cuáles sobreviven.\n\nSolo afecta las etapas que todavía no se han calculado — cambiarlo no revive ni elimina nada que ya se haya decidido antes.`}
+                title={tf("flow.thresholdInfo.title", uiLang)}
+                text={flow.template === "responsabilidades" ? tf("flow.thresholdInfo.text.puestos", uiLang) : tf("flow.thresholdInfo.text.categorias", uiLang)}
               />
             </span>
             <input
@@ -5126,10 +5178,10 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           {flow.template === "cuotas" && (
             <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
               <span className="flex items-center">
-                % de recorte (alto y bajo) en las cuotas
+                {tf("flow.trimLabel.cuotas", uiLang)}
                 <InfoButton
-                  title="% de recorte"
-                  text={"Antes de promediar las propuestas de todos, se descartan las más extremas — las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas, y solo se promedia lo que queda en medio.\n\nEsto es el corazón de Democracia por Promedio: evita que una sola persona (o un grupito) jale el resultado hacia un extremo proponiendo un número absurdo a propósito."}
+                  title={tf("flow.trimInfo.title", uiLang)}
+                  text={tf("flow.trimInfo.text.cuotas", uiLang)}
                 />
               </span>
               <input
@@ -5186,7 +5238,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             </React.Fragment>
           )}
           <div className="dp-body text-[10px] mb-2" style={{ color: INK + "77" }}>
-            Solo afecta las etapas que todavía no se han calculado.
+            {tf("flow.onlyAffectsFuture", uiLang)}
           </div>
           <button
             onClick={saveConfig}
@@ -5194,7 +5246,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             className="dp-body w-full text-xs py-1.5 rounded-full text-white font-medium disabled:opacity-40"
             style={{ background: BLUE }}
           >
-            {savingConfig ? "Guardando…" : "Guardar"}
+            {savingConfig ? tf("flow.saving", uiLang) : tf("flow.save", uiLang)}
           </button>
         </div>
       )}
@@ -5225,7 +5277,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             className="dp-body w-full text-xs py-1.5 rounded-full text-white font-medium disabled:opacity-40"
             style={{ background: BLUE }}
           >
-            {savingConfig ? "Guardando…" : "Guardar"}
+            {savingConfig ? tf("flow.saving", uiLang) : tf("flow.save", uiLang)}
           </button>
         </div>
       )}
@@ -5245,7 +5297,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         if (!finalStage && !flow.licitacion) return null;
         return (
           <div className="rounded-xl p-3.5 mb-3" style={{ background: BLUE_SOFT }}>
-            <div className="dp-display text-lg font-bold mb-2" style={{ color: INK }}>Decisión colectiva:</div>
+            <div className="dp-display text-lg font-bold mb-2" style={{ color: INK }}>{tf("flow.collectiveDecision", uiLang)}</div>
             {finalStage && <BigDecisionDisplay stage={finalStage} />}
             <LicitacionResultsDisplay flow={flow} />
           </div>
@@ -5652,7 +5704,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
               style={{ background: BLUE }}
             >
-              <i className="ti ti-lock" style={{ marginRight: "4px" }}></i>{closingStage ? "Cerrando…" : "Cerrar etapa y avanzar"}
+              <i className="ti ti-lock" style={{ marginRight: "4px" }}></i>{closingStage ? tf("flow.closing", uiLang) : tf("flow.closeStage", uiLang)}
             </button>
           )}
         </div>
@@ -5673,7 +5725,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       {flow.status === "finished" && (
         <div className="mb-3">
           <div className="dp-body text-[12px] mb-2" style={{ color: GREEN }}>
-            <i className="ti ti-circle-check" style={{ marginRight: "4px" }}></i>Flujo completo — si dejaste tu correo, ahí te llega el resumen.
+            <i className="ti ti-circle-check" style={{ marginRight: "4px" }}></i>{tf("flow.completed", uiLang)}
           </div>
           <div className="flex flex-wrap gap-2">
             {(() => {
@@ -5708,7 +5760,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 className="dp-body text-xs px-3 py-2 rounded-full font-medium"
                 style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}
               >
-                <i className="ti ti-download" style={{ marginRight: "4px" }}></i>Descargar resultados (PDF)
+                <i className="ti ti-download" style={{ marginRight: "4px" }}></i>{tf("flow.downloadPdf", uiLang)}
               </button>
             )}
           </div>
@@ -5723,15 +5775,9 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             </div>
             <div className="text-center mb-3">
               <div style={{ fontSize: "36px" }}><i className="ti ti-confetti" style={{ color: GREEN }}></i></div>
-              <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>¡Felicidades!</div>
+              <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>{tf("flow.congrats", uiLang)}</div>
               <div className="dp-body text-[13px] mt-1" style={{ color: INK + "99" }}>
-                Decidieron {{
-                  cuotas: "las cuotas",
-                  presupuesto: "el presupuesto",
-                  tabuladorSueldos: "los sueldos",
-                  presupuestoCooperativa: "el presupuesto",
-                  responsabilidades: "los responsables",
-                }[flow.template] || "el resultado"} de forma colectiva.
+                {tf("flow.decidedCollectively", uiLang, { what: tf(`flow.decided.${flow.template}`, uiLang) === `flow.decided.${flow.template}` ? tf("flow.decided.default", uiLang) : tf(`flow.decided.${flow.template}`, uiLang) })}
               </div>
             </div>
             {(() => {
@@ -5757,7 +5803,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               className="dp-body w-full mt-3 text-xs py-2.5 rounded-full text-white font-medium"
               style={{ background: BLUE }}
             >
-              {nextStepLabel ? `Continuar hacia: ${nextStepLabel}` : flow.status === "finished" && !flow.chainNext && cooperativasMode ? "Continuar" : "Ver todo el proceso"}
+              {nextStepLabel ? `Continuar hacia: ${nextStepLabel}` : flow.status === "finished" && !flow.chainNext && cooperativasMode ? "Continuar" : tf("flow.viewFullProcess", uiLang)}
             </button>
             {onDownloadPdf && (
               <button
