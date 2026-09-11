@@ -252,6 +252,34 @@ const FRONTEND_STRINGS = {
     "mergeAdmin.saveContinue": "Guardar y continuar",
     "mergeAdmin.noDuplicatesContinue": "No hay nombres repetidos, continuar",
     "mergeAdmin.waitingAdmin": "El facilitador está revisando la lista de candidatos…",
+    "adminReturn.subtitle": "Solo necesitas el código del grupo que creaste.",
+    "adminReturn.field.code": "Código del grupo",
+    "adminReturn.field.code.placeholder": "ej. MC231G",
+    "adminReturn.entering": "Entrando…",
+    "adminReturn.submit": "Entrar como facilitador",
+    "adminReturn.error.notFound": "Grupo no encontrado",
+    "join.title": "Unirme con un código",
+    "join.willJoin": "Te vas a unir a:",
+    "join.field.name": "Tu nombre",
+    "join.field.name.placeholder": "ej. Luis",
+    "join.field.email": "Tu correo (opcional, para recibir resultados)",
+    "join.field.email.placeholder": "ej. luis@correo.com",
+    "join.submit": "Unirme",
+    "join.error.generic": "No se pudo unir al grupo",
+    "share.copied": "copiado",
+    "share.copyCode": "copiar código",
+    "share.copyLink": "copiar link",
+    "share.emailInvite": "Enviar código y link por correo",
+    "share.emailSubject": "Invitación a \"{name}\" en Organicen y decidan",
+    "share.emailBody": "Únete a nuestro grupo con este código: {code}\n\nO abre este link directo:\n{link}",
+    "connected.exit": "Salir",
+    "connected.approvedCount": "{n} miembro(s) aprobado(s)",
+    "connected.youAreFacilitator": " · eres el facilitador",
+    "connected.pendingApproval": "Tu participación está pendiente de aprobación del facilitador.",
+    "connected.inviteLink": "Link directo para invitar usuarios a este grupo",
+    "connected.pendingRequests": "{n} solicitud(es) pendiente(s)",
+    "connected.approve": "Aprobar",
+    "connected.reject": "Rechazar",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -378,6 +406,34 @@ const FRONTEND_STRINGS = {
     "mergeAdmin.saveContinue": "Save and continue",
     "mergeAdmin.noDuplicatesContinue": "No duplicate names, continue",
     "mergeAdmin.waitingAdmin": "The facilitator is reviewing the candidate list…",
+    "adminReturn.subtitle": "You just need the code for the group you created.",
+    "adminReturn.field.code": "Group code",
+    "adminReturn.field.code.placeholder": "e.g. MC231G",
+    "adminReturn.entering": "Logging in…",
+    "adminReturn.submit": "Log in as facilitator",
+    "adminReturn.error.notFound": "Group not found",
+    "join.title": "Join with a code",
+    "join.willJoin": "You're about to join:",
+    "join.field.name": "Your name",
+    "join.field.name.placeholder": "e.g. Luis",
+    "join.field.email": "Your email (optional, to receive results)",
+    "join.field.email.placeholder": "e.g. luis@email.com",
+    "join.submit": "Join",
+    "join.error.generic": "Couldn't join the group",
+    "share.copied": "copied",
+    "share.copyCode": "copy code",
+    "share.copyLink": "copy link",
+    "share.emailInvite": "Send code and link by email",
+    "share.emailSubject": "Invitation to \"{name}\" on Organicen y decidan",
+    "share.emailBody": "Join our group with this code: {code}\n\nOr open this direct link:\n{link}",
+    "connected.exit": "Exit",
+    "connected.approvedCount": "{n} approved member(s)",
+    "connected.youAreFacilitator": " · you're the facilitator",
+    "connected.pendingApproval": "Your participation is pending the facilitator's approval.",
+    "connected.inviteLink": "Direct link to invite people to this group",
+    "connected.pendingRequests": "{n} pending request(s)",
+    "connected.approve": "Approve",
+    "connected.reject": "Reject",
   },
 };
 
@@ -1560,6 +1616,7 @@ function ExplanationScreen({ onBack }) {
 }
 
 function AdminReturnScreen({ backendUrl, onBack, onEntered }) {
+  const lang = useLang();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -1571,12 +1628,12 @@ function AdminReturnScreen({ backendUrl, onBack, onEntered }) {
     try {
       const res = await fetch(`${backendUrl}/api/groups/${code.trim()}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Grupo no encontrado");
+      if (!res.ok) throw new Error(data.error || tf("adminReturn.error.notFound", lang));
       onEntered({ code: code.trim(), memberId: data.admin.id });
     } catch (e) {
       setError(
         e.message === "Failed to fetch"
-          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          ? tf("createGroup.error.connection", lang)
           : e.message
       );
     } finally {
@@ -1588,15 +1645,15 @@ function AdminReturnScreen({ backendUrl, onBack, onEntered }) {
     <div className="px-4 py-6">
       <BackButton onClick={onBack} />
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Ingresar a un grupo que administras</div>
+        <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>{tf("entry.adminReturn.title", lang)}</div>
         <p className="dp-body text-[12px] mb-3" style={{ color: INK + "77" }}>
-          Solo necesitas el código del grupo que creaste.
+          {tf("adminReturn.subtitle", lang)}
         </p>
         <div className="flex flex-col gap-2.5 mb-3">
-          <Field label="Código del grupo" value={code} onChange={setCode} placeholder="ej. MC231G" />
+          <Field label={tf("adminReturn.field.code", lang)} value={code} onChange={setCode} placeholder={tf("adminReturn.field.code.placeholder", lang)} />
         </div>
         <PrimaryButton onClick={submit} disabled={loading || !code}>
-          {loading ? "Entrando…" : "Entrar como facilitador"}
+          {loading ? tf("adminReturn.entering", lang) : tf("adminReturn.submit", lang)}
         </PrimaryButton>
         {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
       </div>
@@ -1610,6 +1667,7 @@ function buildJoinLink(code) {
 }
 
 function ShareGroup({ groupName, code }) {
+  const lang = useLang();
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const link = buildJoinLink(code);
@@ -1625,21 +1683,21 @@ function ShareGroup({ groupName, code }) {
   };
 
   const mailtoHref =
-    `mailto:?subject=${encodeURIComponent(`Invitación a "${groupName}" en Organicen y decidan`)}` +
-    `&body=${encodeURIComponent(`Únete a nuestro grupo con este código: ${code}\n\nO abre este link directo:\n${link}`)}`;
+    `mailto:?subject=${encodeURIComponent(tf("share.emailSubject", lang, { name: groupName }))}` +
+    `&body=${encodeURIComponent(tf("share.emailBody", lang, { code, link }))}`;
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: BLUE_SOFT }}>
         <span className="dp-mono text-sm font-semibold" style={{ color: INK }}>{code}</span>
         <button onClick={() => copy(code, setCopiedCode)} className="dp-body text-[11px] font-medium" style={{ color: BLUE }}>
-          {copiedCode ? <span><i className="ti ti-check" style={{ marginRight: "3px" }}></i>copiado</span> : "copiar código"}
+          {copiedCode ? <span><i className="ti ti-check" style={{ marginRight: "3px" }}></i>{tf("share.copied", lang)}</span> : tf("share.copyCode", lang)}
         </button>
       </div>
       <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5" style={{ background: BLUE_SOFT }}>
         <span className="dp-mono text-[11px] truncate mr-2" style={{ color: INK + "aa" }}>{link}</span>
         <button onClick={() => copy(link, setCopiedLink)} className="dp-body text-[11px] font-medium shrink-0" style={{ color: BLUE }}>
-          {copiedLink ? <span><i className="ti ti-check" style={{ marginRight: "3px" }}></i>copiado</span> : "copiar link"}
+          {copiedLink ? <span><i className="ti ti-check" style={{ marginRight: "3px" }}></i>{tf("share.copied", lang)}</span> : tf("share.copyLink", lang)}
         </button>
       </div>
       <a
@@ -1647,7 +1705,7 @@ function ShareGroup({ groupName, code }) {
         className="dp-body text-center text-[12px] px-2.5 py-2 rounded-full font-medium"
         style={{ background: BLUE, color: "#fff" }}
       >
-        <i className="ti ti-mail" style={{ marginRight: "4px" }}></i>Enviar código y link por correo
+        <i className="ti ti-mail" style={{ marginRight: "4px" }}></i>{tf("share.emailInvite", lang)}
       </a>
     </div>
   );
@@ -3175,6 +3233,7 @@ function GroupCreatedScreen({ groupName, code, onContinue }) {
 }
 
 function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillName, prefillEmail, userId }) {
+  const lang = useLang();
   const [code, setCode] = useState(initialCode || "");
   const [name, setName] = useState(prefillName || "");
   const [email, setEmail] = useState(prefillEmail || "");
@@ -3221,13 +3280,13 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
         body: JSON.stringify({ name, email, userId: userId || null }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudo unir al grupo");
+      if (!res.ok) throw new Error(data.error || tf("join.error.generic", lang));
       setStatus(data.status);
       onJoined({ code: code.trim(), memberId: data.memberId });
     } catch (e) {
       setError(
         e.message === "Failed to fetch"
-          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          ? tf("createGroup.error.connection", lang)
           : e.message
       );
     } finally {
@@ -3239,20 +3298,20 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
     <div className="px-4 py-6">
       <BackButton onClick={onBack} />
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>Unirme con un código</div>
+        <div className="dp-body text-sm font-medium mb-1" style={{ color: INK }}>{tf("join.title", lang)}</div>
         {previewName && (
           <p className="dp-body text-[12px] mb-3" style={{ color: GREEN }}>
-            Te vas a unir a: <b>{previewName}</b>
+            {tf("join.willJoin", lang)} <b>{previewName}</b>
           </p>
         )}
         {!previewName && <div className="mb-3" />}
         <div className="flex flex-col gap-2.5 mb-3">
-          <Field label="Código del grupo" value={code} onChange={setCode} placeholder="ej. MC231G" />
-          <Field label="Tu nombre" value={name} onChange={setName} placeholder="ej. Luis" />
-          <Field label="Tu correo (opcional, para recibir resultados)" value={email} onChange={setEmail} placeholder="ej. luis@correo.com" type="email" />
+          <Field label={tf("adminReturn.field.code", lang)} value={code} onChange={setCode} placeholder={tf("adminReturn.field.code.placeholder", lang)} />
+          <Field label={tf("join.field.name", lang)} value={name} onChange={setName} placeholder={tf("join.field.name.placeholder", lang)} />
+          <Field label={tf("join.field.email", lang)} value={email} onChange={setEmail} placeholder={tf("join.field.email.placeholder", lang)} type="email" />
         </div>
         <PrimaryButton onClick={submit} disabled={loading || !code || !name}>
-          {loading ? "Enviando…" : "Unirme"}
+          {loading ? tf("flow.sending", lang) : tf("join.submit", lang)}
         </PrimaryButton>
         {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
       </div>
@@ -5970,6 +6029,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
 }
 
 function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameChange, hideFlowStarters, cooperativasMode }) {
+  const csLang = useLang();
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -6105,15 +6165,15 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
             <div className="dp-body text-sm font-semibold" style={{ color: INK }}>{group.name}</div>
             <div className="dp-mono text-xs mt-0.5" style={{ color: INK + "88" }}>código: {group.code}</div>
           </div>
-          <button onClick={onExit} className="dp-body text-[11px]" style={{ color: INK + "77" }}>Salir</button>
+          <button onClick={onExit} className="dp-body text-[11px]" style={{ color: INK + "77" }}>{tf("connected.exit", csLang)}</button>
         </div>
         <div className="dp-body text-[11px] mt-2" style={{ color: INK + "88" }}>
-          {group.members.filter((m) => m.approved).length} miembro(s) aprobado(s)
-          {isAdmin && " · eres el facilitador"}
+          {tf("connected.approvedCount", csLang, { n: group.members.filter((m) => m.approved).length })}
+          {isAdmin && tf("connected.youAreFacilitator", csLang)}
         </div>
         {me && !me.approved && (
           <div className="dp-body text-[12px] mt-2 rounded-lg px-2.5 py-1.5" style={{ background: CORAL + "22", color: CORAL }}>
-            Tu participación está pendiente de aprobación del facilitador.
+            {tf("connected.pendingApproval", csLang)}
           </div>
         )}
         {flows.length > 0 && (
@@ -6124,14 +6184,14 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body text-[11px] px-3 py-1.5 rounded-full font-medium disabled:opacity-50"
               style={{ background: BLUE_SOFT, color: INK }}
             >
-              {generatingPdf ? "Generando PDF…" : "⬇ Descargar resultados (PDF)"}
+              {generatingPdf ? tf("flow.generatingPdf", csLang) : `⬇ ${tf("flow.downloadPdf", csLang)}`}
             </button>
           </div>
         )}
         {isAdmin && (
           <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${BLUE}22` }}>
             <div className="dp-body text-xs font-medium mb-2" style={{ color: INK }}>
-              Link directo para invitar usuarios a este grupo
+              {tf("connected.inviteLink", csLang)}
             </div>
             <ShareGroup groupName={group.name} code={group.code} />
           </div>
@@ -6141,7 +6201,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
       {isAdmin && pendingMembers.length > 0 && (
         <div className="rounded-2xl p-4 mb-4" style={{ background: CORAL + "15", border: `1.5px solid ${CORAL}55` }}>
           <div className="dp-body text-xs font-semibold mb-2.5" style={{ color: CORAL }}>
-            {pendingMembers.length} solicitud(es) pendiente(s)
+            {tf("connected.pendingRequests", csLang, { n: pendingMembers.length })}
           </div>
           <div className="flex flex-col gap-2">
             {pendingMembers.map((m) => (
@@ -6154,7 +6214,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
                     className="dp-body text-[11px] px-2.5 py-1.5 rounded-full text-white font-medium disabled:opacity-40"
                     style={{ background: GREEN }}
                   >
-                    {approving === m.id ? "…" : "Aprobar"}
+                    {approving === m.id ? "…" : tf("connected.approve", csLang)}
                   </button>
                   <button
                     onClick={() => reject(m.id)}
@@ -6162,7 +6222,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
                     className="dp-body text-[11px] px-2.5 py-1.5 rounded-full font-medium disabled:opacity-40"
                     style={{ background: "#fff", color: CORAL, border: `1px solid ${CORAL}55` }}
                   >
-                    Rechazar
+                    {tf("connected.reject", csLang)}
                   </button>
                 </div>
               </div>
