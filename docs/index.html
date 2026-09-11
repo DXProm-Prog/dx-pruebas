@@ -280,6 +280,32 @@ const FRONTEND_STRINGS = {
     "connected.pendingRequests": "{n} solicitud(es) pendiente(s)",
     "connected.approve": "Aprobar",
     "connected.reject": "Rechazar",
+    "input.alreadyCovered": "Ya están cubiertos como gastos fijos (no hace falta proponerlos):",
+    "input.proposalPlaceholder": "Propuesta {n}",
+    "input.addBox": "+ agregar recuadro",
+    "input.selectPrompt": "Marca las opciones que te importan:",
+    "input.rankPrompt": "Toca en el orden de tu preferencia (1ª, 2ª…):",
+    "input.numberPlaceholder": "Tu número",
+    "input.percentTotal": "Total: {pct}%",
+    "input.percentAutoAdjust": "Si la suma pasa de 100%, se ajusta proporcionalmente al enviar.",
+    "input.yourProposal": "tu propuesta",
+    "input.membersCollected": "{count} miembros × {value} = {total} recaudados",
+    "input.rankOrderShort": "toca en orden de preferencia (1ª, 2ª…)",
+    "input.membersCollectedShort": "{count} miembros × {value} = {total}",
+    "input.totalCollected": "total recaudado con estos números: {total}",
+    "input.assignedAmount": "asignado: {amount}",
+    "input.assignedPercent": "asignado: {pct}% de 100%",
+    "input.overBy": " — te pasaste por {pct}%",
+    "input.underBy": " — te faltan {pct}%",
+    "input.percentDone": " — ¡listo!",
+    "input.alertOver": "Te pasaste por {pct}%. Ajusta tus porcentajes para que sumen exactamente 100% antes de enviar.",
+    "input.alertUnder": "Te faltan {pct}% para llegar a 100%. Ajusta tus porcentajes antes de enviar.",
+    "result.noWinner": "sin ganador",
+    "result.peopleProposedNames": "{n} persona(s) propusieron {m} nombre(s) distintos:",
+    "result.chosen": "elegidas: {names}",
+    "result.totalCollectedLabel": "TOTAL RECAUDADO",
+    "result.sumAdjusted": "La suma de promedios dio {pct}%, se ajustó proporcionalmente a 100%.",
+    "result.normalizedTo": " → normalizado a {pct}%",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -434,6 +460,32 @@ const FRONTEND_STRINGS = {
     "connected.pendingRequests": "{n} pending request(s)",
     "connected.approve": "Approve",
     "connected.reject": "Reject",
+    "input.alreadyCovered": "Already covered as fixed expenses (no need to propose them):",
+    "input.proposalPlaceholder": "Proposal {n}",
+    "input.addBox": "+ add box",
+    "input.selectPrompt": "Mark the options that matter to you:",
+    "input.rankPrompt": "Tap in order of your preference (1st, 2nd…):",
+    "input.numberPlaceholder": "Your number",
+    "input.percentTotal": "Total: {pct}%",
+    "input.percentAutoAdjust": "If the total goes over 100%, it's adjusted proportionally when sent.",
+    "input.yourProposal": "your proposal",
+    "input.membersCollected": "{count} members × {value} = {total} collected",
+    "input.rankOrderShort": "tap in order of preference (1st, 2nd…)",
+    "input.membersCollectedShort": "{count} members × {value} = {total}",
+    "input.totalCollected": "total collected with these numbers: {total}",
+    "input.assignedAmount": "assigned: {amount}",
+    "input.assignedPercent": "assigned: {pct}% of 100%",
+    "input.overBy": ". You went over by {pct}%",
+    "input.underBy": ". You need {pct}% more",
+    "input.percentDone": ". All set!",
+    "input.alertOver": "You went over by {pct}%. Adjust your percentages so they add up to exactly 100% before sending.",
+    "input.alertUnder": "You need {pct}% more to reach 100%. Adjust your percentages before sending.",
+    "result.noWinner": "no winner",
+    "result.peopleProposedNames": "{n} people proposed {m} distinct name(s):",
+    "result.chosen": "chosen: {names}",
+    "result.totalCollectedLabel": "TOTAL COLLECTED",
+    "result.sumAdjusted": "The average total came out to {pct}%, and was proportionally adjusted to 100%.",
+    "result.normalizedTo": " → normalized to {pct}%",
   },
 };
 
@@ -1492,7 +1544,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
 
       {isRankeado && !inTieBreak && !rankeadoResolved && (
         <div className="flex flex-col gap-1.5 mb-2">
-          <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>toca en orden de preferencia (1ª, 2ª…)</div>
+          <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>{tf("input.rankOrderShort", siLang)}</div>
           {question.options.map((opt) => {
             const idx = rankOrder.indexOf(opt);
             return (
@@ -3664,7 +3716,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 
             {type === "mayoria" && majorityRule === "rankeado" && (
               <div className="flex flex-col gap-1.5">
-                <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>toca en orden de preferencia (1ª, 2ª…)</div>
+                <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>{tf("input.rankOrderShort", siLang)}</div>
                 {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : ["Opción 1", "Opción 2"]).map((opt, i) => (
                   <div key={i} className="dp-body flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK }}>
                     <span className="dp-mono font-semibold" style={{ minWidth: "16px" }}>–</span>{opt}
@@ -3712,7 +3764,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
         <div className="flex items-center gap-2">
           <input
             type="number"
-            placeholder="tu propuesta"
+            placeholder={tf("input.yourProposal", siLang)}
             value={numValue}
             disabled={disabled}
             onChange={(e) => setNumValue(e.target.value)}
@@ -3730,7 +3782,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
         </div>
         {singleMemberCount > 0 && numValue !== "" && (
           <div className="dp-mono text-[11px] mt-1" style={{ color: INK + "77" }}>
-            {singleMemberCount} miembros × {numValue} = {formatMoney(singleMemberCount * Number(numValue))} recaudados
+            {tf("input.membersCollected", siLang, { count: singleMemberCount, value: numValue, total: formatMoney(singleMemberCount * Number(numValue)) })}
           </div>
         )}
       </div>
@@ -3773,7 +3825,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
       <div className="mb-2">
         {stage.config.fixedExpenseNames && stage.config.fixedExpenseNames.length > 0 && (
           <div className="rounded-lg p-2.5 mb-3" style={{ background: PAGE_BG }}>
-            <div className="dp-body text-[10.5px] font-semibold mb-1" style={{ color: INK + "99" }}>Ya están cubiertos como gastos fijos (no hace falta proponerlos):</div>
+            <div className="dp-body text-[10.5px] font-semibold mb-1" style={{ color: INK + "99" }}>{tf("input.alreadyCovered", siLang)}</div>
             <div className="dp-body text-[11px]" style={{ color: INK }}>{stage.config.fixedExpenseNames.join(", ")}</div>
           </div>
         )}
@@ -3787,7 +3839,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               arr[i] = e.target.value;
               setTexts(arr);
             }}
-            placeholder={`Propuesta ${i + 1}`}
+            placeholder={tf("input.proposalPlaceholder", siLang, { n: i + 1 })}
             className="dp-body w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-1.5 disabled:opacity-50"
             style={{ background: BLUE_SOFT, color: INK }}
           />
@@ -3798,7 +3850,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
             className="dp-body text-xs font-medium mb-2"
             style={{ color: BLUE }}
           >
-            + agregar recuadro
+            {tf("input.addBox", siLang)}
           </button>
         )}
         <button
@@ -3816,7 +3868,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
   if (stage.type === "ranking_multiganador") {
     return (
       <div className="flex flex-col gap-1.5 mb-2">
-        <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>toca en orden de preferencia (1ª, 2ª…)</div>
+        <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>{tf("input.rankOrderShort", siLang)}</div>
         {stage.config.options.map((opt) => {
           const idx = rankOrder.indexOf(opt);
           return (
@@ -3871,7 +3923,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               </div>
               {mc > 0 && catValues[cat] !== undefined && catValues[cat] !== "" && (
                 <div className="dp-mono text-[10px] text-right" style={{ color: INK + "77" }}>
-                  {mc} miembros × {catValues[cat]} = {formatMoney(mc * Number(catValues[cat]))}
+                  {tf("input.membersCollectedShort", siLang, { count: mc, value: catValues[cat], total: formatMoney(mc * Number(catValues[cat])) })}
                 </div>
               )}
             </div>
@@ -3879,7 +3931,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
         })}
         {hasAnyMemberCount && (
           <div className="dp-mono text-[11px] mb-2" style={{ color: INK + "88" }}>
-            total recaudado con estos números: {formatMoney(liveTotal)}
+            {tf("input.totalCollected", siLang, { total: formatMoney(liveTotal) })}
           </div>
         )}
         <button
@@ -3987,26 +4039,26 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               </div>
               {totalBudget > 0 && (
                 <div className="dp-mono text-[10.5px] text-right mt-1" style={{ color: INK + "77" }}>
-                  asignado: {formatMoney((val / 100) * totalBudget)}
+                  {tf("input.assignedAmount", siLang, { amount: formatMoney((val / 100) * totalBudget) })}
                 </div>
               )}
             </div>
           );
         })}
         <div className="dp-mono text-[11px] mb-2 font-semibold" style={{ color: totalRounded === 100 ? GREEN : CORAL }}>
-          asignado: {total}% de 100%{totalBudget > 0 ? ` (${formatMoney((total / 100) * totalBudget)} de ${formatMoney(totalBudget)})` : ""}
-          {totalRounded > 100 ? ` — te pasaste por ${(totalRounded - 100).toFixed(1)}%` : ""}
-          {totalRounded < 100 ? ` — te faltan ${(100 - totalRounded).toFixed(1)}%` : ""}
-          {totalRounded === 100 ? " — ¡listo!" : ""}
+          {tf("input.assignedPercent", siLang, { pct: total })}{totalBudget > 0 ? ` (${formatMoney((total / 100) * totalBudget)} ${siLang === "en" ? "of" : "de"} ${formatMoney(totalBudget)})` : ""}
+          {totalRounded > 100 ? tf("input.overBy", siLang, { pct: (totalRounded - 100).toFixed(1) }) : ""}
+          {totalRounded < 100 ? tf("input.underBy", siLang, { pct: (100 - totalRounded).toFixed(1) }) : ""}
+          {totalRounded === 100 ? tf("input.percentDone", siLang) : ""}
         </div>
         <button
           onClick={async () => {
             if (totalRounded > 100) {
-              await customAlert(`Te pasaste por ${(totalRounded - 100).toFixed(1)}%. Ajusta tus porcentajes para que sumen exactamente 100% antes de enviar.`);
+              await customAlert(tf("input.alertOver", siLang, { pct: (totalRounded - 100).toFixed(1) }));
               return;
             }
             if (totalRounded < 100) {
-              await customAlert(`Te faltan ${(100 - totalRounded).toFixed(1)}% para llegar a 100%. Ajusta tus porcentajes antes de enviar.`);
+              await customAlert(tf("input.alertUnder", siLang, { pct: (100 - totalRounded).toFixed(1) }));
               return;
             }
             const obj = {};
@@ -4546,7 +4598,7 @@ function StageResultView({ stage }) {
         <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>→ {r.average.toFixed(2)}</div>
         {r.totalCollected !== undefined && (
           <div className="dp-mono text-[11px] mt-1" style={{ color: GREEN }}>
-            {r.memberCount} miembros × {r.average.toFixed(2)} = {formatMoney(r.totalCollected)} recaudados
+            {tf("input.membersCollected", rLang, { count: r.memberCount, value: r.average.toFixed(2), total: formatMoney(r.totalCollected) })}
           </div>
         )}
       </div>
@@ -4564,7 +4616,7 @@ function StageResultView({ stage }) {
             ))}
           </div>
         )}
-        <div className="dp-mono text-xs font-semibold" style={{ color: r.winner ? GREEN : CORAL }}>→ {r.winner || "sin ganador"}</div>
+        <div className="dp-mono text-xs font-semibold" style={{ color: r.winner ? GREEN : CORAL }}>→ {r.winner || tf("result.noWinner", rLang)}</div>
       </div>
     );
   }
@@ -4575,7 +4627,7 @@ function StageResultView({ stage }) {
         <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
         {showDetails && (
           <div className="dp-body text-[10px] mb-1.5" style={{ color: INK + "77" }}>
-            {r.totalResponses} persona(s) propusieron {r.pool.length} nombre(s) distintos:
+            {tf("result.peopleProposedNames", rLang, { n: r.totalResponses, m: r.pool.length })}
           </div>
         )}
         {showDetails && (
@@ -4609,7 +4661,7 @@ function StageResultView({ stage }) {
             ))}
           </div>
         )}
-        <div className="dp-mono text-xs font-semibold" style={{ color: GREEN }}>→ elegidas: {r.winners.join(", ")}</div>
+        <div className="dp-mono text-xs font-semibold" style={{ color: GREEN }}>→ {tf("result.chosen", rLang, { names: r.winners.join(", ") })}</div>
       </div>
     );
   }
@@ -4645,14 +4697,14 @@ function StageResultView({ stage }) {
             <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>→ {cr.average.toFixed(2)}</div>
             {cr.collected !== undefined && (
               <div className="dp-mono text-[11px]" style={{ color: GREEN }}>
-                {cr.memberCount} miembros × {cr.average.toFixed(2)} = {formatMoney(cr.collected)}
+                {tf("input.membersCollectedShort", rLang, { count: cr.memberCount, value: cr.average.toFixed(2), total: formatMoney(cr.collected) })}
               </div>
             )}
           </div>
         ))}
         {r.totalCollected !== undefined && r.totalCollected !== null && (
           <div className="flex justify-between pt-2 mt-1 dp-mono text-xs font-semibold" style={{ borderTop: `1px solid ${BLUE}33`, color: GREEN }}>
-            <span>TOTAL RECAUDADO</span>
+            <span>{tf("result.totalCollectedLabel", rLang)}</span>
             <span>{formatMoney(r.totalCollected)}</span>
           </div>
         )}
@@ -4684,7 +4736,7 @@ function StageResultView({ stage }) {
         <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
         {showDetails && r.wasNormalized && (
           <div className="dp-body text-[10px] mb-2" style={{ color: CORAL }}>
-            La suma de promedios dio {r.rawSum}% — se ajustó proporcionalmente a 100%.
+            {tf("result.sumAdjusted", rLang, { pct: r.rawSum })}
           </div>
         )}
         {Object.entries(r.categories).map(([cat, cr]) => (
@@ -4700,7 +4752,7 @@ function StageResultView({ stage }) {
                   ))}
                 </div>
                 <div className="dp-mono text-[11px] mb-1" style={{ color: INK + "aa" }}>
-                  ({(cr.values || []).join(" + ")}) ÷ {(cr.values || []).length} = {cr.rawAverage}%{r.wasNormalized ? ` → normalizado a ${cr.normalizedPercent}%` : ""}
+                  ({(cr.values || []).join(" + ")}) ÷ {(cr.values || []).length} = {cr.rawAverage}%{r.wasNormalized ? tf("result.normalizedTo", rLang, { pct: cr.normalizedPercent }) : ""}
                 </div>
               </React.Fragment>
             )}
