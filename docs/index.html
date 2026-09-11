@@ -179,6 +179,55 @@ const FRONTEND_STRINGS = {
     "flow.trimLabel.cuotas": "% de recorte (alto y bajo) en las cuotas",
     "flow.trimInfo.title": "% de recorte",
     "flow.trimInfo.text.cuotas": "Antes de promediar las propuestas de todos, se descartan las más extremas: las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas, y solo se promedia lo que queda en medio.\n\nEsto es el corazón de Democracia por Promedio, evita que una sola persona (o un grupito) jale el resultado hacia un extremo proponiendo un número absurdo a propósito.",
+    "common.back": "Volver",
+    "entry.create.title": "Crear un grupo nuevo",
+    "entry.create.subtitle": "Serás el facilitador. Podrás agregar preguntas y aprobar a quienes se unan.",
+    "entry.adminReturn.title": "Ingresar a un grupo que administras",
+    "entry.adminReturn.subtitle": "Ya creaste este grupo antes y necesitas volver a entrar.",
+    "entry.join.title": "Unirme a un grupo con un código",
+    "entry.join.subtitle": "Alguien ya creó un grupo y te compartió su código.",
+    "createGroup.title": "Crear un grupo nuevo",
+    "createGroup.field.name": "Nombre del grupo",
+    "createGroup.field.name.placeholder": "ej. Condominio Las Flores",
+    "createGroup.field.adminName": "Tu nombre (facilitador)",
+    "createGroup.field.adminName.placeholder": "ej. Bernardo",
+    "createGroup.field.email": "Tu correo (para avisarte de solicitudes nuevas)",
+    "createGroup.field.email.placeholder": "ej. bernardo@correo.com",
+    "createGroup.whoCanJoin": "¿Quién puede participar?",
+    "createGroup.approve.yes": "Yo apruebo cada solicitud antes de que participen",
+    "createGroup.approve.no": "Cualquiera con el código puede participar de inmediato",
+    "createGroup.secretQuestion": "¿Las propuestas son secretas?",
+    "createGroup.secret.yes": "Secretas, solo se ven los números, no quién propuso qué",
+    "createGroup.secret.no": "Visibles, se muestra el nombre junto a cada propuesta",
+    "createGroup.creating": "Creando…",
+    "createGroup.submit": "Crear grupo",
+    "createGroup.error.generic": "No se pudo crear el grupo",
+    "createGroup.error.connection": "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?",
+    "groupCreated.title": "¡Creaste el grupo \"{name}\"!",
+    "groupCreated.subtitle": "Comparte el código o el link con quienes quieras invitar.",
+    "groupCreated.continue": "Continuar a mi grupo",
+    "gastosFijos.reminder": "Recuerda que este flujo está conectado con las cuotas, el presupuesto disponible ya sale de ahí ({amount}). Si quieres sumar un monto extra (ahorros, otros ingresos), lo puedes ajustar en la configuración del facilitador.",
+    "gastosFijos.label": "Gastos fijos:",
+    "gastosFijos.namePlaceholder": "Nombre del gasto",
+    "gastosFijos.addButton": "+ agregar gasto fijo",
+    "gastosFijos.saveButton": "Guardar y continuar",
+    "gastosFijos.waitingAdmin": "El facilitador está ingresando los gastos fijos…",
+    "puestos.namePlaceholder": "Nombre del puesto",
+    "puestos.descPlaceholder": "¿Qué hace este puesto? (opcional)",
+    "puestos.addButton": "+ agregar puesto",
+    "puestos.saveButton": "Guardar y continuar",
+    "puestos.waitingAdmin": "El facilitador está definiendo los puestos…",
+    "candidatos.minRequired": "Se necesitan al menos {min} candidato{plural} para los puestos que se van a sortear.",
+    "candidatos.namePlaceholder": "Nombre nuevo",
+    "candidatos.addButton": "+ agregar",
+    "candidatos.missing": "Te faltan {n} candidato{plural} más.",
+    "candidatos.saveButton": "Guardar y mandar a votación",
+    "candidatos.waitingAdmin": "El facilitador está armando la lista de candidatos…",
+    "sorteo.returning": "Regresando…",
+    "sorteo.returnButton": "Regresar a agregar candidatos",
+    "sorteo.runButton": "Realizar sorteo",
+    "sorteo.running": "Sorteando…",
+    "sorteo.waitingAdmin": "El facilitador va a realizar el sorteo…",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -232,6 +281,55 @@ const FRONTEND_STRINGS = {
     "flow.trimLabel.cuotas": "Trim % (highest and lowest) on the dues or fees",
     "flow.trimInfo.title": "Trim %",
     "flow.trimInfo.text.cuotas": "Before averaging everyone's proposals, the most extreme ones are discarded: the highest and the lowest, in the same proportion.\n\nFor example, with 10%: the top 10% of proposals and the bottom 10% are discarded, and only what's left in the middle gets averaged.\n\nThis is the heart of Average-Based Democracy. It stops a single person (or a small group) from pulling the result toward an extreme by proposing an absurd number on purpose.",
+    "common.back": "Back",
+    "entry.create.title": "Create a new group",
+    "entry.create.subtitle": "You'll be the facilitator. You can add questions and approve who joins.",
+    "entry.adminReturn.title": "Log in to a group you manage",
+    "entry.adminReturn.subtitle": "You already created this group before and need to log back in.",
+    "entry.join.title": "Join a group with a code",
+    "entry.join.subtitle": "Someone already created a group and shared their code with you.",
+    "createGroup.title": "Create a new group",
+    "createGroup.field.name": "Group name",
+    "createGroup.field.name.placeholder": "e.g. Las Flores Condo",
+    "createGroup.field.adminName": "Your name (facilitator)",
+    "createGroup.field.adminName.placeholder": "e.g. Bernardo",
+    "createGroup.field.email": "Your email (to notify you of new requests)",
+    "createGroup.field.email.placeholder": "e.g. bernardo@email.com",
+    "createGroup.whoCanJoin": "Who can participate?",
+    "createGroup.approve.yes": "I approve each request before they can participate",
+    "createGroup.approve.no": "Anyone with the code can participate right away",
+    "createGroup.secretQuestion": "Are proposals anonymous?",
+    "createGroup.secret.yes": "Anonymous, only the numbers are shown, not who proposed what",
+    "createGroup.secret.no": "Visible, the name is shown next to each proposal",
+    "createGroup.creating": "Creating…",
+    "createGroup.submit": "Create group",
+    "createGroup.error.generic": "Couldn't create the group",
+    "createGroup.error.connection": "Couldn't connect to the backend. Is npm start still running in your terminal?",
+    "groupCreated.title": "You created the group \"{name}\"!",
+    "groupCreated.subtitle": "Share the code or the link with whoever you want to invite.",
+    "groupCreated.continue": "Continue to my group",
+    "gastosFijos.reminder": "Remember this flow is connected to the dues or fees, the available budget already comes from there ({amount}). If you want to add an extra amount (savings, other income), you can adjust it in the facilitator settings.",
+    "gastosFijos.label": "Fixed expenses:",
+    "gastosFijos.namePlaceholder": "Expense name",
+    "gastosFijos.addButton": "+ add fixed expense",
+    "gastosFijos.saveButton": "Save and continue",
+    "gastosFijos.waitingAdmin": "The facilitator is entering the fixed expenses…",
+    "puestos.namePlaceholder": "Role name",
+    "puestos.descPlaceholder": "What does this role do? (optional)",
+    "puestos.addButton": "+ add role",
+    "puestos.saveButton": "Save and continue",
+    "puestos.waitingAdmin": "The facilitator is defining the roles…",
+    "candidatos.minRequired": "At least {min} candidate{plural} are needed for the roles that will be drawn.",
+    "candidatos.namePlaceholder": "New name",
+    "candidatos.addButton": "+ add",
+    "candidatos.missing": "{n} more candidate{plural} needed.",
+    "candidatos.saveButton": "Save and send to a vote",
+    "candidatos.waitingAdmin": "The facilitator is putting together the candidate list…",
+    "sorteo.returning": "Going back…",
+    "sorteo.returnButton": "Go back to add candidates",
+    "sorteo.runButton": "Run the drawing",
+    "sorteo.running": "Drawing…",
+    "sorteo.waitingAdmin": "The facilitator is about to run the drawing…",
   },
 };
 
@@ -2721,7 +2819,8 @@ function InfoButton({ title, text }) {
   );
 }
 
-function BackButton({ onClick, label = "Volver" }) {
+function BackButton({ onClick, label }) {
+  const lang = useLang();
   return (
     <button
       onClick={onClick}
@@ -2729,7 +2828,7 @@ function BackButton({ onClick, label = "Volver" }) {
       style={{ background: BLUE_SOFT, color: INK }}
     >
       <i className="ti ti-home" style={{ fontSize: "13px" }}></i>
-      {label}
+      {label || tf("common.back", lang)}
     </button>
   );
 }
@@ -2873,25 +2972,26 @@ function SharePromoScreen({ onBack }) {
 }
 
 function CustomEntryScreen({ onBack, onChooseCreate, onChooseAdminReturn, onChooseJoin }) {
+  const lang = useLang();
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
       <BackButton onClick={onBack} />
       <HomeIconButton
         icon="ti-square-plus"
-        title="Crear un grupo nuevo"
-        subtitle="Serás el facilitador. Podrás agregar preguntas y aprobar a quienes se unan."
+        title={tf("entry.create.title", lang)}
+        subtitle={tf("entry.create.subtitle", lang)}
         onClick={onChooseCreate}
       />
       <HomeIconButton
         icon="ti-settings"
-        title="Ingresar a un grupo que administras"
-        subtitle="Ya creaste este grupo antes y necesitas volver a entrar."
+        title={tf("entry.adminReturn.title", lang)}
+        subtitle={tf("entry.adminReturn.subtitle", lang)}
         onClick={onChooseAdminReturn}
       />
       <HomeIconButton
         icon="ti-key"
-        title="Unirme a un grupo con un código"
-        subtitle="Alguien ya creó un grupo y te compartió su código."
+        title={tf("entry.join.title", lang)}
+        subtitle={tf("entry.join.subtitle", lang)}
         onClick={onChooseJoin}
       />
     </div>
@@ -2919,12 +3019,12 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
         body: JSON.stringify({ name, adminName, adminEmail, requireApproval, secretResponses, userId: userId || null, lang: currentLang }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudo crear el grupo");
+      if (!res.ok) throw new Error(data.error || tf("createGroup.error.generic", currentLang));
       onCreated({ code: data.code, memberId: data.adminId, groupName: name });
     } catch (e) {
       setError(
         e.message === "Failed to fetch"
-          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          ? tf("createGroup.error.connection", currentLang)
           : e.message
       );
     } finally {
@@ -2936,15 +3036,15 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
     <div className="px-4 py-6">
       <BackButton onClick={onBack} />
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>Crear un grupo nuevo</div>
+        <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>{tf("createGroup.title", currentLang)}</div>
         <div className="flex flex-col gap-2.5 mb-3">
-          <Field label="Nombre del grupo" value={name} onChange={setName} placeholder="ej. Condominio Las Flores" />
-          <Field label="Tu nombre (facilitador)" value={adminName} onChange={setAdminName} placeholder="ej. Bernardo" />
-          <Field label="Tu correo (para avisarte de solicitudes nuevas)" value={adminEmail} onChange={setAdminEmail} placeholder="ej. bernardo@correo.com" type="email" />
+          <Field label={tf("createGroup.field.name", currentLang)} value={name} onChange={setName} placeholder={tf("createGroup.field.name.placeholder", currentLang)} />
+          <Field label={tf("createGroup.field.adminName", currentLang)} value={adminName} onChange={setAdminName} placeholder={tf("createGroup.field.adminName.placeholder", currentLang)} />
+          <Field label={tf("createGroup.field.email", currentLang)} value={adminEmail} onChange={setAdminEmail} placeholder={tf("createGroup.field.email.placeholder", currentLang)} type="email" />
         </div>
 
         <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
-          ¿Quién puede participar?
+          {tf("createGroup.whoCanJoin", currentLang)}
         </div>
         <div className="flex flex-col gap-2 mb-3">
           <button
@@ -2956,7 +3056,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
                 : { background: BLUE_SOFT, color: INK }
             }
           >
-            Yo apruebo cada solicitud antes de que participen
+            {tf("createGroup.approve.yes", currentLang)}
           </button>
           <button
             onClick={() => setRequireApproval(false)}
@@ -2967,12 +3067,12 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
                 : { background: BLUE_SOFT, color: INK }
             }
           >
-            Cualquiera con el código puede participar de inmediato
+            {tf("createGroup.approve.no", currentLang)}
           </button>
         </div>
 
         <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
-          ¿Las propuestas son secretas?
+          {tf("createGroup.secretQuestion", currentLang)}
         </div>
         <div className="flex flex-col gap-2 mb-3">
           <button
@@ -2984,7 +3084,7 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
                 : { background: BLUE_SOFT, color: INK }
             }
           >
-            Secretas — solo se ven los números, no quién propuso qué
+            {tf("createGroup.secret.yes", currentLang)}
           </button>
           <button
             onClick={() => setSecretResponses(false)}
@@ -2995,12 +3095,12 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
                 : { background: BLUE_SOFT, color: INK }
             }
           >
-            Visibles — se muestra el nombre junto a cada propuesta
+            {tf("createGroup.secret.no", currentLang)}
           </button>
         </div>
 
         <PrimaryButton onClick={submit} disabled={loading || !name || !adminName}>
-          {loading ? "Creando…" : "Crear grupo"}
+          {loading ? tf("createGroup.creating", currentLang) : tf("createGroup.submit", currentLang)}
         </PrimaryButton>
         {error && <div className="dp-body text-[12px] mt-2" style={{ color: CORAL }}>{error}</div>}
       </div>
@@ -3009,16 +3109,17 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
 }
 
 function GroupCreatedScreen({ groupName, code, onContinue }) {
+  const lang = useLang();
   return (
     <div className="px-4 py-6">
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-        <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>¡Creaste el grupo "{groupName}"!</div>
+        <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>{tf("groupCreated.title", lang, { name: groupName })}</div>
         <p className="dp-body text-[12px] mb-3" style={{ color: INK + "88" }}>
-          Comparte el código o el link con quienes quieras invitar.
+          {tf("groupCreated.subtitle", lang)}
         </p>
         <ShareGroup groupName={groupName} code={code} />
         <div className="mt-4">
-          <PrimaryButton onClick={onContinue}>Continuar a mi grupo</PrimaryButton>
+          <PrimaryButton onClick={onContinue}>{tf("groupCreated.continue", lang)}</PrimaryButton>
         </div>
       </div>
     </div>
@@ -5385,7 +5486,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                       <input
                         value={r.name}
                         onChange={(e) => updateRole(i, "name", e.target.value)}
-                        placeholder="Nombre del puesto"
+                        placeholder={tf("puestos.namePlaceholder", uiLang)}
                         className="dp-body flex-1 rounded-lg px-2 py-1.5 text-sm outline-none"
                         style={{ background: BLUE_SOFT, color: INK }}
                       />
@@ -5394,14 +5495,14 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                     <textarea
                       value={r.description}
                       onChange={(e) => updateRole(i, "description", e.target.value)}
-                      placeholder="¿Qué hace este puesto? (opcional)"
+                      placeholder={tf("puestos.descPlaceholder", uiLang)}
                       rows={2}
                       className="dp-body w-full resize-none rounded-lg px-2 py-1.5 text-xs outline-none"
                       style={{ background: BLUE_SOFT, color: INK }}
                     />
                   </div>
                 ))}
-                <button onClick={addRole} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>+ agregar puesto</button>
+                <button onClick={addRole} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>{tf("puestos.addButton", uiLang)}</button>
                 {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
                 <button
                   onClick={async () => { await submitAndClose(currentRoles.filter((r) => r.name.trim())); setRoleDrafts(null); }}
@@ -5409,11 +5510,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                   style={{ background: GREEN }}
                 >
-                  {sending ? "Guardando…" : "Guardar y continuar"}
+                  {sending ? tf("flow.saving", uiLang) : tf("puestos.saveButton", uiLang)}
                 </button>
               </React.Fragment>
             ) : (
-              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está definiendo los puestos…</div>
+              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ {tf("puestos.waitingAdmin", uiLang)}</div>
             )}
           </div>
         );
@@ -5435,7 +5536,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
             {stage.config.minCandidates && (
               <div className="dp-body text-[10.5px] mb-2" style={{ color: INK + "88" }}>
-                Se necesitan al menos {minCandidates} candidato{minCandidates === 1 ? "" : "s"} para los puestos que se van a sortear.
+                {tf("candidatos.minRequired", uiLang, { min: minCandidates, plural: minCandidates === 1 ? "" : "s" })}
               </div>
             )}
             {isAdmin ? (
@@ -5453,16 +5554,16 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                     value={newCandidateName}
                     onChange={(e) => setNewCandidateName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && addCandidate()}
-                    placeholder="Nombre nuevo"
+                    placeholder={tf("candidatos.namePlaceholder", uiLang)}
                     className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
                     style={{ background: "#fff", color: INK }}
                   />
-                  <button onClick={addCandidate} className="dp-body text-xs font-medium px-2" style={{ color: BLUE }}>+ agregar</button>
+                  <button onClick={addCandidate} className="dp-body text-xs font-medium px-2" style={{ color: BLUE }}>{tf("candidatos.addButton", uiLang)}</button>
                 </div>
                 {notEnough && (
                   <div className="dp-body text-[10.5px] mb-2" style={{ color: CORAL }}>
                     <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>
-                    Te faltan {minCandidates - currentCandidates.length} candidato{minCandidates - currentCandidates.length === 1 ? "" : "s"} más.
+                    {tf("candidatos.missing", uiLang, { n: minCandidates - currentCandidates.length, plural: minCandidates - currentCandidates.length === 1 ? "" : "s" })}
                   </div>
                 )}
                 {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
@@ -5472,11 +5573,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                   style={{ background: GREEN }}
                 >
-                  {sending ? "Guardando…" : "Guardar y mandar a votación"}
+                  {sending ? tf("flow.saving", uiLang) : tf("candidatos.saveButton", uiLang)}
                 </button>
               </React.Fragment>
             ) : (
-              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está armando la lista de candidatos…</div>
+              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ {tf("candidatos.waitingAdmin", uiLang)}</div>
             )}
           </div>
         );
@@ -5511,7 +5612,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   className="dp-body flex items-center justify-center gap-1.5 w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
                   style={{ background: BLUE }}
                 >
-                  <i className="ti ti-arrow-back-up"></i> {reopeningCandidatos ? "Regresando…" : "Regresar a agregar candidatos"}
+                  <i className="ti ti-arrow-back-up"></i> {reopeningCandidatos ? tf("sorteo.returning", uiLang) : tf("sorteo.returnButton", uiLang)}
                 </button>
               ) : (
                 <button
@@ -5520,12 +5621,12 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   className="dp-body flex items-center justify-center gap-1.5 w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
                   style={{ background: BLUE }}
                 >
-                  <i className="ti ti-dice-5"></i> {sending ? "Sorteando…" : "Realizar sorteo"}
+                  <i className="ti ti-dice-5"></i> {sending ? tf("sorteo.running", uiLang) : tf("sorteo.runButton", uiLang)}
                 </button>
               )}
             </React.Fragment>
           ) : (
-            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador va a realizar el sorteo…</div>
+            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ {tf("sorteo.waitingAdmin", uiLang)}</div>
           )}
         </div>
       )}
@@ -5535,8 +5636,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
           {stage.config.ingresosFromCuotas && (
             <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>
-              Recuerda que este flujo está conectado con las cuotas — el presupuesto disponible ya sale de ahí (
-              {formatMoney(stage.config.suggestedIngresos || 0)}). Si quieres sumar un monto extra (ahorros, otros ingresos), lo puedes ajustar en la configuración del facilitador.
+              {tf("gastosFijos.reminder", uiLang, { amount: formatMoney(stage.config.suggestedIngresos || 0) })}
             </div>
           )}
           {isAdmin ? (
@@ -5554,13 +5654,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   />
                 </div>
               )}
-              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>Gastos fijos:</div>
+              <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>{tf("gastosFijos.label", uiLang)}</div>
               {gastosDraft.map((g, i) => (
                 <div key={i} className="flex items-center gap-2 mb-1.5">
                   <input
                     value={g.nombre}
                     onChange={(e) => setGastosDraft(gastosDraft.map((x, idx) => (idx === i ? { ...x, nombre: e.target.value } : x)))}
-                    placeholder="Nombre del gasto"
+                    placeholder={tf("gastosFijos.namePlaceholder", uiLang)}
                     className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
                     style={{ background: "#fff", color: INK, border: `1px solid ${BLUE}33` }}
                   />
@@ -5577,7 +5677,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   )}
                 </div>
               ))}
-              <button onClick={() => setGastosDraft([...gastosDraft, { nombre: "", monto: "" }])} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>+ agregar gasto fijo</button>
+              <button onClick={() => setGastosDraft([...gastosDraft, { nombre: "", monto: "" }])} className="dp-body text-xs font-medium mb-3" style={{ color: BLUE }}>{tf("gastosFijos.addButton", uiLang)}</button>
               {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
               <button
                 onClick={async () => {
@@ -5591,11 +5691,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                 style={{ background: GREEN }}
               >
-                {sending ? "Guardando…" : "Guardar y continuar"}
+                {sending ? tf("flow.saving", uiLang) : tf("gastosFijos.saveButton", uiLang)}
               </button>
             </React.Fragment>
           ) : (
-            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está ingresando los gastos fijos…</div>
+            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ {tf("gastosFijos.waitingAdmin", uiLang)}</div>
           )}
         </div>
       )}
