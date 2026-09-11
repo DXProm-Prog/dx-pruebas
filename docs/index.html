@@ -228,6 +228,30 @@ const FRONTEND_STRINGS = {
     "sorteo.runButton": "Realizar sorteo",
     "sorteo.running": "Sorteando…",
     "sorteo.waitingAdmin": "El facilitador va a realizar el sorteo…",
+    "fusion.markedAs": "Marcaste como la misma opción:",
+    "fusion.selectPrompt": "Marca 2 o más opciones que creas que son la misma:",
+    "fusion.mergeButton": "Fusionar ({n})",
+    "fusion.continueWithout": "Continuar sin fusionar nada",
+    "ajustar.removePrompt": "Marca a quién quieres quitar de la lista:",
+    "ajustar.proposeNew": "¿Quieres proponer candidatos nuevos? (opcional)",
+    "ajustar.newPlaceholder": "Nuevo candidato {n}",
+    "ajustar.addNew": "+ agregar candidato nuevo",
+    "result.trimApplied": "Recorte aplicado: {pct}% (alto y bajo) antes de promediar.",
+    "result.noneMerged.options": "No se fusionó ninguna opción.",
+    "result.finalOptions": "Opciones finales:",
+    "result.removed": "Se quitaron:",
+    "result.added": "Se agregaron:",
+    "result.finalList": "Lista final:",
+    "result.noneMerged.names": "No se fusionó ningún nombre.",
+    "result.alreadyMerged": "Ya fusionados:",
+    "result.undo": "deshacer",
+    "mergeAdmin.whichCorrect": "¿Cuál es el nombre correcto?",
+    "mergeAdmin.cancel": "cancelar",
+    "mergeAdmin.selectSamePerson": "Marca 2 o más nombres que sean la misma persona:",
+    "mergeAdmin.mergeSelected": "Fusionar seleccionados ({n})",
+    "mergeAdmin.saveContinue": "Guardar y continuar",
+    "mergeAdmin.noDuplicatesContinue": "No hay nombres repetidos, continuar",
+    "mergeAdmin.waitingAdmin": "El facilitador está revisando la lista de candidatos…",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -330,6 +354,30 @@ const FRONTEND_STRINGS = {
     "sorteo.runButton": "Run the drawing",
     "sorteo.running": "Drawing…",
     "sorteo.waitingAdmin": "The facilitator is about to run the drawing…",
+    "fusion.markedAs": "You marked as the same option:",
+    "fusion.selectPrompt": "Mark 2 or more options you think are the same:",
+    "fusion.mergeButton": "Merge ({n})",
+    "fusion.continueWithout": "Continue without merging anything",
+    "ajustar.removePrompt": "Mark who you want to remove from the list:",
+    "ajustar.proposeNew": "Want to propose new candidates? (optional)",
+    "ajustar.newPlaceholder": "New candidate {n}",
+    "ajustar.addNew": "+ add new candidate",
+    "result.trimApplied": "Trim applied: {pct}% (highest and lowest) before averaging.",
+    "result.noneMerged.options": "No option was merged.",
+    "result.finalOptions": "Final options:",
+    "result.removed": "Removed:",
+    "result.added": "Added:",
+    "result.finalList": "Final list:",
+    "result.noneMerged.names": "No name was merged.",
+    "result.alreadyMerged": "Already merged:",
+    "result.undo": "undo",
+    "mergeAdmin.whichCorrect": "Which is the correct name?",
+    "mergeAdmin.cancel": "cancel",
+    "mergeAdmin.selectSamePerson": "Mark 2 or more names that are the same person:",
+    "mergeAdmin.mergeSelected": "Merge selected ({n})",
+    "mergeAdmin.saveContinue": "Save and continue",
+    "mergeAdmin.noDuplicatesContinue": "No duplicate names, continue",
+    "mergeAdmin.waitingAdmin": "The facilitator is reviewing the candidate list…",
   },
 };
 
@@ -3985,7 +4033,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
       <div className="mb-2">
         {myMergeGroups.length > 0 && (
           <div className="mb-3">
-            <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>Marcaste como el mismo rubro:</div>
+            <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>{tf("fusion.markedAs", siLang)}</div>
             {myMergeGroups.map((g, i) => (
               <div key={i} className="flex items-center justify-between rounded-lg p-2 mb-1.5" style={{ background: BLUE_SOFT }}>
                 <span className="dp-body text-xs" style={{ color: INK }}>{g.join(" + ")}</span>
@@ -3998,7 +4046,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
         )}
         {available.length > 0 && (
           <React.Fragment>
-            <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Marca 2 o más rubros que creas que son el mismo:</div>
+            <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>{tf("fusion.selectPrompt", siLang)}</div>
             {available.map((c) => (
               <label key={c} className="flex items-center gap-2 mb-1.5">
                 <input type="checkbox" checked={selectedMulti.includes(c)} disabled={disabled} onChange={() => toggleSelect(c)} />
@@ -4011,7 +4059,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
                 className="dp-body flex items-center justify-center gap-1.5 w-full text-sm py-2.5 rounded-full text-white font-semibold mb-3"
                 style={{ background: "#E0A458" }}
               >
-                <i className="ti ti-git-merge"></i> Fusionar rubros ({selectedMulti.length})
+                <i className="ti ti-git-merge"></i> {tf("fusion.mergeButton", siLang, { n: selectedMulti.length })}
               </button>
             )}
           </React.Fragment>
@@ -4023,7 +4071,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
           style={{ background: GREEN }}
         >
           <i className="ti ti-send" style={{ marginRight: "4px" }}></i>
-          {sending ? "Enviando…" : myMergeGroups.length > 0 ? "Enviar" : "Continuar sin fusionar nada"}
+          {sending ? tf("flow.sending", siLang) : myMergeGroups.length > 0 ? tf("flow.send", siLang) : tf("fusion.continueWithout", siLang)}
         </button>
       </div>
     );
@@ -4035,14 +4083,14 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
     };
     return (
       <div className="mb-2">
-        <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Marca a quién quieres quitar de la lista:</div>
+        <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>{tf("ajustar.removePrompt", siLang)}</div>
         {stage.config.candidates.map((c) => (
           <label key={c} className="flex items-center gap-2 mb-1.5">
             <input type="checkbox" checked={selectedMulti.includes(c)} disabled={disabled} onChange={() => toggleRemove(c)} />
             <span className="dp-body text-sm" style={{ color: INK, textDecoration: selectedMulti.includes(c) ? "line-through" : "none" }}>{c}</span>
           </label>
         ))}
-        <div className="dp-body text-[11px] font-semibold mt-3 mb-1.5" style={{ color: INK }}>¿Quieres proponer candidatos nuevos? (opcional)</div>
+        <div className="dp-body text-[11px] font-semibold mt-3 mb-1.5" style={{ color: INK }}>{tf("ajustar.proposeNew", siLang)}</div>
         {texts.map((t, i) => (
           <input
             key={i}
@@ -4053,14 +4101,14 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               arr[i] = e.target.value;
               setTexts(arr);
             }}
-            placeholder={`Nuevo candidato ${i + 1}`}
+            placeholder={tf("ajustar.newPlaceholder", siLang, { n: i + 1 })}
             className="dp-body w-full rounded-lg px-2.5 py-1.5 text-sm outline-none mb-1.5 disabled:opacity-50"
             style={{ background: BLUE_SOFT, color: INK }}
           />
         ))}
         {!disabled && (
           <button onClick={() => setTexts([...texts, ""])} className="dp-body text-xs font-medium mb-2" style={{ color: BLUE }}>
-            + agregar candidato nuevo
+            {tf("ajustar.addNew", siLang)}
           </button>
         )}
         <button
@@ -4210,6 +4258,7 @@ function BigDecisionDisplay({ stage }) {
 
 function StageResultView({ stage }) {
   const [showDetails, setShowDetails] = useState(true);
+  const rLang = useLang();
   const r = stage.result;
 
   if (stage.type === "conteo_miembros") {
@@ -4251,7 +4300,7 @@ function StageResultView({ stage }) {
     return (
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
         {stage.result.trimPercent > 0 && (
-          <div className="dp-body text-[10.5px] mb-2" style={{ color: INK + "77" }}>Recorte aplicado: {stage.result.trimPercent}% (alto y bajo) antes de promediar.</div>
+          <div className="dp-body text-[10.5px] mb-2" style={{ color: INK + "77" }}>{tf("result.trimApplied", rLang, { pct: stage.result.trimPercent })}</div>
         )}
         {Object.entries(r.puestos).map(([id, p]) => {
           const d = p.detail;
@@ -4285,7 +4334,6 @@ function StageResultView({ stage }) {
   }
 
   if (stage.type === "gastos_fijos") {
-    const rLang = useLang();
     return (
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
         <div className="mb-1">{tf("flow.availableBudget.label", rLang)}: <b style={{ color: GREEN }}>{formatMoney(r.ingresos)}</b></div>
@@ -4302,13 +4350,13 @@ function StageResultView({ stage }) {
   if (stage.type === "fusionar_categorias") {
     return (
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
-        {r.mergedGroups.length === 0 && <div>No se fusionó ningún rubro.</div>}
+        {r.mergedGroups.length === 0 && <div>{tf("result.noneMerged.options", rLang)}</div>}
         {r.mergedGroups.map((g, i) => (
           <div key={i} className="mb-1">
             <span className="font-semibold" style={{ color: INK }}>{g.primary}</span> + {g.aliases.join(", ")}
           </div>
         ))}
-        <div className="mt-1.5"><span className="font-semibold" style={{ color: INK }}>Rubros finales:</span> {r.finalCategories.join(", ")}</div>
+        <div className="mt-1.5"><span className="font-semibold" style={{ color: INK }}>{tf("result.finalOptions", rLang)}</span> {r.finalCategories.join(", ")}</div>
       </div>
     );
   }
@@ -4318,15 +4366,15 @@ function StageResultView({ stage }) {
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
         {r.removed.length > 0 && (
           <div className="mb-1.5">
-            <span className="font-semibold" style={{ color: CORAL }}>Se quitaron:</span> {r.removed.join(", ")}
+            <span className="font-semibold" style={{ color: CORAL }}>{tf("result.removed", rLang)}</span> {r.removed.join(", ")}
           </div>
         )}
         {r.added.length > 0 && (
           <div className="mb-1.5">
-            <span className="font-semibold" style={{ color: GREEN }}>Se agregaron:</span> {r.added.join(", ")}
+            <span className="font-semibold" style={{ color: GREEN }}>{tf("result.added", rLang)}</span> {r.added.join(", ")}
           </div>
         )}
-        <div><span className="font-semibold" style={{ color: INK }}>Lista final:</span> {r.finalCandidates.join(", ")}</div>
+        <div><span className="font-semibold" style={{ color: INK }}>{tf("result.finalList", rLang)}</span> {r.finalCandidates.join(", ")}</div>
       </div>
     );
   }
@@ -4334,13 +4382,13 @@ function StageResultView({ stage }) {
   if (stage.type === "fusionar_candidatos") {
     return (
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
-        {r.mergeGroups.length === 0 && <div>No se fusionó ningún nombre.</div>}
+        {r.mergeGroups.length === 0 && <div>{tf("result.noneMerged.names", rLang)}</div>}
         {r.mergeGroups.map((g, i) => (
           <div key={i} className="mb-1">
             <span className="font-semibold" style={{ color: INK }}>{g.primary}</span> ← {g.aliases.join(", ")}
           </div>
         ))}
-        <div className="mt-1.5"><span className="font-semibold" style={{ color: INK }}>Lista final:</span> {r.candidates.join(", ")}</div>
+        <div className="mt-1.5"><span className="font-semibold" style={{ color: INK }}>{tf("result.finalList", rLang)}</span> {r.candidates.join(", ")}</div>
       </div>
     );
   }
@@ -5719,20 +5767,20 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               <React.Fragment>
                 {mergeGroups.length > 0 && (
                   <div className="mb-3">
-                    <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>Ya fusionados:</div>
+                    <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>{tf("result.alreadyMerged", uiLang)}</div>
                     {mergeGroups.map((g, i) => (
                       <div key={i} className="flex items-center justify-between rounded-lg p-2 mb-1.5" style={{ background: "#fff" }}>
                         <span className="dp-body text-xs" style={{ color: INK }}>
                           {g.primary} <span style={{ color: INK + "77" }}>({g.aliases.join(", ")})</span>
                         </span>
-                        <button onClick={() => setMergeGroups(mergeGroups.filter((_, idx) => idx !== i))} className="dp-body text-xs" style={{ color: CORAL }}>deshacer</button>
+                        <button onClick={() => setMergeGroups(mergeGroups.filter((_, idx) => idx !== i))} className="dp-body text-xs" style={{ color: CORAL }}>{tf("result.undo", uiLang)}</button>
                       </div>
                     ))}
                   </div>
                 )}
                 {choosingPrimaryFor ? (
                   <div className="mb-3">
-                    <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>¿Cuál es el nombre correcto?</div>
+                    <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>{tf("mergeAdmin.whichCorrect", uiLang)}</div>
                     {choosingPrimaryFor.map((name) => (
                       <button
                         key={name}
@@ -5743,12 +5791,12 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                         {name}
                       </button>
                     ))}
-                    <button onClick={() => setChoosingPrimaryFor(null)} className="dp-body text-xs" style={{ color: INK + "77" }}>cancelar</button>
+                    <button onClick={() => setChoosingPrimaryFor(null)} className="dp-body text-xs" style={{ color: INK + "77" }}>{tf("mergeAdmin.cancel", uiLang)}</button>
                   </div>
                 ) : (
                   <React.Fragment>
                     <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>
-                      Marca 2 o más nombres que sean la misma persona:
+                      {tf("mergeAdmin.selectSamePerson", uiLang)}
                     </div>
                     {available.map((c) => (
                       <label key={c} className="flex items-center gap-2 mb-1.5">
@@ -5762,7 +5810,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                         className="dp-body flex items-center justify-center gap-1.5 w-full text-sm py-2.5 rounded-full text-white font-semibold mb-3"
                         style={{ background: "#E0A458" }}
                       >
-                        <i className="ti ti-git-merge"></i> Fusionar seleccionados ({selectedForMerge.length})
+                        <i className="ti ti-git-merge"></i> {tf("mergeAdmin.mergeSelected", uiLang, { n: selectedForMerge.length })}
                       </button>
                     )}
                   </React.Fragment>
@@ -5778,11 +5826,11 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                   className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                   style={{ background: GREEN }}
                 >
-                  {sending ? "Guardando…" : mergeGroups.length > 0 ? "Guardar y continuar" : "No hay nombres repetidos, continuar"}
+                  {sending ? tf("flow.saving", uiLang) : mergeGroups.length > 0 ? tf("mergeAdmin.saveContinue", uiLang) : tf("mergeAdmin.noDuplicatesContinue", uiLang)}
                 </button>
               </React.Fragment>
             ) : (
-              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ El facilitador está revisando la lista de candidatos…</div>
+              <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ {tf("mergeAdmin.waitingAdmin", uiLang)}</div>
             )}
           </div>
         );
