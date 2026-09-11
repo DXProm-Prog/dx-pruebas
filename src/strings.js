@@ -52,6 +52,23 @@ const STRINGS = {
     "responsabilidades.realizarSorteo": "Todo listo. El facilitador puede realizar el sorteo cuando quiera.",
     "responsabilidades.ajustarCandidatos": "No se aprobó la lista. Selecciona a quién quitarías, y propón nuevos candidatos si quieres.",
     "responsabilidades.fusionarCandidatos": "Revisa la lista final: si dos nombres son en realidad la misma persona (por una errata o apodo), fusiónalos en uno solo.",
+
+    // Cooperativas: Tabulador de sueldos
+    "tabulador.limiteVote": "¿Quieres que exista un límite de desigualdad entre la persona que más gana y la que menos gana en nuestra cooperativa?",
+    "tabulador.vecesPromedio": "¿Cuántas veces más piensas que debe ganar la persona que más gana en nuestra cooperativa, comparada con la persona que menos gana? (considerando que trabajan las mismas horas)",
+    "tabulador.configurarPuestos": "Define los puestos de la cooperativa.",
+    "tabulador.aprobarPuestos": "¿Aprueban esta lista de puestos? {names}",
+    "tabulador.adjustPuestos": "Ajusten la lista de puestos, no se aprobó la anterior.",
+    "tabulador.frecuenciaSueldo": "¿Los sueldos de la cooperativa se deciden por hora, o por mes?",
+    "tabulador.montoPorPuesto": "¿Cuánto debería ganar cada puesto en nuestra cooperativa? (por {frequency})",
+    "tabulador.aprobarSueldos": "¿Aprueban este resultado de sueldos por puesto?",
+    "tabulador.retrySueldos": "Vuelvan a proponer los sueldos, no se aprobó el resultado anterior.",
+    "tabulador.freq.hora": "hora",
+    "tabulador.freq.mes": "mes",
+
+    // Cooperativas: Presupuesto participativo
+    "coopBudget.gastosFijos": "Ingresa los ingresos mensuales de la cooperativa y desglosa sus gastos fijos.",
+    "coopBudget.categories": "Propón rubros de gasto para el presupuesto (además de los gastos fijos ya establecidos).",
   },
   en: {
     // Participatory dues
@@ -90,6 +107,23 @@ const STRINGS = {
     "responsabilidades.realizarSorteo": "All set. The facilitator can run the drawing whenever ready.",
     "responsabilidades.ajustarCandidatos": "The list wasn't approved. Select who you'd remove, and propose new candidates if you'd like.",
     "responsabilidades.fusionarCandidatos": "Review the final list: if two names are actually the same person (a typo or nickname), merge them into one.",
+
+    // Cooperatives: Wage table
+    "tabulador.limiteVote": "Do you want there to be a limit on the inequality between the highest and lowest earner in our cooperative?",
+    "tabulador.vecesPromedio": "How many times more do you think the highest earner in our cooperative should make, compared to the lowest earner? (assuming they work the same hours)",
+    "tabulador.configurarPuestos": "Define the cooperative's roles.",
+    "tabulador.aprobarPuestos": "Do you approve this list of roles? {names}",
+    "tabulador.adjustPuestos": "Adjust the list of roles, the previous one wasn't approved.",
+    "tabulador.frecuenciaSueldo": "Are the cooperative's wages decided per hour, or per month?",
+    "tabulador.montoPorPuesto": "How much should each role earn in our cooperative? (per {frequency})",
+    "tabulador.aprobarSueldos": "Do you approve this result for wages per role?",
+    "tabulador.retrySueldos": "Propose the wages again, the previous result wasn't approved.",
+    "tabulador.freq.hora": "hour",
+    "tabulador.freq.mes": "month",
+
+    // Cooperatives: Participatory budget
+    "coopBudget.gastosFijos": "Enter the cooperative's monthly income and break down its fixed expenses.",
+    "coopBudget.categories": "Propose spending categories for the budget (in addition to the fixed expenses already set).",
   },
 };
 

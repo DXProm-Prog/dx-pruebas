@@ -306,6 +306,12 @@ const FRONTEND_STRINGS = {
     "result.totalCollectedLabel": "TOTAL RECAUDADO",
     "result.sumAdjusted": "La suma de promedios dio {pct}%, se ajustó proporcionalmente a 100%.",
     "result.normalizedTo": " → normalizado a {pct}%",
+    "big.membersCollected": "{count} miembros → {total} recaudados",
+    "big.perFrequency": "por {frequency}",
+    "big.adjustedWasOriginal": " · ajustado (era {original})",
+    "big.someAdjusted": "Algunos sueldos se ajustaron hacia abajo para respetar el límite de {limit}x acordado.",
+    "tabulador.freq.hora": "hora",
+    "tabulador.freq.mes": "mes",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -486,6 +492,12 @@ const FRONTEND_STRINGS = {
     "result.totalCollectedLabel": "TOTAL COLLECTED",
     "result.sumAdjusted": "The average total came out to {pct}%, and was proportionally adjusted to 100%.",
     "result.normalizedTo": " → normalized to {pct}%",
+    "big.membersCollected": "{count} members → {total} collected",
+    "big.perFrequency": "per {frequency}",
+    "big.adjustedWasOriginal": " · adjusted (was {original})",
+    "big.someAdjusted": "Some wages were adjusted down to respect the agreed {limit}x limit.",
+    "tabulador.freq.hora": "hour",
+    "tabulador.freq.mes": "month",
   },
 };
 
@@ -4285,6 +4297,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
 }
 
 function BigDecisionDisplay({ stage }) {
+  const bLang = useLang();
   const r = stage.result;
   if (stage.key === "singleQuota") {
     return (
@@ -4294,7 +4307,7 @@ function BigDecisionDisplay({ stage }) {
         </div>
         {r.totalCollected !== undefined && (
           <div className="dp-mono text-sm mt-1" style={{ color: GREEN }}>
-            {r.memberCount} miembros → {formatMoney(r.totalCollected)} recaudados
+            {tf("big.membersCollected", bLang, { count: r.memberCount, total: formatMoney(r.totalCollected) })}
           </div>
         )}
       </div>
@@ -4316,7 +4329,7 @@ function BigDecisionDisplay({ stage }) {
         ))}
         {r.totalCollected !== undefined && r.totalCollected !== null && (
           <div className="flex justify-between pt-2 mt-2" style={{ borderTop: `2px solid ${BLUE}33` }}>
-            <span className="dp-body text-sm font-semibold" style={{ color: INK }}>TOTAL RECAUDADO</span>
+            <span className="dp-body text-sm font-semibold" style={{ color: INK }}>{tf("result.totalCollectedLabel", bLang)}</span>
             <span className="dp-display text-xl font-extrabold" style={{ color: GREEN }}>{formatMoney(r.totalCollected)}</span>
           </div>
         )}
@@ -4352,13 +4365,13 @@ function BigDecisionDisplay({ stage }) {
             <span className="dp-body text-sm" style={{ color: INK }}>{roleName(id)}</span>
             <span className="text-right">
               <span className="dp-display text-xl font-extrabold" style={{ color: p.adjusted ? CORAL : BLUE }}>{formatMoney(p.amount)}</span>
-              <div className="dp-mono text-[10px]" style={{ color: INK + "77" }}>por {stage.config.frequency}{p.adjusted ? ` · ajustado (era ${formatMoney(p.original)})` : ""}</div>
+              <div className="dp-mono text-[10px]" style={{ color: INK + "77" }}>{tf("big.perFrequency", bLang, { frequency: tf(`tabulador.freq.${stage.config.frequency}`, bLang) })}{p.adjusted ? tf("big.adjustedWasOriginal", bLang, { original: formatMoney(p.original) }) : ""}</div>
             </span>
           </div>
         ))}
         {r.wasAdjusted && (
           <div className="dp-body text-[10.5px] mt-2 pt-2" style={{ color: CORAL, borderTop: `1px solid ${CORAL}33` }}>
-            Algunos sueldos se ajustaron hacia abajo para respetar el límite de {r.limitTimes}x acordado.
+            {tf("big.someAdjusted", bLang, { limit: r.limitTimes })}
           </div>
         )}
       </div>

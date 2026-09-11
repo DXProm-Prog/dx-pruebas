@@ -421,32 +421,33 @@ const responsabilidades = {
 const tabuladorSueldos = {
   defaultConfig: { sueldoTrimPercent: 10 },
 
-  getInitialStage() {
+  getInitialStage(flowConfig = {}) {
     return {
       key: "limiteVote",
       type: "mayoria",
-      text: "¿Quieres que exista un límite de desigualdad entre la persona que más gana y la que menos gana en nuestra cooperativa?",
+      text: t("tabulador.limiteVote", flowConfig.lang),
       config: { options: ["Sí", "No"], majorityRule: "absoluta" },
     };
   },
 
   getNextStage(stages, flowConfig = {}) {
     const last = stages[stages.length - 1];
+    const lang = flowConfig.lang;
 
     if (last.key === "limiteVote") {
       if (last.result.winner === "Sí") {
         return {
           key: "vecesPromedio",
           type: "promedio",
-          text: "¿Cuántas veces más piensas que debe ganar la persona que más gana en nuestra cooperativa, comparada con la persona que menos gana? (considerando que trabajan las mismas horas)",
+          text: t("tabulador.vecesPromedio", lang),
           config: { trimPercent: 0 },
         };
       }
-      return { key: "configurarPuestos", type: "configurar_puestos", text: "Define los puestos de la cooperativa.", config: { suggestedRoles: [], minSlots: 5 } };
+      return { key: "configurarPuestos", type: "configurar_puestos", text: t("tabulador.configurarPuestos", lang), config: { suggestedRoles: [], minSlots: 5 } };
     }
 
     if (last.key === "vecesPromedio") {
-      return { key: "configurarPuestos", type: "configurar_puestos", text: "Define los puestos de la cooperativa.", config: { suggestedRoles: [], minSlots: 5 } };
+      return { key: "configurarPuestos", type: "configurar_puestos", text: t("tabulador.configurarPuestos", lang), config: { suggestedRoles: [], minSlots: 5 } };
     }
 
     if (last.key === "configurarPuestos") {
@@ -454,7 +455,7 @@ const tabuladorSueldos = {
       return {
         key: "aprobarPuestos",
         type: "mayoria",
-        text: `¿Aprueban esta lista de puestos? ${names}`,
+        text: t("tabulador.aprobarPuestos", lang, { names }),
         config: { options: ["Sí", "No"], majorityRule: "absoluta" },
       };
     }
@@ -462,12 +463,12 @@ const tabuladorSueldos = {
     if (last.key === "aprobarPuestos") {
       if (last.result.winner !== "Sí") {
         const prevRoles = [...stages].reverse().find((s) => s.key === "configurarPuestos").result.roles;
-        return { key: "configurarPuestos", type: "configurar_puestos", text: "Ajusten la lista de puestos — no se aprobó la anterior.", config: { suggestedRoles: prevRoles, minSlots: 5 } };
+        return { key: "configurarPuestos", type: "configurar_puestos", text: t("tabulador.adjustPuestos", lang), config: { suggestedRoles: prevRoles, minSlots: 5 } };
       }
       return {
         key: "frecuenciaSueldo",
         type: "mayoria",
-        text: "¿Los sueldos de la cooperativa se deciden por hora, o por mes?",
+        text: t("tabulador.frecuenciaSueldo", lang),
         config: { options: ["Por hora", "Por mes"], majorityRule: "simple" },
       };
     }
@@ -481,7 +482,7 @@ const tabuladorSueldos = {
       return {
         key: "montoPorPuesto",
         type: "monto_por_puesto",
-        text: `¿Cuánto debería ganar cada puesto en nuestra cooperativa? (por ${frequency})`,
+        text: t("tabulador.montoPorPuesto", lang, { frequency: t(`tabulador.freq.${frequency}`, lang) }),
         config: { roles: rolesStage.result.roles, frequency, limitTimes, trimPercent },
       };
     }
@@ -490,7 +491,7 @@ const tabuladorSueldos = {
       return {
         key: "aprobarSueldos",
         type: "mayoria",
-        text: "¿Aprueban este resultado de sueldos por puesto?",
+        text: t("tabulador.aprobarSueldos", lang),
         config: { options: ["Sí", "No"], majorityRule: "absoluta" },
       };
     }
@@ -503,7 +504,7 @@ const tabuladorSueldos = {
         return {
           key: "montoPorPuesto",
           type: "monto_por_puesto",
-          text: "Vuelvan a proponer los sueldos — no se aprobó el resultado anterior.",
+          text: t("tabulador.retrySueldos", lang),
           config: prevMontos.config,
         };
       }
@@ -517,21 +518,22 @@ const tabuladorSueldos = {
 const presupuestoCooperativa = {
   defaultConfig: { selectionThresholdPercent: 10 },
 
-  getInitialStage() {
+  getInitialStage(flowConfig = {}) {
     return {
       key: "gastosFijos",
       type: "gastos_fijos",
-      text: "Ingresa los ingresos mensuales de la cooperativa y desglosa sus gastos fijos.",
+      text: t("coopBudget.gastosFijos", flowConfig.lang),
       config: {},
     };
   },
 
   getNextStage(stages, flowConfig = {}) {
     const thresholdPercent = flowConfig.selectionThresholdPercent ?? 10;
+    const lang = flowConfig.lang;
     const last = stages[stages.length - 1];
 
     if (last.key === "gastosFijos") {
-      return { key: "categories", type: "recoleccion_abierta", text: "Propón rubros de gasto para el presupuesto (además de los gastos fijos ya establecidos).", config: { maxItemsPerPerson: 5 } };
+      return { key: "categories", type: "recoleccion_abierta", text: t("coopBudget.categories", lang), config: { maxItemsPerPerson: 5 } };
     }
 
     if (last.key === "categories") {
@@ -539,7 +541,7 @@ const presupuestoCooperativa = {
       return {
         key: "fusionarCategorias",
         type: "fusionar_categorias",
-        text: "¿Hay rubros propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
+        text: t("presupuesto.fusionarCategorias", lang),
         config: { categories: allNames },
       };
     }
@@ -549,7 +551,7 @@ const presupuestoCooperativa = {
       return {
         key: "selection",
         type: "seleccion_multiple",
-        text: `Elige los rubros que te importan (puedes elegir varios). Se descartan los que no lleguen al ${thresholdPercent}% de apoyo.`,
+        text: t("presupuesto.selection", lang, { threshold: thresholdPercent }),
         config: { options: allNames },
       };
     }
