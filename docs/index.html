@@ -312,6 +312,21 @@ const FRONTEND_STRINGS = {
     "big.someAdjusted": "Algunos sueldos se ajustaron hacia abajo para respetar el límite de {limit}x acordado.",
     "tabulador.freq.hora": "hora",
     "tabulador.freq.mes": "mes",
+    "montoPuesto.limitReminder": "Recuerda: el límite acordado es que quien más gane no gane más de {limit}x quien menos gane.",
+    "montoPuesto.overLimit": "Tu propuesta tiene {ratio}x de diferencia, pasa del límite de {limit}x. Ajusta los montos antes de enviar.",
+    "result.proposals": "Propuestas: {list}",
+    "result.discardedHighLow": ", se descartan {n} más alta(s) y {n} más baja(s)",
+    "result.trimmedTo": "Se recortó de {original} a {amount} para respetar el límite de {limit}x.",
+    "coop.chooseAnother": "¿Quieren hacer otro proceso con esta cooperativa?",
+    "coop.intro": "Para facilitar la toma de decisiones eficiente en una cooperativa, combinamos Democracia por Promedio con procesos de mayoría y sorteo.",
+    "coop.wageTable.title": "Tabulador de sueldos",
+    "coop.wageTable.subtitle": "Definan los puestos y decidan cuánto gana cada uno, con o sin límite de desigualdad.",
+    "coop.budget.title": "Presupuesto participativo",
+    "coop.budget.subtitle": "Con gastos fijos que se pueden ajustar, y el resto repartido entre los rubros que propongan.",
+    "coop.roles.title": "Selección de responsables",
+    "coop.roles.subtitle": "Repartan cargos y responsabilidades por sorteo, con o sin rotación mensual.",
+    "coop.noneForNow": "No, ya terminamos por ahora",
+    "coop.waitingChoice": "El facilitador todavía no elige qué proceso iniciar…",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -498,6 +513,21 @@ const FRONTEND_STRINGS = {
     "big.someAdjusted": "Some wages were adjusted down to respect the agreed {limit}x limit.",
     "tabulador.freq.hora": "hour",
     "tabulador.freq.mes": "month",
+    "montoPuesto.limitReminder": "Remember: the agreed limit is that the highest earner can't make more than {limit}x the lowest earner.",
+    "montoPuesto.overLimit": "Your proposal has a {ratio}x difference, over the {limit}x limit. Adjust the amounts before sending.",
+    "result.proposals": "Proposals: {list}",
+    "result.discardedHighLow": ", the top {n} and bottom {n} are discarded",
+    "result.trimmedTo": "Trimmed from {original} to {amount} to respect the {limit}x limit.",
+    "coop.chooseAnother": "Do you want to run another process with this cooperative?",
+    "coop.intro": "To make decision-making in a cooperative efficient, we combine Average-Based Democracy with majority and lottery processes.",
+    "coop.wageTable.title": "Wage table",
+    "coop.wageTable.subtitle": "Define the roles and decide how much each one earns, with or without an inequality limit.",
+    "coop.budget.title": "Participatory budget",
+    "coop.budget.subtitle": "With fixed expenses that can be adjusted, and the rest split among the items you propose.",
+    "coop.roles.title": "Selecting who's responsible",
+    "coop.roles.subtitle": "Assign roles and responsibilities by lottery, with or without monthly rotation.",
+    "coop.noneForNow": "No, we're done for now",
+    "coop.waitingChoice": "The facilitator hasn't chosen which process to start yet…",
   },
 };
 
@@ -4099,7 +4129,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
       <div className="mb-2">
         {stage.config.limitTimes && (
           <div className="dp-body text-[10.5px] mb-2 rounded-lg p-2" style={{ background: BLUE_SOFT, color: INK + "99" }}>
-            Recuerda: el límite acordado es que quien más gane no gane más de <b style={{ color: INK }}>{stage.config.limitTimes}x</b> quien menos gane.
+            {tf("montoPuesto.limitReminder", siLang, { limit: stage.config.limitTimes })}
           </div>
         )}
         {stage.config.roles.map((role) => (
@@ -4114,12 +4144,12 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               className="dp-mono w-24 rounded-lg px-2 py-1.5 text-sm outline-none disabled:opacity-50"
               style={{ background: BLUE_SOFT, color: INK }}
             />
-            <span className="dp-mono text-xs" style={{ color: INK + "77" }}>/{stage.config.frequency}</span>
+            <span className="dp-mono text-xs" style={{ color: INK + "77" }}>/{tf(`tabulador.freq.${stage.config.frequency}`, siLang)}</span>
           </div>
         ))}
         {overLimit && (
           <div className="dp-body text-[10.5px] mb-2 rounded-lg p-2" style={{ background: CORAL + "15", color: CORAL }}>
-            Tu propuesta tiene {ratio.toFixed(2)}x de diferencia — pasa del límite de {stage.config.limitTimes}x. Ajusta los montos antes de enviar.
+            {tf("montoPuesto.overLimit", siLang, { ratio: ratio.toFixed(2), limit: stage.config.limitTimes })}
           </div>
         )}
         <button
@@ -4432,13 +4462,13 @@ function StageResultView({ stage }) {
             <div key={id} className="rounded-lg p-2.5 mb-2" style={{ background: PAGE_BG }}>
               <div className="flex justify-between items-baseline mb-1">
                 <span className="font-semibold" style={{ color: INK }}>{roleName(id)}</span>
-                <span className="dp-mono font-bold text-sm" style={{ color: p.adjusted ? CORAL : BLUE }}>{formatMoney(p.amount)}/{stage.config.frequency}</span>
+                <span className="dp-mono font-bold text-sm" style={{ color: p.adjusted ? CORAL : BLUE }}>{formatMoney(p.amount)}/{tf(`tabulador.freq.${stage.config.frequency}`, rLang)}</span>
               </div>
               {d && (
                 <React.Fragment>
                   <div className="dp-mono text-[10px] mb-1" style={{ color: INK + "88" }}>
-                    Propuestas: {d.sorted.map((v) => formatMoney(v)).join(", ")}
-                    {d.trimmedCount > 0 ? ` — se descartan ${d.trimmedCount} más alta(s) y ${d.trimmedCount} más baja(s)` : ""}
+                    {tf("result.proposals", rLang, { list: d.sorted.map((v) => formatMoney(v)).join(", ") })}
+                    {d.trimmedCount > 0 ? tf("result.discardedHighLow", rLang, { n: d.trimmedCount }) : ""}
                   </div>
                   <div className="dp-mono text-[10px]" style={{ color: INK + "88" }}>
                     ({d.kept.map((v) => formatMoney(v)).join(" + ")}) ÷ {d.kept.length} = {formatMoney(d.average)}
@@ -4447,7 +4477,7 @@ function StageResultView({ stage }) {
               )}
               {p.adjusted && (
                 <div className="dp-body text-[10px] mt-1" style={{ color: CORAL }}>
-                  Se recortó de {formatMoney(p.original)} a {formatMoney(p.amount)} para respetar el límite de {r.limitTimes}x.
+                  {tf("result.trimmedTo", rLang, { original: formatMoney(p.original), amount: formatMoney(p.amount), limit: r.limitTimes })}
                 </div>
               )}
             </div>
@@ -6387,8 +6417,8 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
           <div className="flex flex-col gap-2 mb-4">
             <div className="dp-body text-[12.5px] rounded-xl p-3 mb-1" style={{ background: BLUE_SOFT, color: INK + "cc", lineHeight: 1.5 }}>
               {showCooperativasChooser
-                ? "¿Quieren hacer otro proceso con esta cooperativa?"
-                : "Para facilitar la toma de decisiones eficiente en una cooperativa, combinamos Democracia por Promedio con procesos de mayoría y sorteo."}
+                ? tf("coop.chooseAnother", csLang)
+                : tf("coop.intro", csLang)}
             </div>
             <button
               onClick={async () => {
@@ -6404,9 +6434,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-cash"></i>Tabulador de sueldos</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-cash"></i>{tf("coop.wageTable.title", csLang)}</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
-                Definan los puestos y decidan cuánto gana cada uno, con o sin límite de desigualdad.
+                {tf("coop.wageTable.subtitle", csLang)}
               </div>
             </button>
             <button
@@ -6423,9 +6453,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-chart-pie"></i>Presupuesto participativo</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-chart-pie"></i>{tf("coop.budget.title", csLang)}</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
-                Con gastos fijos que se pueden ajustar, y el resto repartido entre los rubros que propongan.
+                {tf("coop.budget.subtitle", csLang)}
               </div>
             </button>
             <button
@@ -6442,19 +6472,19 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-dice-5"></i>Selección de responsables</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-dice-5"></i>{tf("coop.roles.title", csLang)}</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
-                Repartan cargos y responsabilidades por sorteo, con o sin rotación mensual.
+                {tf("coop.roles.subtitle", csLang)}
               </div>
             </button>
             {showCooperativasChooser && (
               <button onClick={() => setShowCooperativasChooser(false)} className="dp-body text-xs mt-1" style={{ color: INK + "77" }}>
-                No, ya terminamos por ahora
+                {tf("coop.noneForNow", csLang)}
               </button>
             )}
           </div>
         ) : (
-          <div className="dp-body text-[13px] text-center py-4" style={{ color: INK + "88" }}>⏳ El facilitador todavía no elige qué proceso iniciar…</div>
+          <div className="dp-body text-[13px] text-center py-4" style={{ color: INK + "88" }}>⏳ {tf("coop.waitingChoice", csLang)}</div>
         )
       )}
 
