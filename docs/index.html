@@ -134,7 +134,7 @@ const FRONTEND_STRINGS = {
     "home.cuotas.subtitle": "Decidamos juntos si todos pagamos la misma cuota, y cuánto es lo que hay que pagar.",
     "home.presupuesto.title": "Presupuestos participativos",
     "home.presupuesto.subtitle": "Decidamos juntos en qué invertir o gastar el dinero que tenemos.",
-    "home.responsables.title": "Selección de responsables",
+    "home.responsables.title": "Selección de responsabilidades por sorteo",
     "home.responsables.subtitle": "Para asignar responsabilidades no hace falta votar por personas, asignemos responsabilidades por sorteo.",
     "home.asociaciones.title": "Asociaciones, clubes y orgs",
     "home.asociaciones.subtitle": "Cuotas, presupuesto, proyectos y responsables, un solo proceso conectado.",
@@ -295,9 +295,9 @@ const FRONTEND_STRINGS = {
     "input.totalCollected": "total recaudado con estos números: {total}",
     "input.assignedAmount": "asignado: {amount}",
     "input.assignedPercent": "asignado: {pct}% de 100%",
-    "input.overBy": " — te pasaste por {pct}%",
-    "input.underBy": " — te faltan {pct}%",
-    "input.percentDone": " — ¡listo!",
+    "input.overBy": ". Te pasaste por {pct}%",
+    "input.underBy": ". Te faltan {pct}%",
+    "input.percentDone": ". ¡Listo!",
     "input.alertOver": "Te pasaste por {pct}%. Ajusta tus porcentajes para que sumen exactamente 100% antes de enviar.",
     "input.alertUnder": "Te faltan {pct}% para llegar a 100%. Ajusta tus porcentajes antes de enviar.",
     "result.noWinner": "sin ganador",
@@ -323,7 +323,7 @@ const FRONTEND_STRINGS = {
     "coop.wageTable.subtitle": "Definan los puestos y decidan cuánto gana cada uno, con o sin límite de desigualdad.",
     "coop.budget.title": "Presupuesto participativo",
     "coop.budget.subtitle": "Con gastos fijos que se pueden ajustar, y el resto repartido entre los rubros que propongan.",
-    "coop.roles.title": "Selección de responsables",
+    "coop.roles.title": "Selección de responsabilidades por sorteo",
     "coop.roles.subtitle": "Repartan cargos y responsabilidades por sorteo, con o sin rotación mensual.",
     "coop.noneForNow": "No, ya terminamos por ahora",
     "coop.waitingChoice": "El facilitador todavía no elige qué proceso iniciar…",
@@ -386,6 +386,9 @@ const FRONTEND_STRINGS = {
     "onbEx.chip.mayoria": "Mayoría",
     "onbEx.chip.sorteo": "Sorteo",
     "onbEx.question": "Pregunta: ¿cuánto debería ser la cuota mensual?",
+    "promo.intro1": "¿Eres parte de, o quieres formar, una asociación vecinal, un club, una cooperativa o cualquier organización?",
+    "promo.intro2": "Esta aplicación te ayuda a organizar a tu grupo para tomar decisiones de forma transparente, horizontal, justa y eficiente.",
+    "promo.intro3": "¡Incluye cuotas e impuestos participativos, presupuestos participativos, selección de responsabilidades por sorteo y más!",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -394,19 +397,19 @@ const FRONTEND_STRINGS = {
     "home.cuotas.subtitle": "Decide together whether everyone pays the same dues or fees, and how much to pay.",
     "home.presupuesto.title": "Participatory budgets",
     "home.presupuesto.subtitle": "Decide together where to invest or spend the money you have.",
-    "home.responsables.title": "Selecting who's responsible",
-    "home.responsables.subtitle": "You don't need to vote for people to assign responsibilities — assign them by lottery instead.",
+    "home.responsables.title": "Assigning responsibilities by sortition",
+    "home.responsables.subtitle": "You don't need to vote for people to assign responsibilities, assign them by lottery instead.",
     "home.asociaciones.title": "Associations, clubs & orgs",
-    "home.asociaciones.subtitle": "Dues, budget, projects, and responsibilities — one connected process.",
+    "home.asociaciones.subtitle": "Dues, budget, projects, and responsibilities, one connected process.",
     "home.cooperativas.title": "Cooperatives",
-    "home.cooperativas.subtitle": "Wage tables and participatory budgets, built for cooperatives.",
+    "home.cooperativas.subtitle": "Wage tabulators and participatory budgets, built for cooperatives.",
     "home.custom.title": "Create your own group and questions",
     "home.custom.subtitle": "Build your own group, questions, and rules, without a template.",
     "home.municipios.title": "Municipalities or countries",
     "home.municipios.subtitle": "Interactive demo: taxes and participatory budgeting at a country scale, with real data.",
     "home.share.title": "Invite others",
     "home.share.subtitle": "Share the app with your community. QR code and link ready to send.",
-    "home.title": "Organicen y decidan",
+    "home.title": "Organize and Decide",
     "home.tagline": "How much do we need to pay? What should we spend our resources on? Who's responsible for what? Decide together, with horizontal, fast, and effective processes, without giving power to anyone or dividing the group.",
     "flow.availableBudget": "Available budget (optional)",
     "flow.availableBudget.label": "Available budget",
@@ -530,7 +533,7 @@ const FRONTEND_STRINGS = {
     "share.copyCode": "copy code",
     "share.copyLink": "copy link",
     "share.emailInvite": "Send code and link by email",
-    "share.emailSubject": "Invitation to \"{name}\" on Organicen y decidan",
+    "share.emailSubject": "Invitation to \"{name}\" on Organize and Decide",
     "share.emailBody": "Join our group with this code: {code}\n\nOr open this direct link:\n{link}",
     "connected.exit": "Exit",
     "connected.approvedCount": "{n} approved member(s)",
@@ -579,15 +582,15 @@ const FRONTEND_STRINGS = {
     "result.trimmedTo": "Trimmed from {original} to {amount} to respect the {limit}x limit.",
     "coop.chooseAnother": "Do you want to run another process with this cooperative?",
     "coop.intro": "To make decision-making in a cooperative efficient, we combine Average-Based Democracy with majority and lottery processes.",
-    "coop.wageTable.title": "Wage table",
+    "coop.wageTable.title": "Wage tabulator",
     "coop.wageTable.subtitle": "Define the roles and decide how much each one earns, with or without an inequality limit.",
     "coop.budget.title": "Participatory budget",
     "coop.budget.subtitle": "With fixed expenses that can be adjusted, and the rest split among the items you propose.",
-    "coop.roles.title": "Selecting who's responsible",
+    "coop.roles.title": "Assigning responsibilities by sortition",
     "coop.roles.subtitle": "Assign roles and responsibilities by lottery, with or without monthly rotation.",
     "coop.noneForNow": "No, we're done for now",
     "coop.waitingChoice": "The facilitator hasn't chosen which process to start yet…",
-    "onb.welcome.title": "Welcome to Organicen y decidan!",
+    "onb.welcome.title": "Welcome to Organize and Decide!",
     "onb.welcome.text": "Let's organize and make decisions in a fair, transparent, and efficient way, without voting to give power to one or a few people, and without dividing society!",
     "onb.trueDemocracy.title": "What is real democracy?",
     "onb.trueDemocracy.text": "Electing representatives, or only being able to choose among the options that those already in power present to us, isn't the same as deciding together. Those processes concentrate power in few hands, and that makes it easier for that power to be abused, or for society to split into factions.\n\nThat's why we built this app: so any group can make decisions horizontally, without handing power to a single person, with full transparency and very fast, efficient processes.\n\nWith the right processes, deciding together unites and strengthens the group, while voting to give power to a few people can divide it.",
@@ -646,6 +649,9 @@ const FRONTEND_STRINGS = {
     "onbEx.chip.mayoria": "Majority",
     "onbEx.chip.sorteo": "Lottery",
     "onbEx.question": "Question: how much should the monthly dues be?",
+    "promo.intro1": "Are you part of, or want to start, a neighborhood association, a club, a cooperative, or any other organization?",
+    "promo.intro2": "This app helps you organize your group to make decisions in a transparent, horizontal, fair, and efficient way.",
+    "promo.intro3": "Includes participatory dues or fees and taxes, participatory budgets, assigning responsibilities by sortition, and more!",
   },
 };
 
@@ -948,7 +954,7 @@ function PdfLicitacionDetail({ flow, showNames }) {
             {catProposals.length === 0 && <div style={{ fontFamily: "Inter, sans-serif", fontSize: "10.5px", color: INK + "77" }}>Sin propuestas.</div>}
             {catProposals.map((p) => (
               <div key={p.id} style={{ display: "flex", justifyContent: "space-between", fontFamily: "Inter, sans-serif", fontSize: "10.5px", color: p.id === s.winner ? GREEN : INK + "99", fontWeight: p.id === s.winner ? 700 : 400, padding: "2px 0" }}>
-                <span>{p.id === s.winner && <i className="ti ti-trophy" style={{ marginRight: "3px", color: "#E0A458" }}></i>}{p.name}{showNames && p.memberName ? ` — ${p.memberName}` : ""}</span>
+                <span>{p.id === s.winner && <i className="ti ti-trophy" style={{ marginRight: "3px", color: "#E0A458" }}></i>}{p.name}{showNames && p.memberName ? ` (${p.memberName})` : ""}</span>
                 <span>{p.cost !== undefined ? formatMoney(p.cost) : ""}</span>
               </div>
             ))}
@@ -1679,7 +1685,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
       {isRankeado && inTieBreak && (
         <div className="flex flex-col gap-1.5 mb-2">
           <div className="dp-body text-[11px] mb-1" style={{ color: CORAL }}>
-            Hubo empate — vota de nuevo solo entre las opciones empatadas.
+            Hubo empate. Vota de nuevo solo entre las opciones empatadas.
           </div>
           {freshTieBreak.currentOptions.map((opt) => (
             <button
@@ -2271,7 +2277,7 @@ const MUN_INGRESOS_DEFAULT = [
   { id: "billon", label: "0.00034% (billonarios)", income: 1500000000, households: 0.00045, sub: "935 personas", cap: true, pct: 45 },
 ];
 const MUN_VIVIENDA_DEFAULT = [
-  { id: "c1", label: "1ª casa", sub: "80% de los hogares — exenta", households: 80, pct: 0 },
+  { id: "c1", label: "1ª casa", sub: "80% de los hogares, exenta", households: 80, pct: 0 },
   { id: "c2", label: "2ª casa", sub: "12% de los hogares", households: 12, pct: 5 },
   { id: "c3", label: "3ª casa", sub: "3% de los hogares", households: 3, pct: 10 },
   { id: "c4", label: "4ª casa", sub: "1% de los hogares", households: 1, pct: 15 },
@@ -2409,7 +2415,7 @@ function MunIngresosTab({ onNext, onSubmitResult, savedResult }) {
       ))}
       {badOrder && (
         <div className="dp-body text-[10.5px] rounded-lg p-2 mb-2" style={{ color: CORAL, background: CORAL + "15" }}>
-          Un nivel quedaría con menos dinero que el de abajo — ajusta antes de enviar.
+          Un nivel quedaría con menos dinero que el de abajo, ajusta antes de enviar.
         </div>
       )}
       <div className="dp-body text-[10px] rounded-lg p-2 mb-3" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
@@ -2872,7 +2878,7 @@ function MunFullResumen({ taxResults, presupuestoResult, otrasResults, onBack })
     <div>
       <div className="mb-2"><OnbIcon name="ti-list-check" /></div>
       <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>Resultados de todo el flujo</div>
-      <div className="dp-body text-[10.5px] mb-3" style={{ color: INK + "88" }}>Desde impuestos hasta presupuesto y otras preguntas — todo lo que decidieron en esta demostración.</div>
+      <div className="dp-body text-[10.5px] mb-3" style={{ color: INK + "88" }}>Desde impuestos hasta presupuesto y otras preguntas, todo lo que decidieron en esta demostración.</div>
 
       <div className="dp-body text-[11px] font-bold mb-1.5" style={{ color: INK }}>Impuestos</div>
       {taxSection("ingresos", "ti-cash", "Ingresos", taxResults.ingresos)}
@@ -2947,17 +2953,17 @@ function MunIntroCard({ onContinue }) {
         <div className="mb-2"><OnbIcon name="ti-flask" /></div>
         <div className="dp-display text-lg font-bold mb-3" style={{ color: INK }}>Antes de empezar: esto es solo una demostración</div>
         <div className="dp-body text-[13px] leading-relaxed" style={{ color: INK + "cc" }}>
-          <p className="mb-3">Lo que vas a ver a continuación <b style={{ color: INK }}>no es un proceso real de tu grupo</b> — es una demostración con datos reales, para que sientas cómo se viviría decidir estas cosas de forma horizontal.</p>
+          <p className="mb-3">Lo que vas a ver a continuación <b style={{ color: INK }}>no es un proceso real de tu grupo</b>, es una demostración con datos reales, para que sientas cómo se viviría decidir estas cosas de forma horizontal.</p>
 
-          <p className="mb-3">En la antigüedad, muchos filósofos y pensadores no consideraban que votar por personas fuera un proceso democrático. Para ellos, elegir representantes era un proceso <b style={{ color: INK }}>aristocrático u oligárquico</b>: el poder de decidir se le entregaba a unos cuantos, no se repartía entre todos.</p>
+          <p className="mb-3">En la antigüedad, muchos filósofos y pensadores no consideraban que votar por personas fuera un proceso democrático. Para ellos, elegir representantes era un proceso <b style={{ color: INK }}>aristocrático u oligárquico</b>; pues el poder de decidir se le entregaba a unos cuantos, no se repartía entre todos.</p>
 
           <p className="mb-3">Concentrar demasiado poder en pocas manos tiende a generar los mismos problemas, sin importar la época: <b style={{ color: INK }}>polariza a la sociedad</b>, y termina formando una clase política que vela más por sus propios intereses que por los del ciudadano común.</p>
 
-          <p className="mb-3">Ante las crisis que hoy viven las repúblicas capitalistas, muchas personas buscan la salida en algún salvador a quien entregarle el poder — o simplemente se desencantan de la política y dejan de participar.</p>
+          <p className="mb-3">Ante las crisis que hoy viven las repúblicas capitalistas, muchas personas buscan la salida en algún salvador a quien entregarle el poder, o simplemente se desencantan de la política y dejan de participar.</p>
 
           <p className="mb-3">Pero existe otro camino: podemos inyectar procesos de <b style={{ color: INK }}>democracia de verdad</b> al sistema actual, para quitarle poder a la clase política y repartirlo entre todos los ciudadanos. Lo que verás aquí son solo algunos de los primeros cambios posibles para transformar una república capitalista en una verdadera democracia.</p>
 
-          <p className="mb-3">En los ejemplos podrás elegir los impuestos de un país, y en qué se gastan — de las decisiones más importantes que cualquier sociedad tiene que tomar.</p>
+          <p className="mb-3">En los ejemplos podrás elegir los impuestos de un país, y en qué se gastan, de las decisiones más importantes que cualquier sociedad tiene que tomar.</p>
 
           <p>Y al final, te adelantamos otro sistema de organización política que podría remplazar por completo a la república, para repartir el poder y las responsabilidades entre todos los ciudadanos.</p>
         </div>
@@ -3249,6 +3255,7 @@ function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChooseP
 const APP_SHARE_URL = "https://dxprom-prog.github.io/dx-pruebas/";
 
 function SharePromoScreen({ onBack }) {
+  const lang = useLang();
   const cardRef = React.useRef(null);
   const [downloading, setDownloading] = useState(false);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(APP_SHARE_URL)}`;
@@ -3272,11 +3279,11 @@ function SharePromoScreen({ onBack }) {
     <div className="px-4 py-6 flex flex-col gap-4">
       <BackButton onClick={onBack} />
       <div ref={cardRef} className="rounded-2xl p-6 text-center" style={{ background: WARM_WHITE, border: `1.5px solid ${BLUE}33` }}>
-        <div className="dp-display text-xl font-bold mb-3" style={{ color: INK }}>Organicen y decidan</div>
+        <div className="dp-display text-xl font-bold mb-3" style={{ color: INK }}>{tf("home.title", lang)}</div>
         <div className="dp-body text-[12.5px] mb-4 text-left" style={{ color: INK + "aa", lineHeight: 1.55 }}>
-          <p className="mb-2.5">¿Eres parte de, o quieres formar, una asociación vecinal, un club, una cooperativa o cualquier organización?</p>
-          <p className="mb-2.5">Esta aplicación te ayuda a organizar a tu grupo para tomar decisiones de forma transparente, horizontal, justa y eficiente.</p>
-          <p>¡Incluye cuotas e impuestos participativos, presupuestos participativos, selección de responsabilidades por sorteo y más!</p>
+          <p className="mb-2.5">{tf("promo.intro1", lang)}</p>
+          <p className="mb-2.5">{tf("promo.intro2", lang)}</p>
+          <p>{tf("promo.intro3", lang)}</p>
         </div>
         <div className="flex justify-center mb-3">
           <img src={qrUrl} alt="Código QR" style={{ width: "160px", height: "160px", borderRadius: "12px" }} />
@@ -4424,7 +4431,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               />
               {lowered && (
                 <div className="dp-body text-[10px] mt-1" style={{ color: CORAL }}>
-                  <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>Estás bajando este gasto fijo — confirma que la cooperativa pueda cubrirlo con ese monto.
+                  <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>Estás bajando este gasto fijo, confirma que la cooperativa pueda cubrirlo con ese monto.
                 </div>
               )}
             </div>
@@ -4560,7 +4567,7 @@ function StageResultView({ stage }) {
         {r.roles.map((role) => (
           <div key={role.id} className="mb-1">
             <span className="font-semibold" style={{ color: INK }}>{role.name}</span>
-            {role.description && <span> — {role.description}</span>}
+            {role.description && <span> ({role.description})</span>}
           </div>
         ))}
       </div>
@@ -5041,7 +5048,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
         <div>
           {state.round > 1 && (
             <div className="dp-body text-[11px] mb-2 p-2 rounded-lg" style={{ background: CORAL + "15", color: CORAL }}>
-              {proposals.length > 0 ? "Empate en la ronda anterior — pueden editar sus propuestas o agregar nuevas antes de volver a votar." : "Esta categoría se quedó sin propuestas — ¡anímense a proponer algo!"}
+              {proposals.length > 0 ? "Empate en la ronda anterior. Pueden editar sus propuestas o agregar nuevas antes de volver a votar." : "Esta categoría se quedó sin propuestas. ¡Anímense a proponer algo!"}
             </div>
           )}
           {state.closesAt && <CountdownBadge closesAt={state.closesAt} closed={false} />}
@@ -5084,7 +5091,7 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
               ) : (
                 <div>
                   <div className="dp-body text-sm font-medium" style={{ color: INK }}>{p.name}</div>
-                  <div className="dp-body text-[11px]" style={{ color: INK + "77" }}>— {p.memberName}</div>
+                  <div className="dp-body text-[11px]" style={{ color: INK + "77" }}>({p.memberName})</div>
                   {p.description && <div className="dp-body text-[11px] mt-1" style={{ color: INK + "99" }}>{p.description}</div>}
                   {p.memberId === memberId && state.round > 1 && (
                     <button
@@ -5235,13 +5242,13 @@ function LicitacionCategoryCard({ backendUrl, groupCode, memberId, flowId, categ
 
       {state.status === "tie_final" && (
         <div className="dp-body text-[12px] p-2 rounded-lg" style={{ background: CORAL + "15", color: CORAL }}>
-          Empate definitivo después de {state.round} rondas — sin ganador claro en esta categoría.
+          Empate definitivo después de {state.round} rondas, sin ganador claro en esta categoría.
         </div>
       )}
 
       {(state.status === "empty" || state.status === "empty_closed") && (
         <div className="dp-body text-[12px] p-2 rounded-lg" style={{ background: INK + "0d", color: INK + "77" }}>
-          {state.status === "empty" ? "Sin propuestas por ahora — el facilitador puede reabrirla cuando terminen las demás categorías." : `Sin propuestas después de ${state.round} intento(s).`}
+          {state.status === "empty" ? "Sin propuestas por ahora, el facilitador puede reabrirla cuando terminen las demás categorías." : `Sin propuestas después de ${state.round} intento(s).`}
         </div>
       )}
     </div>
@@ -5687,7 +5694,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               % de recorte (alto y bajo) en los sueldos propuestos
               <InfoButton
                 title="% de recorte"
-                text={"Antes de promediar las propuestas de todos para cada puesto, se descartan las más extremas — las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas de ese puesto, y solo se promedia lo que queda en medio.\n\nEsto evita que una sola persona (o un grupito) jale el sueldo de un puesto hacia un extremo proponiendo un número absurdo a propósito."}
+                text={"Antes de promediar las propuestas de todos para cada puesto, se descartan las más extremas, las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas de ese puesto, y solo se promedia lo que queda en medio.\n\nEsto evita que una sola persona (o un grupito) jale el sueldo de un puesto hacia un extremo proponiendo un número absurdo a propósito."}
               />
             </span>
             <input
@@ -5698,7 +5705,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             />
           </label>
           <div className="dp-body text-[10px] mb-2" style={{ color: INK + "77" }}>
-            Antes de promediar cada puesto, se descartan las propuestas más extremas — solo afecta las etapas que todavía no se han calculado.
+            Antes de promediar cada puesto, se descartan las propuestas más extremas. Solo afecta las etapas que todavía no se han calculado.
           </div>
           <button
             onClick={saveConfig}
@@ -6754,11 +6761,11 @@ function LoginScreen({ onBack }) {
           <i className="ti ti-mail-opened" style={{ fontSize: "32px", color: BLUE }}></i>
           <div className="dp-display text-base font-semibold mt-2 mb-1.5" style={{ color: INK }}>Revisa tu correo</div>
           <div className="dp-body text-[13px] leading-relaxed" style={{ color: INK + "99" }}>
-            Te mandamos un link a<br /><b style={{ color: INK }}>{email}</b><br />ábrelo para entrar — no hace falta contraseña.
+            Te mandamos un link a<br /><b style={{ color: INK }}>{email}</b><br />ábrelo para entrar, no hace falta contraseña.
           </div>
           <div className="rounded-lg p-2.5 mt-3 text-left" style={{ background: CORAL + "15" }}>
             <span className="dp-body text-[11px]" style={{ color: CORAL }}>
-              <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>Cuida ese link — es tu forma de entrar a tu cuenta. No lo compartas ni lo borres hasta haber entrado.
+              <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>Cuida ese link, es tu forma de entrar a tu cuenta. No lo compartas ni lo borres hasta haber entrado.
             </span>
           </div>
         </div>
@@ -6807,6 +6814,10 @@ function DemocraciaPorPromedioConectada() {
     localStorage.setItem("org_lang", code);
     setLang(code);
   };
+
+  useEffect(() => {
+    document.title = tf("home.title", lang);
+  }, [lang]);
 
   const closeWelcome = () => {
     localStorage.setItem("org_onboarding_seen", "true");

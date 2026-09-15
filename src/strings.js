@@ -108,7 +108,7 @@ const STRINGS = {
     "responsabilidades.ajustarCandidatos": "The list wasn't approved. Select who you'd remove, and propose new candidates if you'd like.",
     "responsabilidades.fusionarCandidatos": "Review the final list: if two names are actually the same person (a typo or nickname), merge them into one.",
 
-    // Cooperatives: Wage table
+    // Cooperatives: Wage tabulator
     "tabulador.limiteVote": "Do you want there to be a limit on the inequality between the highest and lowest earner in our cooperative?",
     "tabulador.vecesPromedio": "How many times more do you think the highest earner in our cooperative should make, compared to the lowest earner? (assuming they work the same hours)",
     "tabulador.configurarPuestos": "Define the cooperative's roles.",
