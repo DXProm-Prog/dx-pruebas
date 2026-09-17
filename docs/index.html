@@ -355,6 +355,47 @@ const FRONTEND_STRINGS = {
     "mun.otras.tope": "Tope salarial",
     "mun.otras.horas": "Horas/semana",
     "mun.otras.retiro": "Retiro",
+    "mun.before": "antes",
+    "mun.after": "después",
+    "mun.proposalSent": "Propuesta enviada",
+    "mun.averagedWith": "Se promedió con las respuestas de otros ciudadanos del ejemplo.",
+    "mun.collectiveResults": "Resultados colectivos",
+    "mun.taxDecided": "impuesto decidido",
+    "mun.collects": "recauda",
+    "mun.continue": "Continuar →",
+    "mun.ingresos.title": "Impuestos a los ingresos",
+    "mun.ingresos.constraint": "No puedes dejar a un nivel con menos dinero después de impuestos que el de abajo.",
+    "mun.households": "{n} hogares",
+    "mun.people": "{n} personas",
+    "mun.collectsLabel": "Recauda",
+    "mun.badOrder": "Un nivel quedaría con menos dinero que el de abajo, ajusta antes de enviar.",
+    "mun.ingresos.history": "En los años 50 en EE. UU. (1951–1963), se cobraba un 91% a la porción de ingresos por encima de $200,000 al año.",
+    "mun.totalCollected": "Total recaudado",
+    "mun.sendProposal": "Enviar mi propuesta",
+    "mun.vivienda.title": "Impuesto a la vivienda",
+    "mun.productos.title": "Impuesto a productos",
+    "mun.riqueza.title": "Impuesto a la riqueza",
+    "mun.riqueza.richest1pct": "1% más rico",
+    "mun.riqueza.poorest50": "50% de la población con menos riqueza del país",
+    "mun.riqueza.householdsApprox": "~66,000,000 hogares",
+    "mun.riqueza.richestManWealth": "Riqueza del hombre más rico del país",
+    "mun.riqueza.distribution": "Distribución de la riqueza de EE. UU.",
+    "mun.riqueza.onlyTopPrefix": "El impuesto a la riqueza ",
+    "mun.riqueza.onlyTopBold": "solo aplica al 1% de las personas más ricas del país",
+    "mun.riqueza.onlyTopSuffix": ", que son dueñas del 33% de la riqueza.",
+    "mun.riqueza.netWorth": "patrimonio combinado: {amount}",
+    "mun.hide": "▼ ocultar",
+    "mun.subSecretariats": "▶ sub-secretarías",
+    "mun.distributePrompt": "Reparte el 100% de lo que le toca a {dept} entre sus sub-secretarías:",
+    "mun.legislatorsWarning": "Si los ciudadanos no lo reparten, los legisladores repartirán entre sub-secretarías.",
+    "mun.subSecTotal": "sub-secretarías: {sub}% de {total}%",
+    "mun.addSubSec": "+ agregar sub-secretaría o proyecto",
+    "mun.collectiveByDept": "Resultados colectivos por secretaría",
+    "mun.presupuesto.instructions": "Reparte lo recaudado entre secretaría, sub-secretaría, o un proyecto específico que creas importante. Las respuestas de todos se promedian por categoría.",
+    "mun.pctDistributed": "{pct}% repartido · {remaining}% por repartir",
+    "mun.addDept": "+ agregar otra secretaría",
+    "mun.promptSubName": "Nombre de la sub-secretaría o proyecto:",
+    "mun.promptDeptName": "Nombre de la nueva secretaría:",
     "mun.intro.title": "Antes de empezar: esto es solo una demostración",
     "mun.intro.p1": "Lo que vas a ver a continuación no es un proceso real de tu grupo, es una demostración con datos reales, para que sientas cómo se viviría decidir estas cosas de forma horizontal.",
     "mun.intro.p2": "En la antigüedad, muchos filósofos y pensadores no consideraban que votar por personas fuera un proceso democrático. Para ellos, elegir representantes era un proceso aristocrático u oligárquico; pues el poder de decidir se le entregaba a unos cuantos, no se repartía entre todos.",
@@ -655,6 +696,47 @@ const FRONTEND_STRINGS = {
     "mun.otras.tope": "Salary cap",
     "mun.otras.horas": "Hours/week",
     "mun.otras.retiro": "Retirement",
+    "mun.before": "before",
+    "mun.after": "after",
+    "mun.proposalSent": "Proposal sent",
+    "mun.averagedWith": "Averaged with other example citizens' answers.",
+    "mun.collectiveResults": "Collective results",
+    "mun.taxDecided": "tax decided",
+    "mun.collects": "collects",
+    "mun.continue": "Continue →",
+    "mun.ingresos.title": "Income taxes",
+    "mun.ingresos.constraint": "You can't leave a bracket with less after-tax money than the one below it.",
+    "mun.households": "{n} households",
+    "mun.people": "{n} people",
+    "mun.collectsLabel": "Collects",
+    "mun.badOrder": "A bracket would end up with less money than the one below it, adjust before sending.",
+    "mun.ingresos.history": "In the 1950s in the US (1951–1963), income above $200,000 a year was taxed at 91%.",
+    "mun.totalCollected": "Total collected",
+    "mun.sendProposal": "Send my proposal",
+    "mun.vivienda.title": "Housing tax",
+    "mun.productos.title": "Product tax",
+    "mun.riqueza.title": "Wealth tax",
+    "mun.riqueza.richest1pct": "richest 1%",
+    "mun.riqueza.poorest50": "50% of the population with the least wealth in the country",
+    "mun.riqueza.householdsApprox": "~66,000,000 households",
+    "mun.riqueza.richestManWealth": "Wealth of the richest man in the country",
+    "mun.riqueza.distribution": "US wealth distribution",
+    "mun.riqueza.onlyTopPrefix": "The wealth tax ",
+    "mun.riqueza.onlyTopBold": "only applies to the richest 1% of people in the country",
+    "mun.riqueza.onlyTopSuffix": ", who own 33% of the wealth.",
+    "mun.riqueza.netWorth": "combined net worth: {amount}",
+    "mun.hide": "▼ hide",
+    "mun.subSecretariats": "▶ sub-departments",
+    "mun.distributePrompt": "Split {dept}'s 100% share among its sub-departments:",
+    "mun.legislatorsWarning": "If citizens don't split it, legislators will split it among sub-departments.",
+    "mun.subSecTotal": "sub-departments: {sub}% of {total}%",
+    "mun.addSubSec": "+ add sub-department or project",
+    "mun.collectiveByDept": "Collective results by department",
+    "mun.presupuesto.instructions": "Split what was collected among departments, sub-departments, or a specific project you think is important. Everyone's answers are averaged by category.",
+    "mun.pctDistributed": "{pct}% distributed · {remaining}% left to distribute",
+    "mun.addDept": "+ add another department",
+    "mun.promptSubName": "Name of the sub-department or project:",
+    "mun.promptDeptName": "Name of the new department:",
     "mun.intro.title": "Before you start: this is just a demo",
     "mun.intro.p1": "What you're about to see is not a real process for your group, it's a demo using real data, so you can get a feel for what deciding these things horizontally would be like.",
     "mun.intro.p2": "In antiquity, many philosophers and thinkers didn't consider voting for people to be a democratic process. To them, electing representatives was an aristocratic or oligarchic process; the power to decide was handed to a few, not shared among everyone.",
@@ -2390,6 +2472,7 @@ function munFmt(n) {
 }
 
 function MunSliderRow({ item, pct, onChange, max, showIncome }) {
+  const lang = useLang();
   const netIncome = item.income !== undefined ? item.income * (1 - pct / 100) : null;
   return (
     <div className="rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
@@ -2399,8 +2482,8 @@ function MunSliderRow({ item, pct, onChange, max, showIncome }) {
       {item.sub && <div className="dp-body text-[9px] mb-1" style={{ color: INK + "77" }}>{item.sub}</div>}
       {showIncome && item.income !== undefined && (
         <div className="flex justify-between dp-mono text-[9.5px] mb-1" style={{ color: INK + "99" }}>
-          <span>antes: {munFmt(item.income)}</span>
-          <span>después: <b style={{ color: GREEN }}>{munFmt(netIncome)}</b></span>
+          <span>{tf("mun.before", lang)}: {munFmt(item.income)}</span>
+          <span>{tf("mun.after", lang)}: <b style={{ color: GREEN }}>{munFmt(netIncome)}</b></span>
         </div>
       )}
       <div className="flex items-center gap-1.5 mb-1">
@@ -2431,17 +2514,18 @@ function MunSliderRow({ item, pct, onChange, max, showIncome }) {
 }
 
 function MunResultCard({ rows, totalLabel, totalValue, onContinue }) {
+  const lang = useLang();
   return (
     <div className="rounded-xl p-3.5" style={{ background: PAGE_BG }}>
-      <div className="dp-display text-sm font-bold" style={{ color: INK }}>Propuesta enviada</div>
-      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>Se promedió con las respuestas de otros ciudadanos del ejemplo.</div>
-      <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Resultados colectivos</div>
+      <div className="dp-display text-sm font-bold" style={{ color: INK }}>{tf("mun.proposalSent", lang)}</div>
+      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>{tf("mun.averagedWith", lang)}</div>
+      <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>{tf("mun.collectiveResults", lang)}</div>
       {rows.map((r, i) => (
         <div key={i} className="py-1" style={{ borderTop: `1px solid ${BLUE}15` }}>
           <div className="dp-body text-[10.5px] font-semibold" style={{ color: INK }}>{r.label}</div>
           <div className="flex justify-between dp-mono text-[10px]" style={{ color: INK + "99" }}>
-            <span>{r.pct !== undefined ? <React.Fragment>impuesto decidido: <b style={{ color: BLUE }}>{r.pct.toFixed(1)}%</b></React.Fragment> : ""}</span>
-            <span>recauda: <b style={{ color: GREEN }}>{munFmt(r.collected)}</b></span>
+            <span>{r.pct !== undefined ? <React.Fragment>{tf("mun.taxDecided", lang)}: <b style={{ color: BLUE }}>{r.pct.toFixed(1)}%</b></React.Fragment> : ""}</span>
+            <span>{tf("mun.collects", lang)}: <b style={{ color: GREEN }}>{munFmt(r.collected)}</b></span>
           </div>
         </div>
       ))}
@@ -2449,12 +2533,13 @@ function MunResultCard({ rows, totalLabel, totalValue, onContinue }) {
         <span className="dp-body text-[11px]" style={{ color: INK + "99" }}>{totalLabel}</span>
         <span className="dp-display text-base font-bold" style={{ color: BLUE }}>{totalValue}</span>
       </div>
-      <button onClick={onContinue} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Continuar →</button>
+      <button onClick={onContinue} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>{tf("mun.continue", lang)}</button>
     </div>
   );
 }
 
 function MunIngresosTab({ onNext, onSubmitResult, savedResult }) {
+  const lang = useLang();
   const [items, setItems] = useState(MUN_INGRESOS_DEFAULT);
   const [submitted, setSubmitted] = useState(!!savedResult);
   const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
@@ -2470,31 +2555,31 @@ function MunIngresosTab({ onNext, onSubmitResult, savedResult }) {
       const total = rows.reduce((s, r) => s + r.collected, 0);
       return { rows, total };
     })();
-    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
+    return <MunResultCard rows={rows} totalLabel={tf("mun.totalCollected", lang)} totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
   return (
     <div>
       <div className="mb-2"><OnbIcon name="ti-cash" /></div>
-      <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>Impuestos a los ingresos</div>
-      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>No puedes dejar a un nivel con menos dinero después de impuestos que el de abajo.</div>
+      <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>{tf("mun.ingresos.title", lang)}</div>
+      <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>{tf("mun.ingresos.constraint", lang)}</div>
       {items.map((item, i) => (
         <div key={item.id}>
           <MunSliderRow item={item} pct={item.pct} onChange={(v) => setPct(i, v)} max={100} showIncome={true} />
           <div className="flex justify-between dp-body text-[9.5px] mb-2 px-1" style={{ color: INK + "88" }}>
-            <span>{item.households >= 1 ? Math.round(item.households * 1000000).toLocaleString("en-US") + " hogares" : Math.round(item.households * 1000000).toLocaleString("en-US") + " personas"}</span>
-            <span>Recauda: <b style={{ color: BLUE }}>{munFmt(item.income * (item.pct / 100) * item.households * 1000000)}</b></span>
+            <span>{item.households >= 1 ? tf("mun.households", lang, { n: Math.round(item.households * 1000000).toLocaleString("en-US") }) : tf("mun.people", lang, { n: Math.round(item.households * 1000000).toLocaleString("en-US") })}</span>
+            <span>{tf("mun.collectsLabel", lang)}: <b style={{ color: BLUE }}>{munFmt(item.income * (item.pct / 100) * item.households * 1000000)}</b></span>
           </div>
         </div>
       ))}
       {badOrder && (
         <div className="dp-body text-[10.5px] rounded-lg p-2 mb-2" style={{ color: CORAL, background: CORAL + "15" }}>
-          Un nivel quedaría con menos dinero que el de abajo, ajusta antes de enviar.
+          {tf("mun.badOrder", lang)}
         </div>
       )}
       <div className="dp-body text-[10px] rounded-lg p-2 mb-3" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
         <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
-        En los años 50 en EE. UU. (1951–1963), se cobraba un 91% a la porción de ingresos por encima de $200,000 al año.
+        {tf("mun.ingresos.history", lang)}
       </div>
       <button
         onClick={() => {
@@ -2508,13 +2593,14 @@ function MunIngresosTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium disabled:opacity-40"
         style={{ background: BLUE }}
       >
-        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{tf("mun.sendProposal", lang)}
       </button>
     </div>
   );
 }
 
 function MunViviendaTab({ onNext, onSubmitResult, savedResult }) {
+  const lang = useLang();
   const [items, setItems] = useState(MUN_VIVIENDA_DEFAULT);
   const [submitted, setSubmitted] = useState(!!savedResult);
   const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
@@ -2527,19 +2613,19 @@ function MunViviendaTab({ onNext, onSubmitResult, savedResult }) {
         const total = rows.reduce((s, r) => s + r.collected, 0);
         return { rows, total };
       })();
-    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
+    return <MunResultCard rows={rows} totalLabel={tf("mun.totalCollected", lang)} totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
   return (
     <div>
       <div className="mb-2"><OnbIcon name="ti-home" /></div>
-      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Impuesto a la vivienda</div>
+      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>{tf("mun.vivienda.title", lang)}</div>
       {items.map((item, i) => (
         <div key={item.id}>
           <MunSliderRow item={item} pct={item.pct} onChange={(v) => setPct(i, v)} max={100} showIncome={false} />
           <div className="flex justify-between dp-body text-[9.5px] mb-2 px-1" style={{ color: INK + "88" }}>
             <span></span>
-            <span>Recauda: <b style={{ color: BLUE }}>{munFmt(350000 * (item.pct / 100) * item.households * 1330000)}</b></span>
+            <span>{tf("mun.collectsLabel", lang)}: <b style={{ color: BLUE }}>{munFmt(350000 * (item.pct / 100) * item.households * 1330000)}</b></span>
           </div>
         </div>
       ))}
@@ -2553,13 +2639,14 @@ function MunViviendaTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{tf("mun.sendProposal", lang)}
       </button>
     </div>
   );
 }
 
 function MunProductosTab({ onNext, onSubmitResult, savedResult }) {
+  const lang = useLang();
   const [items, setItems] = useState(MUN_PRODUCTOS_DEFAULT);
   const [submitted, setSubmitted] = useState(!!savedResult);
   const setPct = (i, v) => setItems(items.map((it, idx) => (idx === i ? { ...it, pct: v } : it)));
@@ -2572,19 +2659,19 @@ function MunProductosTab({ onNext, onSubmitResult, savedResult }) {
         const total = rows.reduce((s, r) => s + r.collected, 0);
         return { rows, total };
       })();
-    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
+    return <MunResultCard rows={rows} totalLabel={tf("mun.totalCollected", lang)} totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
   return (
     <div>
       <div className="mb-2"><OnbIcon name="ti-shopping-cart" /></div>
-      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Impuesto a productos</div>
+      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>{tf("mun.productos.title", lang)}</div>
       {items.map((item, i) => (
         <div key={item.id}>
           <MunSliderRow item={item} pct={item.pct} onChange={(v) => setPct(i, v)} max={100} showIncome={false} />
           <div className="flex justify-between dp-body text-[9.5px] mb-2 px-1" style={{ color: INK + "88" }}>
             <span></span>
-            <span>Recauda: <b style={{ color: BLUE }}>{munFmt(item.gasto * (item.pct / 100))}</b></span>
+            <span>{tf("mun.collectsLabel", lang)}: <b style={{ color: BLUE }}>{munFmt(item.gasto * (item.pct / 100))}</b></span>
           </div>
         </div>
       ))}
@@ -2598,7 +2685,7 @@ function MunProductosTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{tf("mun.sendProposal", lang)}
       </button>
     </div>
   );
@@ -2622,28 +2709,30 @@ function MunPieSVG({ slices }) {
 }
 
 function MunRiquezaTab({ onNext, onSubmitResult, savedResult }) {
+  const lang = useLang();
   const [pct, setPct] = useState(2);
   const [submitted, setSubmitted] = useState(!!savedResult);
+  const richest1pct = tf("mun.riqueza.richest1pct", lang);
 
   if (submitted) {
     const { rows, total } =
       savedResult ||
       (() => {
         const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
-        return { rows: [{ label: "1% más rico", pct, collected }], total: collected };
+        return { rows: [{ label: richest1pct, pct, collected }], total: collected };
       })();
-    return <MunResultCard rows={rows} totalLabel="Total recaudado" totalValue={munFmt(total)} onContinue={onNext} />;
+    return <MunResultCard rows={rows} totalLabel={tf("mun.totalCollected", lang)} totalValue={munFmt(total)} onContinue={onNext} />;
   }
 
   const comparisons = [
-    { label: "50% de la población con menos riqueza del país", extra: "~66,000,000 hogares", value: 60000, color: INK },
-    { label: "Riqueza del hombre más rico del país", extra: "", value: 839000000000, color: CORAL },
+    { label: tf("mun.riqueza.poorest50", lang), extra: tf("mun.riqueza.householdsApprox", lang), value: 60000, color: INK },
+    { label: tf("mun.riqueza.richestManWealth", lang), extra: "", value: 839000000000, color: CORAL },
   ];
 
   return (
     <div>
       <div className="mb-2"><OnbIcon name="ti-building-bank" /></div>
-      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>Impuesto a la riqueza</div>
+      <div className="dp-display text-base font-bold mb-2.5" style={{ color: INK }}>{tf("mun.riqueza.title", lang)}</div>
       {comparisons.map((c, i) => (
         <div key={i} className="flex justify-between items-center rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
           <div>
@@ -2653,7 +2742,7 @@ function MunRiquezaTab({ onNext, onSubmitResult, savedResult }) {
           <div className="dp-mono font-bold" style={{ fontSize: c.value > 1e9 ? "12px" : "13px", color: c.color }}>{munFmt(c.value)}</div>
         </div>
       ))}
-      <div className="dp-body text-[11px] font-semibold my-2.5" style={{ color: INK }}>Distribución de la riqueza de EE. UU.</div>
+      <div className="dp-body text-[11px] font-semibold my-2.5" style={{ color: INK }}>{tf("mun.riqueza.distribution", lang)}</div>
       <div className="flex gap-2.5 items-center mb-2.5">
         <div><MunPieSVG slices={MUN_WEALTH_SLICES} /></div>
         <div className="flex-1">
@@ -2666,33 +2755,34 @@ function MunRiquezaTab({ onNext, onSubmitResult, savedResult }) {
         </div>
       </div>
       <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>
-        El impuesto a la riqueza <b style={{ color: INK }}>solo aplica al 1% de las personas más ricas del país</b>, que son dueñas del 33% de la riqueza.
+        {tf("mun.riqueza.onlyTopPrefix", lang)}<b style={{ color: INK }}>{tf("mun.riqueza.onlyTopBold", lang)}</b>{tf("mun.riqueza.onlyTopSuffix", lang)}
       </div>
       <div className="dp-body text-[10px] rounded-lg p-2 mb-2.5" style={{ color: INK + "77", background: PAGE_BG, lineHeight: 1.5 }}>
         <i className="ti ti-history" style={{ marginRight: "4px" }}></i>
-        En los años 50 en EE. UU. (1951–1963), se cobraba un 91% a la porción de ingresos por encima de $200,000 al año.
+        {tf("mun.ingresos.history", lang)}
       </div>
-      <MunSliderRow item={{ label: "1% más rico", sub: `patrimonio combinado: ${munFmt(MUN_RIQUEZA_TOTAL)}` }} pct={pct} onChange={setPct} max={100} showIncome={false} />
+      <MunSliderRow item={{ label: richest1pct, sub: tf("mun.riqueza.netWorth", lang, { amount: munFmt(MUN_RIQUEZA_TOTAL) }) }} pct={pct} onChange={setPct} max={100} showIncome={false} />
       <div className="flex justify-between dp-body text-[9.5px] mb-3 px-1" style={{ color: INK + "88" }}>
         <span></span>
-        <span>Recauda: <b style={{ color: BLUE }}>{munFmt(MUN_RIQUEZA_TOTAL * (pct / 100))}</b></span>
+        <span>{tf("mun.collectsLabel", lang)}: <b style={{ color: BLUE }}>{munFmt(MUN_RIQUEZA_TOTAL * (pct / 100))}</b></span>
       </div>
       <button
         onClick={() => {
           const collected = MUN_RIQUEZA_TOTAL * (pct / 100);
-          if (onSubmitResult) onSubmitResult({ rows: [{ label: "1% más rico", pct, collected }], total: collected });
+          if (onSubmitResult) onSubmitResult({ rows: [{ label: richest1pct, pct, collected }], total: collected });
           setSubmitted(true);
         }}
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{tf("mun.sendProposal", lang)}
       </button>
     </div>
   );
 }
 
 function MunDeptRow({ dept, deptos, idx, onSetPct, expanded, onToggle, onSetSubPct, onAddSub }) {
+  const lang = useLang();
   const used = deptos.reduce((s, d, i) => (i === idx ? s : s + d.pct), 0);
   const max = Math.max(0, 100 - used);
   const subTotal = dept.subs.reduce((s, x) => s + (x.pct || 0), 0);
@@ -2701,7 +2791,7 @@ function MunDeptRow({ dept, deptos, idx, onSetPct, expanded, onToggle, onSetSubP
     <div className="rounded-lg p-2.5 mb-1.5" style={{ background: PAGE_BG }}>
       <div className="flex justify-between items-center mb-1">
         <span className="dp-body text-[11px] font-semibold" style={{ color: INK }}>{dept.label}</span>
-        <button onClick={onToggle} className="dp-body text-[10px]" style={{ color: BLUE }}>{expanded ? "▼ ocultar" : "▶ sub-secretarías"}</button>
+        <button onClick={onToggle} className="dp-body text-[10px]" style={{ color: BLUE }}>{expanded ? tf("mun.hide", lang) : tf("mun.subSecretariats", lang)}</button>
       </div>
       <div className="flex items-center gap-1.5 mb-1">
         <button onClick={() => onSetPct(Math.max(0, dept.pct - 1))} className="rounded-full flex items-center justify-center" style={{ width: "22px", height: "22px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>−</button>
@@ -2720,8 +2810,8 @@ function MunDeptRow({ dept, deptos, idx, onSetPct, expanded, onToggle, onSetSubP
       <div className="dp-body text-[9.5px]" style={{ color: INK + "88" }}>{munFmt(MUN_TOTAL_BUDGET * (dept.pct / 100))}</div>
       {expanded && (
         <div className="mt-2 pt-2" style={{ borderTop: `1px dashed ${BLUE}33` }}>
-          <div className="dp-body text-[9px] mb-0.5" style={{ color: INK + "77" }}>Reparte el 100% de lo que le toca a {dept.label} entre sus sub-secretarías:</div>
-          <div className="dp-body text-[8.5px] mb-1.5 italic" style={{ color: CORAL }}>Si los ciudadanos no lo reparten, los legisladores repartirán entre sub-secretarías.</div>
+          <div className="dp-body text-[9px] mb-0.5" style={{ color: INK + "77" }}>{tf("mun.distributePrompt", lang, { dept: dept.label })}</div>
+          <div className="dp-body text-[8.5px] mb-1.5 italic" style={{ color: CORAL }}>{tf("mun.legislatorsWarning", lang)}</div>
           {dept.subs.map((sub, si) => (
             <div key={si} className="flex items-center gap-1.5 mb-1">
               <span className="dp-body text-[10px] flex-1" style={{ color: INK }}>{sub.n || sub}</span>
@@ -2730,8 +2820,8 @@ function MunDeptRow({ dept, deptos, idx, onSetPct, expanded, onToggle, onSetSubP
               <button onClick={() => onSetSubPct(si, 1)} className="rounded-full flex items-center justify-center" style={{ width: "18px", height: "18px", fontSize: "11px", border: `1px solid ${BLUE}55`, background: "#fff", color: BLUE }}>+</button>
             </div>
           ))}
-          <div className="dp-body text-[9.5px] text-right" style={{ color: subTotal === 100 ? GREEN : CORAL }}>sub-secretarías: {subTotal}% de {dept.pct}%</div>
-          <button onClick={onAddSub} className="dp-body text-[9.5px] font-medium mt-1.5" style={{ color: BLUE, border: `1.5px dashed ${BLUE}55`, borderRadius: "999px", padding: "4px 10px", background: "none" }}>+ agregar sub-secretaría o proyecto</button>
+          <div className="dp-body text-[9.5px] text-right" style={{ color: subTotal === 100 ? GREEN : CORAL }}>{tf("mun.subSecTotal", lang, { sub: subTotal, total: dept.pct })}</div>
+          <button onClick={onAddSub} className="dp-body text-[9.5px] font-medium mt-1.5" style={{ color: BLUE, border: `1.5px dashed ${BLUE}55`, borderRadius: "999px", padding: "4px 10px", background: "none" }}>{tf("mun.addSubSec", lang)}</button>
         </div>
       )}
     </div>
@@ -2739,6 +2829,7 @@ function MunDeptRow({ dept, deptos, idx, onSetPct, expanded, onToggle, onSetSubP
 }
 
 function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
+  const lang = useLang();
   const [deptos, setDeptos] = useState(MUN_DEPTOS_DEFAULT.map((d) => ({ ...d, subs: d.subs.map((n) => ({ n, pct: 0 })) })));
   const [expanded, setExpanded] = useState({});
   const [submitted, setSubmitted] = useState(!!savedResult);
@@ -2757,12 +2848,12 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
     setDeptos(deptos.map((d, idx) => (idx === di ? { ...d, subs: newSubs } : d)));
   };
   const addSub = async (di) => {
-    const name = await customPrompt("Nombre de la sub-secretaría o proyecto:");
+    const name = await customPrompt(tf("mun.promptSubName", lang));
     if (!name) return;
     setDeptos(deptos.map((d, idx) => (idx === di ? { ...d, subs: [...d.subs, { n: name, pct: 0 }] } : d)));
   };
   const addDept = async () => {
-    const name = await customPrompt("Nombre de la nueva secretaría:");
+    const name = await customPrompt(tf("mun.promptDeptName", lang));
     if (!name) return;
     setDeptos([...deptos, { id: `custom_${Date.now()}`, label: name, pct: 0, subs: [] }]);
   };
@@ -2784,9 +2875,9 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
     const avgDeptos = savedResult || computeAvgDeptos();
     return (
       <div className="rounded-xl p-3.5" style={{ background: PAGE_BG }}>
-        <div className="dp-display text-sm font-bold" style={{ color: INK }}>Propuesta enviada</div>
-        <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>Se promedió con las respuestas de otros ciudadanos del ejemplo.</div>
-        <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>Resultados colectivos por secretaría</div>
+        <div className="dp-display text-sm font-bold" style={{ color: INK }}>{tf("mun.proposalSent", lang)}</div>
+        <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>{tf("mun.averagedWith", lang)}</div>
+        <div className="dp-body text-[11px] font-semibold mb-1.5" style={{ color: INK }}>{tf("mun.collectiveByDept", lang)}</div>
         {avgDeptos.map((d, i) => (
           <div key={d.id} className="py-1" style={{ borderTop: `1px solid ${BLUE}15` }}>
             <div className="flex justify-between items-center">
@@ -2814,7 +2905,7 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
             )}
           </div>
         ))}
-        <button onClick={onNext} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>Continuar →</button>
+        <button onClick={onNext} className="dp-body w-full mt-3 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>{tf("mun.continue", lang)}</button>
       </div>
     );
   }
@@ -2822,9 +2913,9 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
   return (
     <div>
       <div className="mb-2"><OnbIcon name="ti-chart-pie" /></div>
-      <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>Presupuesto participativo</div>
+      <div className="dp-display text-base font-bold mb-1" style={{ color: INK }}>{tf("mun.tab.presupuesto", lang)}</div>
       <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "99", lineHeight: 1.5 }}>
-        Reparte lo recaudado entre secretaría, sub-secretaría, o un proyecto específico que creas importante. Las respuestas de todos se promedian por categoría.
+        {tf("mun.presupuesto.instructions", lang)}
       </div>
       {deptos.map((dept, i) => (
         <MunDeptRow
@@ -2840,9 +2931,9 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
         />
       ))}
       <div className="dp-body text-xs font-bold text-center my-2 py-2 rounded-lg" style={{ background: totalPct === 100 ? GREEN + "18" : BLUE_SOFT, color: totalPct === 100 ? GREEN : INK }}>
-        {totalPct}% repartido · {100 - totalPct}% por repartir
+        {tf("mun.pctDistributed", lang, { pct: totalPct, remaining: 100 - totalPct })}
       </div>
-      <button onClick={addDept} className="dp-body w-full text-xs py-2 rounded-full font-medium mb-2" style={{ border: `1.5px dashed ${BLUE}55`, color: BLUE }}>+ agregar otra secretaría</button>
+      <button onClick={addDept} className="dp-body w-full text-xs py-2 rounded-full font-medium mb-2" style={{ border: `1.5px dashed ${BLUE}55`, color: BLUE }}>{tf("mun.addDept", lang)}</button>
       <button
         onClick={() => {
           if (onSubmitResult) onSubmitResult(computeAvgDeptos());
@@ -2851,7 +2942,7 @@ function MunPresupuestoTab({ onNext, onSubmitResult, savedResult }) {
         className="dp-body w-full text-xs py-2.5 rounded-full text-white font-medium"
         style={{ background: BLUE }}
       >
-        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar mi propuesta
+        <i className="ti ti-send" style={{ marginRight: "4px" }}></i>{tf("mun.sendProposal", lang)}
       </button>
     </div>
   );
