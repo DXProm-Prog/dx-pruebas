@@ -511,6 +511,58 @@ const FRONTEND_STRINGS = {
     "sorteo.drawing": "Sorteando…",
     "sorteo.drawAgain": "Sortear de nuevo",
     "sorteo.drawButton": "Sortear",
+    "nq.title": "Nueva pregunta",
+    "nq.rule.simple": "Simple",
+    "nq.rule.absoluta": "Absoluta",
+    "nq.rule.calificada": "Calificada",
+    "nq.rule.rankeado": "Voto ranqueado",
+    "nq.rule.segundaVuelta": "Segunda vuelta electoral",
+    "nq.ruleDef.simple": "Gana la opción con más votos, sin importar el porcentaje.",
+    "nq.ruleDef.absoluta": "La opción ganadora necesita más del 50% de los votos.",
+    "nq.ruleDef.calificada": "La opción ganadora necesita superar el porcentaje que tú definas (mayor al 50%).",
+    "nq.ruleDef.rankeado": "Cada quien ordena las opciones por preferencia. La app calcula sola, en rondas, quién gana: elimina la menos votada y reparte esos votos a la siguiente preferencia, hasta que alguien pase el 50%.",
+    "nq.ruleDef.segundaVuelta": "Se vota por una sola opción a la vez, en rondas. Al cerrarse una ronda (por tiempo o porque tú la cierras), se elimina a las opciones menos votadas que definas, y se vuelve a votar entre las que quedan.",
+    "nq.needTwoOptions": "Agrega al menos 2 opciones",
+    "nq.needTwoCandidates": "Agrega al menos 2 candidatos",
+    "nq.writeQuestion": "Escribe la pregunta…",
+    "nq.trim": "Recorte",
+    "nq.sorteoExplain": "Se elige al azar entre estos candidatos. Nunca se repite el mismo ganador hasta que todos los demás hayan salido una vez.",
+    "nq.candidateN": "Candidato {n}",
+    "nq.addCandidate": "+ agregar candidato",
+    "nq.optionN": "Opción {n}",
+    "nq.addOption": "+ agregar opción",
+    "nq.majoritySection": "Mayoría",
+    "nq.requiresMoreThan": "requiere más de",
+    "nq.numRounds": "Número de rondas",
+    "nq.minPercentSurvive": "% mínimo para sobrevivir",
+    "nq.roundsEliminateNote": "en cada ronda se eliminan las opciones sin votos y las que estén por debajo de este %",
+    "nq.hideDefs": "ocultar definiciones",
+    "nq.whatMeans": "¿qué significa cada una?",
+    "nq.timeLimitRound": "Límite de tiempo por ronda:",
+    "nq.timeLimitAnswer": "Límite de tiempo para responder:",
+    "nq.no": "No",
+    "nq.yes": "Sí",
+    "nq.days": "Días",
+    "nq.hours": "Horas",
+    "nq.minutes": "Min",
+    "nq.autoCloses": "al pasar el tiempo, la ronda se cierra sola y avanza.",
+    "nq.manualCloses": "sin límite: tú cierras cada ronda a mano.",
+    "nq.hidePreview": "Ocultar vista previa",
+    "nq.preview": "Vista previa",
+    "nq.howTheyllSeeIt": "Así lo verán los participantes",
+    "nq.writeQuestionAbove": "Escribe tu pregunta arriba…",
+    "nq.previewTrim": "recorte: {pct}%",
+    "nq.previewSorteo": "se elige al azar entre los candidatos",
+    "nq.previewNeedsMoreThan": "necesita más del {pct}%",
+    "nq.previewNeedsAbsoluta": "necesita más del 50%",
+    "nq.previewWinsMostVoted": "gana la más votada",
+    "nq.previewRanked": "voto ranqueado (automático)",
+    "nq.previewRounds": "{n} rondas, elimina menos del {pct}%",
+    "nq.adding": "Agregando…",
+    "nq.addQuestion": "Agregar pregunta",
+    "error.closeStage": "Error al cerrar la etapa",
+    "error.save": "Error al guardar",
+    "error.continueFlow": "Error al continuar",
     "mun.intro.title": "Antes de empezar: esto es solo una demostración",
     "mun.intro.p1": "Lo que vas a ver a continuación no es un proceso real de tu grupo, es una demostración con datos reales, para que sientas cómo se viviría decidir estas cosas de forma horizontal.",
     "mun.intro.p2": "En la antigüedad, muchos filósofos y pensadores no consideraban que votar por personas fuera un proceso democrático. Para ellos, elegir representantes era un proceso aristocrático u oligárquico; pues el poder de decidir se le entregaba a unos cuantos, no se repartía entre todos.",
@@ -967,6 +1019,58 @@ const FRONTEND_STRINGS = {
     "sorteo.drawing": "Drawing…",
     "sorteo.drawAgain": "Draw again",
     "sorteo.drawButton": "Draw",
+    "nq.title": "New question",
+    "nq.rule.simple": "Simple",
+    "nq.rule.absoluta": "Absolute",
+    "nq.rule.calificada": "Qualified",
+    "nq.rule.rankeado": "Ranked voting",
+    "nq.rule.segundaVuelta": "Runoff election",
+    "nq.ruleDef.simple": "The option with the most votes wins, regardless of percentage.",
+    "nq.ruleDef.absoluta": "The winning option needs more than 50% of the votes.",
+    "nq.ruleDef.calificada": "The winning option needs to pass the percentage you set (over 50%).",
+    "nq.ruleDef.rankeado": "Everyone ranks the options by preference. The app calculates the winner on its own, in rounds: it eliminates the least-voted option and passes those votes to the next preference, until someone passes 50%.",
+    "nq.ruleDef.segundaVuelta": "People vote for a single option at a time, in rounds. When a round closes (by time or because you close it), the least-voted options you set are eliminated, and voting happens again among those left.",
+    "nq.needTwoOptions": "Add at least 2 options",
+    "nq.needTwoCandidates": "Add at least 2 candidates",
+    "nq.writeQuestion": "Write the question…",
+    "nq.trim": "Trim",
+    "nq.sorteoExplain": "Chosen at random among these candidates. The same winner never repeats until everyone else has had a turn.",
+    "nq.candidateN": "Candidate {n}",
+    "nq.addCandidate": "+ add candidate",
+    "nq.optionN": "Option {n}",
+    "nq.addOption": "+ add option",
+    "nq.majoritySection": "Majority",
+    "nq.requiresMoreThan": "requires more than",
+    "nq.numRounds": "Number of rounds",
+    "nq.minPercentSurvive": "Minimum % to survive",
+    "nq.roundsEliminateNote": "each round eliminates options with no votes and those below this %",
+    "nq.hideDefs": "hide definitions",
+    "nq.whatMeans": "what does each one mean?",
+    "nq.timeLimitRound": "Time limit per round:",
+    "nq.timeLimitAnswer": "Time limit to answer:",
+    "nq.no": "No",
+    "nq.yes": "Yes",
+    "nq.days": "Days",
+    "nq.hours": "Hours",
+    "nq.minutes": "Min",
+    "nq.autoCloses": "once time is up, the round closes on its own and moves on.",
+    "nq.manualCloses": "no limit: you close each round by hand.",
+    "nq.hidePreview": "Hide preview",
+    "nq.preview": "Preview",
+    "nq.howTheyllSeeIt": "How participants will see it",
+    "nq.writeQuestionAbove": "Write your question above…",
+    "nq.previewTrim": "trim: {pct}%",
+    "nq.previewSorteo": "chosen at random among the candidates",
+    "nq.previewNeedsMoreThan": "needs more than {pct}%",
+    "nq.previewNeedsAbsoluta": "needs more than 50%",
+    "nq.previewWinsMostVoted": "the most voted wins",
+    "nq.previewRanked": "ranked voting (automatic)",
+    "nq.previewRounds": "{n} rounds, eliminates below {pct}%",
+    "nq.adding": "Adding…",
+    "nq.addQuestion": "Add question",
+    "error.closeStage": "Error closing the stage",
+    "error.save": "Error saving",
+    "error.continueFlow": "Error continuing",
     "mun.intro.title": "Before you start: this is just a demo",
     "mun.intro.p1": "What you're about to see is not a real process for your group, it's a demo using real data, so you can get a feel for what deciding these things horizontally would be like.",
     "mun.intro.p2": "In antiquity, many philosophers and thinkers didn't consider voting for people to be a democratic process. To them, electing representatives was an aristocratic or oligarchic process; the power to decide was handed to a few, not shared among everyone.",
@@ -4021,6 +4125,7 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
 }
 
 function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
+  const lang = useLang();
   const [type, setType] = useState("promedio");
   const [text, setText] = useState("");
   const [trimPercent, setTrimPercent] = useState("5");
@@ -4044,24 +4149,24 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 
   const totalMinutes = () => Number(days || 0) * 1440 + Number(hours || 0) * 60 + Number(minutes || 0);
 
-  const RULE_LABEL = { simple: "Simple", absoluta: "Absoluta", calificada: "Calificada", rankeado: "Voto ranqueado", segunda_vuelta: "Segunda vuelta electoral" };
+  const RULE_LABEL = { simple: tf("nq.rule.simple", lang), absoluta: tf("nq.rule.absoluta", lang), calificada: tf("nq.rule.calificada", lang), rankeado: tf("nq.rule.rankeado", lang), segunda_vuelta: tf("nq.rule.segundaVuelta", lang) };
   const RULE_DEF = {
-    simple: "Gana la opción con más votos, sin importar el porcentaje.",
-    absoluta: "La opción ganadora necesita más del 50% de los votos.",
-    calificada: "La opción ganadora necesita superar el porcentaje que tú definas (mayor al 50%).",
-    rankeado: "Cada quien ordena las opciones por preferencia. La app calcula sola, en rondas, quién gana: elimina la menos votada y reparte esos votos a la siguiente preferencia, hasta que alguien pase el 50%.",
-    segunda_vuelta: "Se vota por una sola opción a la vez, en rondas. Al cerrarse una ronda (por tiempo o porque tú la cierras), se elimina a las opciones menos votadas que definas, y se vuelve a votar entre las que quedan.",
+    simple: tf("nq.ruleDef.simple", lang),
+    absoluta: tf("nq.ruleDef.absoluta", lang),
+    calificada: tf("nq.ruleDef.calificada", lang),
+    rankeado: tf("nq.ruleDef.rankeado", lang),
+    segunda_vuelta: tf("nq.ruleDef.segundaVuelta", lang),
   };
 
   const submit = async () => {
     if (!text) return;
     const cleanOptions = options.map((o) => o.trim()).filter(Boolean);
     if (type === "mayoria" && cleanOptions.length < 2) {
-      setError("Agrega al menos 2 opciones");
+      setError(tf("nq.needTwoOptions", lang));
       return;
     }
     if (type === "sorteo" && cleanOptions.length < 2) {
-      setError("Agrega al menos 2 candidatos");
+      setError(tf("nq.needTwoCandidates", lang));
       return;
     }
     setAdding(true);
@@ -4094,7 +4199,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al crear la pregunta");
+      if (!res.ok) throw new Error(data.error || tf("error.createQuestion", lang));
       setText("");
       setOptions(["", ""]);
       setUseLimit(false);
@@ -4111,10 +4216,10 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-      <div className="dp-body text-xs font-medium mb-3" style={{ color: INK }}>Nueva pregunta</div>
+      <div className="dp-body text-xs font-medium mb-3" style={{ color: INK }}>{tf("nq.title", lang)}</div>
 
       <div className="flex gap-1.5 mb-3">
-        {[{ key: "promedio", label: "Promedio" }, { key: "mayoria", label: "Mayoría" }, { key: "sorteo", label: "Sorteo" }].map((t) => (
+        {[{ key: "promedio", label: tf("onbEx.chip.promedio", lang) }, { key: "mayoria", label: tf("onbEx.chip.mayoria", lang) }, { key: "sorteo", label: tf("onbEx.chip.sorteo", lang) }].map((t) => (
           <button
             key={t.key}
             onClick={() => setType(t.key)}
@@ -4130,14 +4235,14 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         rows={2}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Escribe la pregunta…"
+        placeholder={tf("nq.writeQuestion", lang)}
         className="dp-body w-full resize-none rounded-lg px-2.5 py-2 text-sm outline-none mb-2"
         style={{ background: BLUE_SOFT, color: INK }}
       />
 
       {type === "promedio" && (
         <div className="dp-body flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full mb-3 w-fit" style={{ background: BLUE_SOFT, color: INK }}>
-          <span style={{ opacity: 0.6 }}>Recorte</span>
+          <span style={{ opacity: 0.6 }}>{tf("nq.trim", lang)}</span>
           <input type="number" value={trimPercent} onChange={(e) => setTrimPercent(e.target.value)} className="w-9 bg-transparent dp-mono text-center outline-none font-medium" />
           <span style={{ opacity: 0.6 }}>%</span>
         </div>
@@ -4147,14 +4252,14 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         <div className="mb-3">
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
             <i className="ti ti-dice-5" style={{ marginRight: "4px" }}></i>
-            Se elige al azar entre estos candidatos. Nunca se repite el mismo ganador hasta que todos los demás hayan salido una vez.
+            {tf("nq.sorteoExplain", lang)}
           </div>
           {options.map((opt, i) => (
             <div key={i} className="flex items-center gap-2 mb-1.5">
               <input
                 value={opt}
                 onChange={(e) => updateOption(i, e.target.value)}
-                placeholder={`Candidato ${i + 1}`}
+                placeholder={tf("nq.candidateN", lang, { n: i + 1 })}
                 className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
                 style={{ background: BLUE_SOFT, color: INK }}
               />
@@ -4163,7 +4268,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
               )}
             </div>
           ))}
-          <button onClick={addOption} className="dp-body text-xs font-medium" style={{ color: BLUE }}>+ agregar candidato</button>
+          <button onClick={addOption} className="dp-body text-xs font-medium" style={{ color: BLUE }}>{tf("nq.addCandidate", lang)}</button>
         </div>
       )}
 
@@ -4175,7 +4280,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
                 <input
                   value={opt}
                   onChange={(e) => updateOption(i, e.target.value)}
-                  placeholder={`Opción ${i + 1}`}
+                  placeholder={tf("nq.optionN", lang, { n: i + 1 })}
                   className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
                   style={{ background: BLUE_SOFT, color: INK }}
                 />
@@ -4184,11 +4289,11 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
                 )}
               </div>
             ))}
-            <button onClick={addOption} className="dp-body text-xs font-medium" style={{ color: BLUE }}>+ agregar opción</button>
+            <button onClick={addOption} className="dp-body text-xs font-medium" style={{ color: BLUE }}>{tf("nq.addOption", lang)}</button>
           </div>
 
           <div className="dp-body text-[10px] font-semibold mb-1.5" style={{ color: INK + "88", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-            Mayoría
+            {tf("nq.majoritySection", lang)}
           </div>
           <div className="flex gap-1.5 mb-2">
             {["simple", "absoluta", "calificada"].map((r) => (
@@ -4204,7 +4309,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
           </div>
           {majorityRule === "calificada" && (
             <div className="dp-body flex items-center gap-2 text-xs mb-3" style={{ color: INK }}>
-              requiere más de
+              {tf("nq.requiresMoreThan", lang)}
               <input type="number" min="51" max="99" value={qualifiedPct} onChange={(e) => setQualifiedPct(e.target.value)} className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
               %
             </div>
@@ -4216,7 +4321,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
             className="dp-body block w-full text-left text-xs font-medium px-2.5 py-2 rounded-lg mb-2"
             style={majorityRule === "rankeado" ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
           >
-            Voto ranqueado
+            {tf("nq.rule.rankeado", lang)}
           </button>
 
           <div style={{ height: "1px", background: BLUE + "22", margin: "8px 0" }} />
@@ -4225,12 +4330,12 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
             className="dp-body block w-full text-left text-xs font-medium px-2.5 py-2 rounded-lg mb-2"
             style={majorityRule === "segunda_vuelta" ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
           >
-            Segunda vuelta electoral
+            {tf("nq.rule.segundaVuelta", lang)}
           </button>
           {isSegundaVuelta && (
             <div className="flex gap-3 mb-2">
               <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK }}>
-                Número de rondas
+                {tf("nq.numRounds", lang)}
                 <input type="number" min="1" value={numRounds} onChange={(e) => setNumRounds(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
               </label>
             </div>
@@ -4238,19 +4343,19 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
           {isSegundaVuelta && (
             <div className="flex gap-3 mb-1">
               <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK }}>
-                % mínimo para sobrevivir
+                {tf("nq.minPercentSurvive", lang)}
                 <input type="number" min="0" max="100" value={eliminationThresholdPercent} onChange={(e) => setEliminationThresholdPercent(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
               </label>
             </div>
           )}
           {isSegundaVuelta && (
             <div className="dp-body text-[10px] mb-3" style={{ color: INK + "77" }}>
-              en cada ronda se eliminan las opciones sin votos y las que estén por debajo de este %
+              {tf("nq.roundsEliminateNote", lang)}
             </div>
           )}
 
           <button onClick={() => setShowDefs(!showDefs)} className="dp-body text-[11px] font-medium mb-2" style={{ color: BLUE }}>
-            {showDefs ? "ocultar definiciones" : "¿qué significa cada una?"}
+            {showDefs ? tf("nq.hideDefs", lang) : tf("nq.whatMeans", lang)}
           </button>
           {showDefs && (
             <div className="rounded-lg p-2.5 mb-3 text-[11px] leading-relaxed" style={{ background: BLUE_SOFT, color: INK + "cc" }}>
@@ -4267,28 +4372,28 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
       {type !== "sorteo" && (
         <React.Fragment>
           <div className="dp-body text-xs font-medium mb-1.5" style={{ color: INK }}>
-            Límite de tiempo{isSegundaVuelta ? " por ronda" : " para responder"}:
+            {isSegundaVuelta ? tf("nq.timeLimitRound", lang) : tf("nq.timeLimitAnswer", lang)}
           </div>
           <div className="flex gap-1.5 mb-2">
-            <button onClick={() => setUseLimit(false)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={!useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>No</button>
-            <button onClick={() => setUseLimit(true)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>Sí</button>
+            <button onClick={() => setUseLimit(false)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={!useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>{tf("nq.no", lang)}</button>
+            <button onClick={() => setUseLimit(true)} className="dp-body text-xs px-3 py-1.5 rounded-full font-medium flex-1" style={useLimit ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}>{tf("nq.yes", lang)}</button>
           </div>
           {useLimit && (
             <div className="flex gap-2 mb-1">
               <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
-                Días <input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+                {tf("nq.days", lang)} <input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
               </label>
               <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
-                Horas <input type="number" min="0" max="23" value={hours} onChange={(e) => setHours(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+                {tf("nq.hours", lang)} <input type="number" min="0" max="23" value={hours} onChange={(e) => setHours(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
               </label>
               <label className="dp-body flex items-center gap-1.5 text-xs" style={{ color: INK + "99" }}>
-                Min <input type="number" min="0" max="59" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
+                {tf("nq.minutes", lang)} <input type="number" min="0" max="59" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="dp-mono w-11 rounded-lg px-1.5 py-1 text-center outline-none" style={{ background: BLUE_SOFT }} />
               </label>
             </div>
           )}
           {isSegundaVuelta && (
             <div className="dp-body text-[10px] mb-3" style={{ color: INK + "77" }}>
-              {useLimit ? "al pasar el tiempo, la ronda se cierra sola y avanza." : "sin límite: tú cierras cada ronda a mano."}
+              {useLimit ? tf("nq.autoCloses", lang) : tf("nq.manualCloses", lang)}
             </div>
           )}
           {!isSegundaVuelta && <div className="mb-3" />}
@@ -4301,53 +4406,53 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         className="dp-body w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-full font-medium mb-2"
         style={{ background: BLUE_SOFT, color: INK }}
       >
-        <i className="ti ti-eye" style={{ marginRight: "4px" }}></i>{showPreview ? "Ocultar vista previa" : "Vista previa"}
+        <i className="ti ti-eye" style={{ marginRight: "4px" }}></i>{showPreview ? tf("nq.hidePreview", lang) : tf("nq.preview", lang)}
       </button>
 
       {showPreview && (
         <div className="rounded-2xl p-3 mb-3" style={{ background: PAGE_BG, border: `1.5px dashed ${BLUE}55` }}>
           <div className="dp-body text-[10px] font-semibold mb-2" style={{ color: INK + "77", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-            Así lo verán los participantes
+            {tf("nq.howTheyllSeeIt", lang)}
           </div>
           <div className="rounded-xl p-3.5" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
-            <div className="dp-body text-[15px] mb-1" style={{ color: INK }}>{text || "Escribe tu pregunta arriba…"}</div>
+            <div className="dp-body text-[15px] mb-1" style={{ color: INK }}>{text || tf("nq.writeQuestionAbove", lang)}</div>
             <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
               {type === "promedio"
-                ? `recorte: ${trimPercent || 0}%`
+                ? tf("nq.previewTrim", lang, { pct: trimPercent || 0 })
                 : type === "sorteo"
-                ? "se elige al azar entre los candidatos"
+                ? tf("nq.previewSorteo", lang)
                 : majorityRule === "calificada"
-                ? `necesita más del ${qualifiedPct || 66}%`
+                ? tf("nq.previewNeedsMoreThan", lang, { pct: qualifiedPct || 66 })
                 : majorityRule === "absoluta"
-                ? "necesita más del 50%"
+                ? tf("nq.previewNeedsAbsoluta", lang)
                 : majorityRule === "simple"
-                ? "gana la más votada"
+                ? tf("nq.previewWinsMostVoted", lang)
                 : majorityRule === "rankeado"
-                ? "voto ranqueado (automático)"
-                : `${numRounds || 3} rondas · elimina menos del ${eliminationThresholdPercent || 10}%`}
+                ? tf("nq.previewRanked", lang)
+                : tf("nq.previewRounds", lang, { n: numRounds || 3, pct: eliminationThresholdPercent || 10 })}
             </div>
 
             {type === "promedio" && (
               <div className="flex items-center gap-2">
-                <div className="flex-1 rounded-lg px-2.5 py-1.5 text-sm dp-mono" style={{ background: BLUE_SOFT, color: INK + "77" }}>tu propuesta</div>
-                <div className="text-xs px-3 py-2 rounded-full text-white font-medium" style={{ background: GREEN, opacity: 0.6 }}><i className="ti ti-send" style={{ marginRight: "4px" }}></i>Enviar</div>
+                <div className="flex-1 rounded-lg px-2.5 py-1.5 text-sm dp-mono" style={{ background: BLUE_SOFT, color: INK + "77" }}>{tf("input.yourProposal", lang)}</div>
+                <div className="text-xs px-3 py-2 rounded-full text-white font-medium" style={{ background: GREEN, opacity: 0.6 }}><i className="ti ti-send" style={{ marginRight: "4px" }}></i>{tf("flow.send", lang)}</div>
               </div>
             )}
 
             {type === "sorteo" && (
               <div className="flex flex-col gap-1.5">
-                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : ["Candidato 1", "Candidato 2"]).map((opt, i) => (
+                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : [tf("nq.candidateN", lang, { n: 1 }), tf("nq.candidateN", lang, { n: 2 })]).map((opt, i) => (
                   <div key={i} className="dp-body text-left text-sm px-3 py-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK }}>
                     {opt}
                   </div>
                 ))}
-                <div className="text-xs px-3 py-2 rounded-full text-white font-medium text-center" style={{ background: BLUE, opacity: 0.6 }}><i className="ti ti-dice-5" style={{ marginRight: "4px" }}></i>Sortear</div>
+                <div className="text-xs px-3 py-2 rounded-full text-white font-medium text-center" style={{ background: BLUE, opacity: 0.6 }}><i className="ti ti-dice-5" style={{ marginRight: "4px" }}></i>{tf("sorteo.drawButton", lang)}</div>
               </div>
             )}
 
             {type === "mayoria" && majorityRule !== "rankeado" && (
               <div className="flex flex-col gap-1.5">
-                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : ["Opción 1", "Opción 2"]).map((opt, i) => (
+                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : [tf("nq.optionN", lang, { n: 1 }), tf("nq.optionN", lang, { n: 2 })]).map((opt, i) => (
                   <div key={i} className="dp-body text-left text-sm px-3 py-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK }}>
                     ○ {opt}
                   </div>
@@ -4357,8 +4462,8 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
 
             {type === "mayoria" && majorityRule === "rankeado" && (
               <div className="flex flex-col gap-1.5">
-                <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>{tf("input.rankOrderShort", siLang)}</div>
-                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : ["Opción 1", "Opción 2"]).map((opt, i) => (
+                <div className="dp-body text-[11px] mb-1" style={{ color: INK + "77" }}>{tf("input.rankOrderShort", lang)}</div>
+                {(options.map((o) => o.trim()).filter(Boolean).length ? options.map((o) => o.trim()).filter(Boolean) : [tf("nq.optionN", lang, { n: 1 }), tf("nq.optionN", lang, { n: 2 })]).map((opt, i) => (
                   <div key={i} className="dp-body flex items-center gap-2 text-left text-sm px-3 py-2 rounded-lg" style={{ background: BLUE_SOFT, color: INK }}>
                     <span className="dp-mono font-semibold" style={{ minWidth: "16px" }}>–</span>{opt}
                   </div>
@@ -4377,7 +4482,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
         className="dp-body w-full flex items-center justify-center gap-1.5 text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
         style={{ background: BLUE }}
       >
-        <i className="ti ti-plus" style={{ marginRight: "4px" }}></i>{adding ? "Agregando…" : "Agregar pregunta"}
+        <i className="ti ti-plus" style={{ marginRight: "4px" }}></i>{adding ? tf("nq.adding", lang) : tf("nq.addQuestion", lang)}
       </button>
     </div>
   );
@@ -5961,7 +6066,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         body: JSON.stringify({ memberId, value }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al enviar");
+      if (!res.ok) throw new Error(data.error || tf("error.send", uiLang));
       setSent(true);
     } catch (e) {
       setSendError(e.message);
@@ -5981,7 +6086,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         body: JSON.stringify({ memberId }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al cerrar la etapa");
+      if (!res.ok) throw new Error(data.error || tf("error.closeStage", uiLang));
       await onAdvance();
     } catch (e) {
       setSendError(e.message);
@@ -6000,14 +6105,14 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         body: JSON.stringify({ memberId, value }),
       });
       const data1 = await res1.json();
-      if (!res1.ok) throw new Error(data1.error || "Error al guardar");
+      if (!res1.ok) throw new Error(data1.error || tf("error.save", uiLang));
       const res2 = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
       });
       const data2 = await res2.json();
-      if (!res2.ok) throw new Error(data2.error || "Error al continuar");
+      if (!res2.ok) throw new Error(data2.error || tf("error.continueFlow", uiLang));
       await onAdvance();
     } catch (e) {
       setSendError(e.message);
@@ -6031,14 +6136,14 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         body: JSON.stringify({ memberId, value: cleaned }),
       });
       const data1 = await res1.json();
-      if (!res1.ok) throw new Error(data1.error || "Error al guardar");
+      if (!res1.ok) throw new Error(data1.error || tf("error.save", uiLang));
       const res2 = await fetch(`${backendUrl}/api/groups/${groupCode}/flows/${flow.id}/close-stage`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memberId }),
       });
       const data2 = await res2.json();
-      if (!res2.ok) throw new Error(data2.error || "Error al continuar");
+      if (!res2.ok) throw new Error(data2.error || tf("error.continueFlow", uiLang));
       await onAdvance();
     } catch (e) {
       setSendError(e.message);
