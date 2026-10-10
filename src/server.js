@@ -11,6 +11,7 @@ const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResu
 const { t } = require("./strings");
 const { computeStageResult, drawResponsabilidades } = require("./flowEngine");
 const { TEMPLATES, rolesFromNames } = require("./templates");
+const { localizeCopy } = require("./localize");
 
 // Si una sola consulta a la base de datos falla (ej. un problema pasajero
 // de red o de configuración), que se quede solo en ESA petición y no
@@ -22,6 +23,33 @@ process.on("unhandledRejection", (err) => {
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Idioma de quien hace la petición. La app manda ?lang=es o ?lang=en en
+// cada llamada; si falta, se usa el idioma con el que se creó el grupo.
+function requestLang(req) {
+  return req.query && (req.query.lang === "en" || req.query.lang === "es") ? req.query.lang : null;
+}
+function langOf(req, group) {
+  return requestLang(req) || (group && group.lang) || "es";
+}
+
+// Si la petición trae ?lang=, las respuestas en JSON salen con los textos
+// de las etapas traducidos a ese idioma (ver localize.js). Siempre se
+// traduce una copia: lo que está guardado en la base no se toca.
+app.use((req, res, next) => {
+  const lang = requestLang(req);
+  if (!lang) return next();
+  const originalJson = res.json.bind(res);
+  res.json = (body) => {
+    try {
+      if (body && typeof body === "object") return originalJson(localizeCopy(body, lang));
+    } catch (err) {
+      console.error("No se pudo traducir la respuesta:", err.message);
+    }
+    return originalJson(body);
+  };
+  next();
+});
 
 // Envuelve automáticamente CADA ruta que se registre de aquí en
 // adelante (get/post/put/delete/patch): si el endpoint lanza un error
@@ -956,20 +984,20 @@ app.post("/api/groups/:code/invite", async (req, res) => {
   const db = await load(req.params.code);
   const group = db.groups[req.params.code];
   if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
-  if (group.admin.id !== memberId) return res.status(403).json({ error: t("error.onlyAdminInvite", group.lang) });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: t("error.onlyAdminInvite", langOf(req, group)) });
   if (!Array.isArray(emails)) return res.status(400).json({ error: "emails debe ser una lista" });
 
   const clean = [...new Set(emails.map((e) => String(e).trim().toLowerCase()).filter(Boolean))];
   const valid = clean.filter((e) => EMAIL_REGEX.test(e));
   const invalid = clean.filter((e) => !EMAIL_REGEX.test(e));
-  if (valid.length === 0) return res.status(400).json({ error: t("error.noValidEmails", group.lang), invalid });
-  if (valid.length > 50) return res.status(400).json({ error: t("error.tooManyEmails", group.lang) });
-  if (!emailConfigured()) return res.status(503).json({ error: t("error.emailNotConfigured", group.lang) });
+  if (valid.length === 0) return res.status(400).json({ error: t("error.noValidEmails", langOf(req, group)), invalid });
+  if (valid.length > 50) return res.status(400).json({ error: t("error.tooManyEmails", langOf(req, group)) });
+  if (!emailConfigured()) return res.status(503).json({ error: t("error.emailNotConfigured", langOf(req, group)) });
 
   const now = Date.now();
   const counter = inviteCounters.get(group.code);
   const current = counter && counter.resetAt > now ? counter : { count: 0, resetAt: now + 24 * 60 * 60 * 1000 };
-  if (current.count + valid.length > INVITES_PER_DAY) return res.status(429).json({ error: t("error.inviteLimit", group.lang) });
+  if (current.count + valid.length > INVITES_PER_DAY) return res.status(429).json({ error: t("error.inviteLimit", langOf(req, group)) });
   current.count += valid.length;
   inviteCounters.set(group.code, current);
 
@@ -981,7 +1009,7 @@ app.post("/api/groups/:code/invite", async (req, res) => {
         adminName: group.admin.name,
         code: group.code,
         frontendUrl: process.env.FRONTEND_URL,
-        lang: group.lang,
+        lang: langOf(req, group),
       })
     )
   );
@@ -1035,7 +1063,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
   // así que se va a cerrar sola), ya no se aceptan más respuestas.
   if (stage.config && stage.config.closesAt && new Date(stage.config.closesAt).getTime() < Date.now()) {
     const already = group.responses.filter((r) => r.flowId === flow.id && r.stageInstanceIndex === stage.instanceIndex).length;
-    if (already > 0) return res.status(403).json({ error: t("error.timeUp", group.lang) });
+    if (already > 0) return res.status(403).json({ error: t("error.timeUp", langOf(req, group)) });
   }
   let storedValue;
 
@@ -1083,7 +1111,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
     if (Object.keys(cleaned).length === 0) return res.status(400).json({ error: "Asigna al menos un %" });
     storedValue = cleaned;
   } else if (stage.type === "eleccion_modo") {
-    if (value !== "simple" && value !== "democratic") return res.status(400).json({ error: t("error.badMode", group.lang) });
+    if (value !== "simple" && value !== "democratic") return res.status(400).json({ error: t("error.badMode", langOf(req, group)) });
     storedValue = value;
   } else if (stage.type === "configurar_cuotas_simple") {
     if (typeof value !== "object" || value === null || !Array.isArray(value.categories)) {
@@ -1103,7 +1131,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
         return true;
       })
       .slice(0, 12);
-    if (categories.length === 0) return res.status(400).json({ error: t("error.needCategory", group.lang) });
+    if (categories.length === 0) return res.status(400).json({ error: t("error.needCategory", langOf(req, group)) });
 
     let timeLimit = null;
     let timeLimitMinutes = null;
@@ -1111,7 +1139,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
       const amount = Number(value.timeLimit.amount);
       const minutesPerUnit = { minutes: 1, hours: 60, days: 1440 }[value.timeLimit.unit];
       if (!minutesPerUnit || !(amount > 0) || amount * minutesPerUnit > 60 * 1440) {
-        return res.status(400).json({ error: t("error.badTimeLimit", group.lang) });
+        return res.status(400).json({ error: t("error.badTimeLimit", langOf(req, group)) });
       }
       timeLimit = { amount, unit: value.timeLimit.unit };
       timeLimitMinutes = Math.round(amount * minutesPerUnit);
@@ -1490,7 +1518,8 @@ app.post("/api/groups/:code/flows/:flowId/reopen-candidatos", async (req, res) =
   flow.currentStage = {
     key: "configurarCandidatos",
     type: "configurar_candidatos",
-    text: "Agrega más candidatos, no hay suficientes para todos los puestos que se van a sortear.",
+    text: t("responsabilidades.addMoreCandidates", group.lang),
+    textKey: "responsabilidades.addMoreCandidates",
     config: { minCandidates, prefillCandidates: previousCandidates },
     instanceIndex: flow.stages.length,
   };

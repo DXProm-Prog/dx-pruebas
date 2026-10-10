@@ -62,6 +62,7 @@ const STRINGS = {
     "responsabilidades.approvalVote": "¿Aprueban esta lista de candidatos para el sorteo de puestos? {names}",
     "responsabilidades.realizarSorteo": "Todo listo. El facilitador puede realizar el sorteo cuando quiera.",
     "responsabilidades.ajustarCandidatos": "No se aprobó la lista. Selecciona a quién quitarías, y propón nuevos candidatos si quieres.",
+    "responsabilidades.addMoreCandidates": "Agrega más candidatos, no hay suficientes para todos los puestos que se van a sortear.",
     "responsabilidades.fusionarCandidatos": "Revisa la lista final: si dos nombres son en realidad la misma persona (por una errata o apodo), fusiónalos en uno solo.",
 
     // Cooperativas: Tabulador de sueldos
@@ -128,6 +129,7 @@ const STRINGS = {
     "responsabilidades.approvalVote": "Do you approve this list of candidates for the role drawing? {names}",
     "responsabilidades.realizarSorteo": "All set. The facilitator can run the drawing whenever ready.",
     "responsabilidades.ajustarCandidatos": "The list wasn't approved. Select who you'd remove, and propose new candidates if you'd like.",
+    "responsabilidades.addMoreCandidates": "Add more candidates, there aren't enough for all the roles being drawn.",
     "responsabilidades.fusionarCandidatos": "Review the final list: if two names are actually the same person (a typo or nickname), merge them into one.",
 
     // Cooperatives: Wage tabulator

@@ -18,6 +18,18 @@
   .dp-display { font-family: 'Sora', sans-serif; }
   .dp-body { font-family: 'Inter', sans-serif; }
   .dp-mono { font-family: 'JetBrains Mono', monospace; }
+  /* Recuadros donde se escribe: borde y sombra suaves para que se distingan del fondo azul claro */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+  textarea,
+  select {
+    border: 1.5px solid rgba(58, 110, 165, 0.55);
+    box-shadow: 0 1px 2px rgba(20, 33, 61, 0.12), inset 0 1px 2px rgba(20, 33, 61, 0.06);
+  }
+  input:focus, textarea:focus, select:focus {
+    border-color: #3A6EA5;
+    box-shadow: 0 0 0 3px rgba(58, 110, 165, 0.22);
+  }
+  input::placeholder, textarea::placeholder { color: rgba(20, 33, 61, 0.45); }
 </style>
 </head>
 <body>
@@ -122,6 +134,20 @@ function formatMoney(n) {
 // clave pedida, cayendo de regreso al español si falta en el otro
 // idioma. LangContext hace que cualquier componente pueda leer el
 // idioma actual sin tener que pasarlo a mano por cada nivel.
+// Cada llamada al servidor lleva el idioma actual (?lang=es o ?lang=en),
+// para que los textos de las preguntas salgan en el idioma de quien las ve
+// y no en el idioma con el que se creó el grupo.
+const nativeFetch = window.fetch.bind(window);
+window.fetch = function (input, init) {
+  try {
+    if (typeof input === "string" && input.includes("/api/") && !/[?&]lang=/.test(input)) {
+      const current = localStorage.getItem("org_lang") === "en" ? "en" : "es";
+      input += (input.includes("?") ? "&" : "?") + "lang=" + current;
+    }
+  } catch (e) {}
+  return nativeFetch(input, init);
+};
+
 const LangContext = React.createContext("es");
 function useLang() {
   return React.useContext(LangContext);
@@ -6435,11 +6461,27 @@ function formatTimeLeft(ms) {
 
 // Cuenta regresiva de una etapa con límite de tiempo. Cuando llega a
 // cero, el servidor cierra la etapa solo en la siguiente actualización.
+// Etapas que solo le importan al facilitador (elegir la versión y escribir
+// las categorías): el resto del grupo no las ve, solo ve la pregunta.
+const STAGES_HIDDEN_FROM_MEMBERS = ["eleccion_modo", "configurar_cuotas_simple"];
+
+// Reloj de cuenta regresiva: HH:MM:SS (o MM:SS si falta menos de una hora).
+function formatCountdown(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const sec = total % 60;
+  const pad = (n) => String(n).padStart(2, "0");
+  const clock = h > 0 || d > 0 ? `${pad(h)}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  return d > 0 ? `${d} d ${clock}` : clock;
+}
+
 function StageCountdown({ closesAt, extended }) {
   const lang = useLang();
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 15000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
   const msLeft = new Date(closesAt).getTime() - now;
@@ -6447,11 +6489,18 @@ function StageCountdown({ closesAt, extended }) {
   return (
     <div className="mb-2">
       <div
-        className="dp-body text-[11px] font-medium rounded-lg px-2.5 py-1.5 inline-flex items-center gap-1.5"
-        style={{ background: over ? CORAL + "15" : BLUE_SOFT, color: over ? CORAL : INK }}
+        className="dp-body text-[12px] font-medium rounded-lg px-3 py-2 inline-flex items-center gap-2"
+        style={{ background: over ? CORAL + "15" : BLUE_SOFT, color: over ? CORAL : INK, border: `1px solid ${over ? CORAL : BLUE}33` }}
       >
         <i className="ti ti-clock"></i>
-        {over ? tf("timer.over", lang) : tf("timer.left", lang, { time: formatTimeLeft(msLeft) })}
+        {over ? (
+          tf("timer.over", lang)
+        ) : (
+          <React.Fragment>
+            <span>{tf("timer.left", lang, { time: "" }).replace(/[:\s]+$/, "")}</span>
+            <span className="dp-mono font-semibold text-[16px]" style={{ color: BLUE }}>{formatCountdown(msLeft)}</span>
+          </React.Fragment>
+        )}
       </div>
       {extended > 0 && !over && (
         <div className="dp-body text-[10px] mt-1" style={{ color: INK + "77" }}>{tf("timer.extended", lang)}</div>
@@ -7045,7 +7094,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         </AdvancedSettings>
       )}
 
-      {flow.stages.map((s, i) => (
+      {flow.stages.map((s, i) => (!isAdmin && STAGES_HIDDEN_FROM_MEMBERS.includes(s.type)) ? null : (
         <div key={i} className="mb-3 pb-3" style={{ borderBottom: `1px dashed ${BLUE}33`, opacity: 0.55 }}>
           <div className="dp-body text-[12px] font-medium mb-1 flex items-center gap-1.5" style={{ color: INK }}>
             <i className="ti ti-lock"></i>
@@ -7501,11 +7550,13 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
 
       {stage && !["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos", "fusionar_candidatos", "eleccion_modo", "configurar_cuotas_simple"].includes(stage.type) && (
         <div>
-          <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
-          <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
-            {tf("flow.responded", uiLang, { n: liveCount, total: approvedMemberCount })}
-          </div>
+          <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
           {stage.config.closesAt && <StageCountdown closesAt={stage.config.closesAt} extended={stage.config.timeExtensions || 0} />}
+          {(isAdmin || flow.config.cuotasMode !== "simple") && (
+            <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
+              {tf("flow.responded", uiLang, { n: liveCount, total: approvedMemberCount })}
+            </div>
+          )}
           <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={{ ...flow.config, totalBudget: effectiveTotalBudget }} approvedMemberNames={approvedMemberNames} />
           {sent && <div className="dp-body text-[11px] mb-2 flex items-center gap-1" style={{ color: GREEN }}><i className="ti ti-circle-check"></i>{tf("flow.saved", uiLang)}</div>}
           {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
@@ -7709,7 +7760,19 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
     }
   }, [generatingPdf]);
 
-  const downloadPdf = () => setGeneratingPdf(true);
+  // El PDF se arma siempre con los textos en español, sin importar el
+  // idioma en que se esté viendo la app.
+  const [pdfFlows, setPdfFlows] = useState(null);
+  const downloadPdf = async () => {
+    try {
+      const res = await fetch(`${backendUrl}/api/groups/${groupCode}?lang=es`);
+      const data = await res.json();
+      setPdfFlows(res.ok && Array.isArray(data.flows) ? data.flows : null);
+    } catch (e) {
+      setPdfFlows(null);
+    }
+    setGeneratingPdf(true);
+  };
 
   useEffect(() => {
     fetchGroup();
@@ -7718,7 +7781,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
       Notification.requestPermission();
     }
     return () => clearInterval(interval);
-  }, []);
+  }, [csLang]);
 
   const approve = async (id) => {
     setApproving(id);
@@ -8034,7 +8097,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
       {generatingPdf && (
         <div style={{ position: "fixed", left: "-9999px", top: 0, zIndex: -1 }}>
           <div ref={pdfContentRef}>
-            <PdfExportContent groupName={group.name} flowChain={flows.filter((f) => f.stages.length > 0)} showNames={group.secretResponses === false} />
+            <PdfExportContent groupName={group.name} flowChain={(pdfFlows || flows).filter((f) => f.stages.length > 0)} showNames={group.secretResponses === false} />
           </div>
         </div>
       )}

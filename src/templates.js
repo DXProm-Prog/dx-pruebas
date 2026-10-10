@@ -4,7 +4,66 @@
 // (flow.config), que el administrador puede ajustar — aquí solo se usan
 // los valores, con 10% como default si no se ha configurado nada.
 
-const { t } = require("./strings");
+const { t: rawT } = require("./strings");
+
+// Cada vez que se arma una etapa, se anota con qué clave y variables se
+// pidió su texto (ver localize.js). Así, esa misma etapa se puede mostrar
+// después en el idioma de quien la esté viendo. Todo esto es automático:
+// las plantillas de abajo siguen llamando a t() como siempre.
+let recorded = [];
+function t(key, lang, vars) {
+  const text = rawT(key, lang, vars);
+  recorded.push({ key, vars: vars || {}, text });
+  return text;
+}
+
+function findRecorded(text) {
+  for (let i = recorded.length - 1; i >= 0; i--) {
+    if (recorded[i].text === text) return i;
+  }
+  return -1;
+}
+
+// Variables de la llamada número "index". Si el valor de alguna variable
+// salió de otra llamada a t() (ej. el nombre de "las cuotas" dentro de
+// "¿Apruebas el resultado de ...?"), se guarda como clave anidada para
+// que también se traduzca.
+function specVars(index) {
+  const out = {};
+  Object.entries(recorded[index].vars).forEach(([name, value]) => {
+    let nested = -1;
+    if (typeof value === "string") {
+      for (let i = index - 1; i >= 0; i--) {
+        if (recorded[i].text === value) {
+          nested = i;
+          break;
+        }
+      }
+    }
+    out[name] = nested >= 0 ? { $t: recorded[nested].key, vars: specVars(nested) } : value;
+  });
+  return out;
+}
+
+function attachSpecs(stage) {
+  if (!stage) return stage;
+  if (!stage.textKey && typeof stage.text === "string") {
+    const i = findRecorded(stage.text);
+    if (i >= 0) {
+      stage.textKey = recorded[i].key;
+      stage.textVars = specVars(i);
+    }
+  }
+  const cfg = stage.config;
+  if (cfg && typeof cfg === "object" && !cfg.explanationKey && typeof cfg.explanation === "string") {
+    const j = findRecorded(cfg.explanation);
+    if (j >= 0) {
+      cfg.explanationKey = recorded[j].key;
+      cfg.explanationVars = specVars(j);
+    }
+  }
+  return stage;
+}
 
 // Redondea hacia abajo en los empates de .5 (2.5 → 2, no 3), a
 // diferencia de Math.round que siempre sube en los .5. Solo sube si la
@@ -615,7 +674,7 @@ const presupuestoCooperativa = {
     if (last.key === "approval") {
       if (last.result.winner === "Sí") return null;
       const budgetStage = [...stages].reverse().find((s) => s.key === "budget");
-      return { key: "budget", type: "porcentaje_por_categoria", text: budgetStage.text, config: budgetStage.config };
+      return { key: "budget", type: "porcentaje_por_categoria", text: budgetStage.text, textKey: budgetStage.textKey, textVars: budgetStage.textVars, config: budgetStage.config };
     }
 
     return null;
@@ -623,5 +682,17 @@ const presupuestoCooperativa = {
 };
 
 const TEMPLATES = { cuotas, presupuesto, responsabilidades, tabuladorSueldos, presupuestoCooperativa };
+
+// Envuelve getInitialStage y getNextStage de cada plantilla para que las
+// etapas que devuelven salgan con su textKey/textVars ya anotados.
+Object.values(TEMPLATES).forEach((tpl) => {
+  ["getInitialStage", "getNextStage"].forEach((fn) => {
+    const original = tpl[fn];
+    tpl[fn] = function (...args) {
+      recorded = [];
+      return attachSpecs(original.apply(tpl, args));
+    };
+  });
+});
 
 module.exports = { TEMPLATES, rolesFromNames };
