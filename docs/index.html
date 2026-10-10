@@ -78,6 +78,7 @@ function PrimaryButton({ children, onClick, disabled }) {
 }
 
 function CountdownBadge({ closesAt, closed }) {
+  const cbLang = useLang();
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     if (closed || !closesAt) return;
@@ -88,7 +89,7 @@ function CountdownBadge({ closesAt, closed }) {
   if (closed) {
     return (
       <span className="dp-body text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: CORAL + "22", color: CORAL }}>
-        cerrada
+        {tf("badge.closed", cbLang)}
       </span>
     );
   }
@@ -98,7 +99,7 @@ function CountdownBadge({ closesAt, closed }) {
   if (msLeft <= 0) {
     return (
       <span className="dp-body text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: CORAL + "22", color: CORAL }}>
-        cerrando…
+        {tf("badge.closing", cbLang)}
       </span>
     );
   }
@@ -107,7 +108,7 @@ function CountdownBadge({ closesAt, closed }) {
   const label = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   return (
     <span className="dp-body text-[11px] px-2 py-0.5 rounded-full font-medium" style={{ background: BLUE_SOFT, color: INK }}>
-      ⏱ cierra en {label}
+      {tf("badge.closesIn", cbLang, { time: label })}
     </span>
   );
 }
@@ -206,6 +207,8 @@ const FRONTEND_STRINGS = {
     "groupCreated.title": "¡Creaste el grupo \"{name}\"!",
     "groupCreated.subtitle": "Comparte el código o el link con quienes quieras invitar.",
     "groupCreated.continue": "Continuar a mi grupo",
+    "groupCreated.subtitleDefer": "Primero vas a elegir cómo se va a decidir. Después podrás invitar a tu grupo.",
+    "connected.inviteAfterMode": "Primero elige cómo se va a decidir. Después podrás invitar a tu grupo.",
     "gastosFijos.reminder": "Recuerda que este flujo está conectado con las cuotas, el presupuesto disponible ya sale de ahí ({amount}). Si quieres sumar un monto extra (ahorros, otros ingresos), lo puedes ajustar en la configuración del facilitador.",
     "gastosFijos.label": "Gastos fijos:",
     "gastosFijos.namePlaceholder": "Nombre del gasto",
@@ -293,6 +296,7 @@ const FRONTEND_STRINGS = {
     "input.rankOrderShort": "toca en orden de preferencia (1ª, 2ª…)",
     "input.membersCollectedShort": "{count} miembros × {value} = {total}",
     "input.totalCollected": "total recaudado con estos números: {total}",
+    "input.lowerFixedWarning": "Estás bajando este gasto fijo, confirma que la cooperativa pueda cubrirlo con ese monto.",
     "input.assignedAmount": "asignado: {amount}",
     "input.assignedPercent": "asignado: {pct}% de 100%",
     "input.overBy": ". Te pasaste por {pct}%",
@@ -501,6 +505,55 @@ const FRONTEND_STRINGS = {
     "q.calculateDecision": "Calcular decisión colectiva",
     "q.reachedDecision": "Llegaron a una decisión colectiva.",
     "q.needsAnotherRound": "Se necesita otra ronda de participación.",
+    "footer.server": "servidor",
+    "badge.closed": "cerrada",
+    "badge.closing": "cerrando…",
+    "badge.closesIn": "⏱ cierra en {time}",
+    "details.hide": "Ocultar proceso",
+    "details.show": "Ver proceso",
+    "qr.confirmCloseRound": "¿Seguro que quieres cerrar esta ronda? Nadie más podrá votar en ella después de esto. Esta acción no se puede deshacer.",
+    "qr.rule.simple": "gana la más votada",
+    "qr.rule.absoluta": "necesita más del 50%",
+    "qr.rule.calificada": "necesita más del {pct}%",
+    "qr.rule.rankeado": "voto ranqueado (automático)",
+    "qr.rule.segunda_vuelta": "{rounds} rondas · elimina menos del {pct}%",
+    "qr.trim": "recorte: {pct}%",
+    "qr.roundNum": " · ronda {n}",
+    "qr.tieParen": " (desempate)",
+    "qr.tieRoundNum": " · ronda de desempate {n}",
+    "qr.votedCount": "{n} de {total} miembro(s) han votado",
+    "qr.proposalsTrimmed": "{n} propuestas · {trimmed} recortadas de cada extremo",
+    "qr.suggestedMin": " · mínimo sugerido: {pct}%",
+    "qr.collectiveDecision": "Decisión colectiva",
+    "qr.votesCount": "{n} voto(s)",
+    "qr.noWinnerYet": "sin ganador todavía",
+    "qr.round": "Ronda {n}",
+    "qr.eliminatesQuoted": " · se elimina \"{option}\"",
+    "qr.tieShort": " · empate",
+    "qr.tieBreakTitle": "Desempate",
+    "qr.tieBreakRound": "Ronda de desempate {n}",
+    "qr.tieVotingAmong": "votación en curso entre: {options}",
+    "qr.roundEliminatedList": "Ronda {n}{tie} · se elimina: {list}",
+    "qr.nobody": "nadie",
+    "qr.roundInProgress": "Ronda {n} (en curso)",
+    "qr.yourProposal": "tu propuesta",
+    "qr.tieRevote": "Hubo empate. Vota de nuevo solo entre las opciones empatadas.",
+    "qr.congrats": "¡Felicidades!",
+    "qr.tied": "¡Empate!",
+    "hdr.title.responsables": "Selección de responsables",
+    "hdr.steps.default": "Arma tu grupo|Escribe las preguntas|Elige el proceso|Envía a tu grupo|¡Decidan juntos!",
+    "hdr.steps.responsables": "Arma tu grupo|Define los cargos|Agrega candidatos|Sortea|¡Responsable elegido!",
+    "hdr.steps.cuotas": "Arma tu grupo|Definan las categorías|Propongan la cuota|Aprueben el resultado|¡Cobren juntos!",
+    "hdr.steps.presupuesto": "Arma tu grupo|Propongan categorías|Repartan el %|Aprueben el resultado|¡Gasten juntos!",
+    "hdr.steps.asociaciones": "Arma tu grupo|Decidan las cuotas|Repartan el presupuesto|Propongan proyectos|¡Decidan juntos!",
+    "hdr.steps.municipios": "Impuestos|Presupuesto|Otras preguntas",
+    "hdr.steps.cooperativas": "Arma tu grupo|Elige un proceso|Decidan juntos|¡Listo!",
+    "result.skippedByFacilitator": "El facilitador omitió este paso.",
+    "result.membersLabel": "Miembros",
+    "result.candidates": "Candidatos: {list}",
+    "result.was": " (era {amount})",
+    "result.fixedTotal": "Total gastos fijos",
+    "promo.qrAlt": "Código QR",
     "q.viewProcess": "Ver el proceso",
     "q.voteNewRound": "Votar en la nueva ronda",
     "sorteo.description": "sorteo, nunca repite ganador hasta que todos salgan",
@@ -634,6 +687,105 @@ const FRONTEND_STRINGS = {
     "promo.intro1": "¿Eres parte de, o quieres formar, una asociación vecinal, un club, una cooperativa o cualquier organización?",
     "promo.intro2": "Esta aplicación te ayuda a organizar a tu grupo para tomar decisiones de forma transparente, horizontal, justa y eficiente.",
     "promo.intro3": "¡Incluye cuotas e impuestos participativos, presupuestos participativos, selección de responsabilidades por sorteo y más!",
+
+    // ---- Ajustes avanzados, cuotas simplificada y bienvenida a invitados ----
+    "adv.toggle": "Ajustes avanzados",
+    "adv.hint": "Ya vienen con valores recomendados. Solo cámbialos si lo necesitas.",
+    "adv.budgetTotalTitle": "Presupuesto total (de cuotas más extra)",
+    "adv.fromCuotas": "De cuotas: {amount}",
+    "adv.extraAmount": "Monto extra (ahorros, otros ingresos)",
+    "adv.total": "Total: {amount}",
+    "adv.tieMinutes": "Minutos para rondas de desempate (vacío = tú cierras a mano)",
+    "adv.reopenMinutes": "Minutos al reabrir categorías vacías",
+    "adv.minutesPlaceholder": "ej. 1440",
+    "adv.sueldoTrim.label": "% de recorte (alto y bajo) en los sueldos propuestos",
+    "adv.sueldoTrim.title": "% de recorte",
+    "adv.sueldoTrim.text": "Antes de promediar las propuestas de todos para cada puesto, se descartan las más extremas, las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas de ese puesto, y solo se promedia lo que queda en medio.\n\nEsto evita que una sola persona (o un grupito) jale el sueldo de un puesto hacia un extremo proponiendo un número absurdo a propósito.",
+    "adv.sueldoTrim.note": "Antes de promediar cada puesto, se descartan las propuestas más extremas. Solo afecta las etapas que todavía no se han calculado.",
+    "cuotasMode.simple.title": "Versión simplificada",
+    "cuotasMode.simple.badge": "Más rápida",
+    "cuotasMode.simple.desc": "Tú decides cuántas categorías de cuotas hay y cómo se llaman. El grupo solo propone cuánto debe ser cada cuota.",
+    "cuotasMode.democratic.title": "Versión más democrática",
+    "cuotasMode.democratic.badge": "Más participativa",
+    "cuotasMode.democratic.desc": "Se le pregunta todo al grupo: si todos pagan lo mismo, cuántas categorías hay, cómo se llaman y cuánto paga cada una.",
+    "cuotasMode.waiting": "El facilitador está eligiendo cómo se va a decidir…",
+    "simple.step": "Paso {n} de 3",
+    "simple.cat.title": "¿Qué categorías de cuota habrá?",
+    "simple.cat.help": "Escribe el nombre de cada categoría. Por ejemplo: Casas, Locales comerciales. Si todos pagan lo mismo, deja una sola.",
+    "simple.cat.placeholder": "Nombre de la categoría",
+    "simple.cat.membersPlaceholder": "¿Cuántas personas? (opcional)",
+    "simple.cat.membersHint": "Si indicas cuántas personas hay en cada categoría, la app calcula cuánto se recauda en total.",
+    "simple.cat.add": "+ Agregar otra categoría",
+    "simple.cat.needOne": "Escribe al menos una categoría para continuar.",
+    "simple.time.title": "¿Quieres poner un límite de tiempo para que decidan?",
+    "simple.time.help": "Cuando se acabe el tiempo, la app cierra la votación sola y calcula el resultado con las propuestas recibidas.",
+    "simple.time.no": "No, la cierro yo",
+    "simple.time.yes": "Sí, poner un límite",
+    "simple.time.amount": "Cantidad",
+    "simple.time.unit.minutes": "Minutos",
+    "simple.time.unit.hours": "Horas",
+    "simple.time.unit.days": "Días",
+    "simple.time.max": "El máximo es de 60 días.",
+    "simple.send.title": "¿Ya estás listo para enviar las preguntas a tu grupo?",
+    "simple.send.help": "Puedes escribir los correos de las personas a las que quieres invitar, o simplemente copiar el link del grupo y enviarlo por donde prefieras.",
+    "simple.send.emails": "Correos (opcional)",
+    "simple.send.emailPlaceholder": "correo@ejemplo.com",
+    "simple.send.addEmail": "Agregar",
+    "simple.send.invalidEmail": "Ese correo no parece válido.",
+    "simple.send.orLink": "O comparte el link del grupo",
+    "simple.send.button": "Enviar preguntas al grupo",
+    "simple.send.sending": "Enviando…",
+    "simple.send.partial": "Se enviaron {n} invitaciones, pero no se pudo enviar a: {list}. Comparte el link del grupo con esas personas.",
+    "simple.send.noneSent": "No se pudieron enviar las invitaciones por correo ({msg}). Comparte el link del grupo.",
+    "simple.send.continueAnyway": "Continuar de todos modos",
+    "simple.waiting": "El facilitador está preparando las preguntas…",
+    "timer.left": "Tiempo restante: {time}",
+    "timer.over": "El tiempo terminó. Calculando el resultado…",
+    "timer.extended": "Nadie había respondido, así que se reinició el tiempo.",
+    "result.mode.simple": "Versión simplificada",
+    "result.mode.democratic": "Versión más democrática",
+    "result.simpleCategories": "Categorías: {list}",
+    "result.timeLimit": "Límite de tiempo: {amount} {unit}",
+    "result.noTimeLimit": "Sin límite de tiempo.",
+    "welcome.s1.title": "Te damos la bienvenida a {group}",
+    "welcome.s1.text": "{admin} te invitó a este grupo.\n\nJuntos van a decidir las cuotas del grupo.",
+    "welcome.s1.textNoAdmin": "Te invitaron a este grupo.\n\nJuntos van a decidir las cuotas del grupo.",
+    "welcome.how.title": "¿Cómo vamos a decidir?",
+    "welcome.how.text": "Cada integrante envía su propia propuesta de cuánto debería ser la cuota.\n\nDespués se promedian todas las propuestas, y ese promedio es la decisión colectiva.\n\nA esta forma de decidir se le llama democracia por promedio.",
+    "welcome.d3.title": "Primero, ¿todos pagan lo mismo?",
+    "welcome.d3.text": "Para decidir las cuotas, lo primero es decidir si todos pagan lo mismo o si algunos grupos pagan diferente.\n\nPor ejemplo, en un vecindario los locales comerciales podrían pagar más que las casas.\n\nEsta decisión la tomamos entre todos los integrantes.",
+    "welcome.d4.title": "¿Cómo se elige cuántas categorías hay?",
+    "welcome.d4.text": "Cada integrante propone cuántas categorías cree que debe haber.\n\nSe suman las propuestas y se dividen entre el número de participantes.\n\nPor ejemplo, si un vecino propone 3 y otro propone 1, entonces (3 + 1) ÷ 2 = 2. La decisión colectiva es de 2 categorías.",
+    "welcome.d4.exampleQuestion": "Pregunta: ¿cuántas categorías de cuota debe haber?",
+    "welcome.d5.title": "¿Cómo decidimos cuáles son las categorías?",
+    "welcome.d5.text": "Cada vecino puede escribir los nombres de las categorías que se le ocurran. Después, todos reciben la lista completa de nombres.\n\nEntonces se les pide que unan las categorías que creen que son la misma. Si más de la mitad unió dos categorías, esas dos pasan a ser una sola.\n\nCuando termina esa etapa, cada vecino elige, entre las que quedaron, las categorías que considera más adecuadas (tantas como se decidió en el paso anterior, por ejemplo dos). Avanzan las que tengan más votos.",
+    "welcome.d6.title": "¿Y cuánto paga cada categoría?",
+    "welcome.d6.text": "Cada vecino elige cuánto debería ser la cuota de cada una de las categorías que resultaron.\n\nLas respuestas se promedian por categoría, y así sale la cuota de cada una.",
+    "welcome.ready.title": "¿Estás listo para decidir?",
+    "welcome.ready.titleAdvance": "¿Están listos para avanzar?",
+    "welcome.ready.text": "Cuando quieras, entra al grupo y envía tu propuesta.",
+    "welcome.ready.yes": "Sí",
+    "welcome.ready.more": "Conocer más del proceso",
+    "flow.saved": "Guardado",
+    "flow.responded": "{n} de {total} miembro(s) han respondido",
+    "flow.anotherProcess": "¿Hacer otro proceso? →",
+    "memberSetup.number": "Número de miembros",
+    "memberSetup.saveContinue": "Guardar y continuar",
+    "memberSetup.skip": "Omitir, no es necesario",
+    "memberSetup.waiting": "El facilitador está indicando el número de miembros…",
+    "error.goBack": "No se pudo regresar",
+    "connected.connecting": "Conectando…",
+    "connected.code": "código: {code}",
+    "connected.notFound": "Grupo no encontrado",
+    "connected.newRequest.title": "Nueva solicitud pendiente",
+    "connected.newRequest.body": "Alguien quiere unirse a \"{name}\". Entra a la app para aprobar o rechazar.",
+    "connected.noQuestions": "Este grupo todavía no tiene preguntas.",
+    "starter.cuotas.title": "Iniciar cuotas participativas",
+    "starter.cuotas.desc": "Un flujo guiado de varias etapas para decidir las cuotas del grupo.",
+    "starter.presupuesto.title": "Iniciar presupuesto participativo",
+    "starter.presupuesto.desc": "Un flujo guiado para decidir en qué se gasta el presupuesto del grupo.",
+    "starter.asociaciones.title": "Iniciar asociaciones (cuotas y presupuesto)",
+    "starter.asociaciones.desc": "Corre los dos flujos, uno después del otro.",
   },
   en: {
     "home.explain.title": "Explanation and examples",
@@ -714,6 +866,8 @@ const FRONTEND_STRINGS = {
     "groupCreated.title": "You created the group \"{name}\"!",
     "groupCreated.subtitle": "Share the code or the link with whoever you want to invite.",
     "groupCreated.continue": "Continue to my group",
+    "groupCreated.subtitleDefer": "First you will choose how this will be decided. Then you can invite your group.",
+    "connected.inviteAfterMode": "First choose how this will be decided. Then you can invite your group.",
     "gastosFijos.reminder": "Remember this flow is connected to the dues or fees, the available budget already comes from there ({amount}). If you want to add an extra amount (savings, other income), you can adjust it in the facilitator settings.",
     "gastosFijos.label": "Fixed expenses:",
     "gastosFijos.namePlaceholder": "Expense name",
@@ -801,6 +955,7 @@ const FRONTEND_STRINGS = {
     "input.rankOrderShort": "tap in order of preference (1st, 2nd…)",
     "input.membersCollectedShort": "{count} members × {value} = {total}",
     "input.totalCollected": "total collected with these numbers: {total}",
+    "input.lowerFixedWarning": "You are lowering this fixed expense, make sure the cooperative can cover it with that amount.",
     "input.assignedAmount": "assigned: {amount}",
     "input.assignedPercent": "assigned: {pct}% of 100%",
     "input.overBy": ". You went over by {pct}%",
@@ -1009,6 +1164,55 @@ const FRONTEND_STRINGS = {
     "q.calculateDecision": "Calculate collective decision",
     "q.reachedDecision": "A collective decision was reached.",
     "q.needsAnotherRound": "Another round of participation is needed.",
+    "footer.server": "server",
+    "badge.closed": "closed",
+    "badge.closing": "closing…",
+    "badge.closesIn": "⏱ closes in {time}",
+    "details.hide": "Hide process",
+    "details.show": "Show process",
+    "qr.confirmCloseRound": "Are you sure you want to close this round? No one else will be able to vote in it after this. This can't be undone.",
+    "qr.rule.simple": "the most voted wins",
+    "qr.rule.absoluta": "needs more than 50%",
+    "qr.rule.calificada": "needs more than {pct}%",
+    "qr.rule.rankeado": "ranked vote (automatic)",
+    "qr.rule.segunda_vuelta": "{rounds} rounds · eliminates below {pct}%",
+    "qr.trim": "trim: {pct}%",
+    "qr.roundNum": " · round {n}",
+    "qr.tieParen": " (tiebreaker)",
+    "qr.tieRoundNum": " · tiebreaker round {n}",
+    "qr.votedCount": "{n} of {total} member(s) have voted",
+    "qr.proposalsTrimmed": "{n} proposals · {trimmed} trimmed from each end",
+    "qr.suggestedMin": " · suggested minimum: {pct}%",
+    "qr.collectiveDecision": "Collective decision",
+    "qr.votesCount": "{n} vote(s)",
+    "qr.noWinnerYet": "no winner yet",
+    "qr.round": "Round {n}",
+    "qr.eliminatesQuoted": " · \"{option}\" is eliminated",
+    "qr.tieShort": " · tie",
+    "qr.tieBreakTitle": "Tiebreaker",
+    "qr.tieBreakRound": "Tiebreaker round {n}",
+    "qr.tieVotingAmong": "voting in progress between: {options}",
+    "qr.roundEliminatedList": "Round {n}{tie} · eliminated: {list}",
+    "qr.nobody": "no one",
+    "qr.roundInProgress": "Round {n} (in progress)",
+    "qr.yourProposal": "your proposal",
+    "qr.tieRevote": "There was a tie. Vote again, only among the tied options.",
+    "qr.congrats": "Congratulations!",
+    "qr.tied": "It's a tie!",
+    "hdr.title.responsables": "Choosing people in charge",
+    "hdr.steps.default": "Build your group|Write the questions|Choose the process|Send to your group|Decide together!",
+    "hdr.steps.responsables": "Build your group|Define the roles|Add candidates|Draw lots|Person in charge chosen!",
+    "hdr.steps.cuotas": "Build your group|Define the categories|Propose the amount|Approve the result|Collect together!",
+    "hdr.steps.presupuesto": "Build your group|Propose categories|Split the %|Approve the result|Spend together!",
+    "hdr.steps.asociaciones": "Build your group|Decide the dues or fees|Split the budget|Propose projects|Decide together!",
+    "hdr.steps.municipios": "Taxes|Budget|Other questions",
+    "hdr.steps.cooperativas": "Build your group|Choose a process|Decide together|Done!",
+    "result.skippedByFacilitator": "The facilitator skipped this step.",
+    "result.membersLabel": "Members",
+    "result.candidates": "Candidates: {list}",
+    "result.was": " (was {amount})",
+    "result.fixedTotal": "Total fixed expenses",
+    "promo.qrAlt": "QR code",
     "q.viewProcess": "View the process",
     "q.voteNewRound": "Vote in the new round",
     "sorteo.description": "lottery, never repeats a winner until everyone's had a turn",
@@ -1142,6 +1346,105 @@ const FRONTEND_STRINGS = {
     "promo.intro1": "Are you part of, or want to start, a neighborhood association, a club, a cooperative, or any other organization?",
     "promo.intro2": "This app helps you organize your group to make decisions in a transparent, horizontal, fair, and efficient way.",
     "promo.intro3": "Includes participatory dues or fees and taxes, participatory budgets, assigning responsibilities by sortition, and more!",
+
+    // ---- Advanced settings, simplified dues or fees and guest welcome ----
+    "adv.toggle": "Advanced settings",
+    "adv.hint": "They come with recommended values. Only change them if you need to.",
+    "adv.budgetTotalTitle": "Total budget (from dues or fees plus extra)",
+    "adv.fromCuotas": "From dues or fees: {amount}",
+    "adv.extraAmount": "Extra amount (savings, other income)",
+    "adv.total": "Total: {amount}",
+    "adv.tieMinutes": "Minutes for tiebreaker rounds (empty = you close them by hand)",
+    "adv.reopenMinutes": "Minutes when reopening empty categories",
+    "adv.minutesPlaceholder": "e.g. 1440",
+    "adv.sueldoTrim.label": "Trim % (high and low) on the proposed wages",
+    "adv.sueldoTrim.title": "Trim %",
+    "adv.sueldoTrim.text": "Before averaging everyone's proposals for each role, the most extreme ones, the highest and the lowest, are discarded in the same proportion.\n\nFor example, with 10%: the highest 10% and the lowest 10% of proposals for that role are discarded, and only what is left in the middle is averaged.\n\nThis prevents one person (or a small group) from pulling a role's wage to an extreme by proposing an absurd number on purpose.",
+    "adv.sueldoTrim.note": "Before averaging each role, the most extreme proposals are discarded. It only affects stages that haven't been calculated yet.",
+    "cuotasMode.simple.title": "Simplified version",
+    "cuotasMode.simple.badge": "Faster",
+    "cuotasMode.simple.desc": "You decide how many dues or fees categories there are and what they are called. The group only proposes how much each one should be.",
+    "cuotasMode.democratic.title": "More democratic version",
+    "cuotasMode.democratic.badge": "More participatory",
+    "cuotasMode.democratic.desc": "Everything is asked to the group: whether everyone pays the same, how many categories there are, what they are called and how much each one pays.",
+    "cuotasMode.waiting": "The facilitator is choosing how this will be decided…",
+    "simple.step": "Step {n} of 3",
+    "simple.cat.title": "Which dues or fees categories will there be?",
+    "simple.cat.help": "Write the name of each category. For example: Homes, Commercial premises. If everyone pays the same, leave just one.",
+    "simple.cat.placeholder": "Category name",
+    "simple.cat.membersPlaceholder": "How many people? (optional)",
+    "simple.cat.membersHint": "If you enter how many people are in each category, the app calculates the total amount collected.",
+    "simple.cat.add": "+ Add another category",
+    "simple.cat.needOne": "Write at least one category to continue.",
+    "simple.time.title": "Do you want to set a time limit for them to decide?",
+    "simple.time.help": "When time runs out, the app closes the vote by itself and calculates the result with the proposals received.",
+    "simple.time.no": "No, I will close it myself",
+    "simple.time.yes": "Yes, set a limit",
+    "simple.time.amount": "Amount",
+    "simple.time.unit.minutes": "Minutes",
+    "simple.time.unit.hours": "Hours",
+    "simple.time.unit.days": "Days",
+    "simple.time.max": "The maximum is 60 days.",
+    "simple.send.title": "Are you ready to send the questions to your group?",
+    "simple.send.help": "You can enter the emails of the people you want to invite, or simply copy the group link and send it however you prefer.",
+    "simple.send.emails": "Emails (optional)",
+    "simple.send.emailPlaceholder": "email@example.com",
+    "simple.send.addEmail": "Add",
+    "simple.send.invalidEmail": "That email doesn't look valid.",
+    "simple.send.orLink": "Or share the group link",
+    "simple.send.button": "Send the questions to the group",
+    "simple.send.sending": "Sending…",
+    "simple.send.partial": "{n} invitations were sent, but we couldn't send to: {list}. Share the group link with those people.",
+    "simple.send.noneSent": "The email invitations couldn't be sent ({msg}). Share the group link.",
+    "simple.send.continueAnyway": "Continue anyway",
+    "simple.waiting": "The facilitator is preparing the questions…",
+    "timer.left": "Time left: {time}",
+    "timer.over": "Time is up. Calculating the result…",
+    "timer.extended": "Nobody had answered yet, so the time was restarted.",
+    "result.mode.simple": "Simplified version",
+    "result.mode.democratic": "More democratic version",
+    "result.simpleCategories": "Categories: {list}",
+    "result.timeLimit": "Time limit: {amount} {unit}",
+    "result.noTimeLimit": "No time limit.",
+    "welcome.s1.title": "Welcome to {group}",
+    "welcome.s1.text": "{admin} invited you to this group.\n\nTogether you will decide the group's dues or fees.",
+    "welcome.s1.textNoAdmin": "You were invited to this group.\n\nTogether you will decide the group's dues or fees.",
+    "welcome.how.title": "How are we going to decide?",
+    "welcome.how.text": "Each member sends their own proposal for how much the dues or fees should be.\n\nThen all the proposals are averaged, and that average is the collective decision.\n\nThis way of deciding is called Average-Based Democracy.",
+    "welcome.d3.title": "First, does everyone pay the same?",
+    "welcome.d3.text": "To decide the dues or fees, the first step is deciding whether everyone pays the same or some groups pay differently.\n\nFor example, in a neighborhood, commercial premises might pay more than homes.\n\nAll the members make this decision together.",
+    "welcome.d4.title": "How do we choose how many categories there are?",
+    "welcome.d4.text": "Each member proposes how many categories there should be.\n\nThe proposals are added up and divided by the number of participants.\n\nFor example, if one neighbor proposes 3 and another proposes 1, then (3 + 1) ÷ 2 = 2. The collective decision is 2 categories.",
+    "welcome.d4.exampleQuestion": "Question: how many dues or fees categories should there be?",
+    "welcome.d5.title": "How do we decide which categories they are?",
+    "welcome.d5.text": "Each neighbor can write the names of the categories they come up with. Then everyone receives the full list of names.\n\nThey are then asked to merge the categories they think are the same. If more than half merged two categories, those two become one.\n\nWhen that stage ends, each neighbor chooses, among the ones left, the categories they consider most adequate (as many as were decided in the previous step, for example two). The ones with the most votes move forward.",
+    "welcome.d6.title": "And how much does each category pay?",
+    "welcome.d6.text": "Each neighbor chooses how much the dues or fees should be for each of the resulting categories.\n\nThe answers are averaged per category, and that gives the amount for each one.",
+    "welcome.ready.title": "Are you ready to decide?",
+    "welcome.ready.titleAdvance": "Are you ready to move forward?",
+    "welcome.ready.text": "Whenever you want, join the group and send your proposal.",
+    "welcome.ready.yes": "Yes",
+    "welcome.ready.more": "Learn more about the process",
+    "flow.saved": "Saved",
+    "flow.responded": "{n} of {total} member(s) have responded",
+    "flow.anotherProcess": "Do another process? →",
+    "memberSetup.number": "Number of members",
+    "memberSetup.saveContinue": "Save and continue",
+    "memberSetup.skip": "Skip, not needed",
+    "memberSetup.waiting": "The facilitator is entering the number of members…",
+    "error.goBack": "Couldn't go back",
+    "connected.connecting": "Connecting…",
+    "connected.code": "code: {code}",
+    "connected.notFound": "Group not found",
+    "connected.newRequest.title": "New pending request",
+    "connected.newRequest.body": "Someone wants to join \"{name}\". Open the app to approve or reject.",
+    "connected.noQuestions": "This group has no questions yet.",
+    "starter.cuotas.title": "Start participatory dues or fees",
+    "starter.cuotas.desc": "A guided flow with several stages to decide the group's dues or fees.",
+    "starter.presupuesto.title": "Start participatory budget",
+    "starter.presupuesto.desc": "A guided flow to decide how the group's budget is spent.",
+    "starter.asociaciones.title": "Start associations (dues or fees and budget)",
+    "starter.asociaciones.desc": "Runs both flows, one after the other.",
   },
 };
 
@@ -1149,7 +1452,7 @@ function tf(key, lang, vars = {}) {
   const dict = FRONTEND_STRINGS[lang] || FRONTEND_STRINGS.es;
   let str = dict[key] || FRONTEND_STRINGS.es[key] || key;
   Object.entries(vars).forEach(([k, v]) => {
-    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), () => String(v));
   });
   return str;
 }
@@ -1307,7 +1610,7 @@ function LicitacionResultsDisplay({ flow, detailed }) {
           return (
             <div key={cat} className="flex justify-between items-baseline mb-1.5">
               <span className="dp-body text-xs" style={{ color: INK + "99" }}>{cat}</span>
-              <span className="dp-display text-sm font-bold" style={{ color: GREEN }}>{p ? p.name : "—"}</span>
+              <span className="dp-display text-sm font-bold" style={{ color: GREEN }}>{p ? p.name : "·"}</span>
             </div>
           );
         })}
@@ -1407,7 +1710,7 @@ function PdfLicitacionSummary({ flow }) {
             <div key={cat} style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "10px" }}>
               <span style={{ fontFamily: "Inter, sans-serif", fontSize: "12.5px", color: INK }}>{cat}</span>
               <span style={{ fontFamily: "Sora, sans-serif", fontSize: "14px", fontWeight: 700, color: GREEN, textAlign: "right" }}>
-                {p ? p.name : "—"}
+                {p ? p.name : "·"}
                 {p && p.cost !== undefined && <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", color: INK + "88", fontWeight: 400, display: "block" }}>{formatMoney(p.cost)}</span>}
               </span>
             </div>
@@ -1710,6 +2013,7 @@ function OptionBar({ option, count, percent, highlight }) {
 }
 
 function DetailsToggle({ show, onToggle, color }) {
+  const dtLang = useLang();
   return (
     <button
       onClick={onToggle}
@@ -1717,7 +2021,7 @@ function DetailsToggle({ show, onToggle, color }) {
       style={{ color: color || INK + "99" }}
     >
       <span style={{ display: "inline-block", transform: show ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" }}>▶</span>
-      {show ? "Ocultar proceso" : "Ver proceso"}
+      {show ? tf("details.hide", dtLang) : tf("details.show", dtLang)}
     </button>
   );
 }
@@ -1811,6 +2115,7 @@ function SorteoRunner({ backendUrl, groupCode, memberId, question, isAdmin }) {
 }
 
 function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, groupResponses, approvedMemberCount }) {
+  const siLang = useLang();
   const rule = question.majorityRule;
   const isRankeado = rule === "rankeado";
   const isSegundaVuelta = rule === "segunda_vuelta";
@@ -1880,9 +2185,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
   };
 
   const closeRound = async () => {
-    const ok = await customConfirm(
-      "¿Seguro que quieres cerrar esta ronda? Nadie más podrá votar en ella después de esto. Esta acción no se puede deshacer."
-    );
+    const ok = await customConfirm(tf("qr.confirmCloseRound", siLang));
     if (!ok) return;
     setClosingRound(true);
     try {
@@ -1913,11 +2216,11 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
   }, [Boolean(result), needsLivePolling]);
 
   const ruleLabel = {
-    simple: "gana la más votada",
-    absoluta: "necesita más del 50%",
-    calificada: `necesita más del ${question.qualifiedPct}%`,
-    rankeado: "voto ranqueado (automático)",
-    segunda_vuelta: `${question.numRounds} rondas · elimina menos del ${question.eliminationThresholdPercent}%`,
+    simple: tf("qr.rule.simple", siLang),
+    absoluta: tf("qr.rule.absoluta", siLang),
+    calificada: tf("qr.rule.calificada", siLang, { pct: question.qualifiedPct }),
+    rankeado: tf("qr.rule.rankeado", siLang),
+    segunda_vuelta: tf("qr.rule.segunda_vuelta", siLang, { rounds: question.numRounds, pct: question.eliminationThresholdPercent }),
   }[rule];
 
   const currentOptions = isSegundaVuelta && result ? result.currentOptions : question.options;
@@ -1979,14 +2282,14 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
         )}
       </div>
       <div className="dp-body text-[11px] mb-3" style={{ color: INK + "77" }}>
-        {question.type === "promedio" ? `recorte: ${question.trimPercent}%` : ruleLabel}
-        {isSegundaVuelta && result && !result.finished && ` · ronda ${result.currentRound}${result.inTieBreak ? " (desempate)" : ""}`}
-        {inTieBreak && ` · ronda de desempate ${freshTieBreak.currentRound}`}
+        {question.type === "promedio" ? tf("qr.trim", siLang, { pct: question.trimPercent }) : ruleLabel}
+        {isSegundaVuelta && result && !result.finished && `${tf("qr.roundNum", siLang, { n: result.currentRound })}${result.inTieBreak ? tf("qr.tieParen", siLang) : ""}`}
+        {inTieBreak && tf("qr.tieRoundNum", siLang, { n: freshTieBreak.currentRound })}
       </div>
       {liveVoteCount !== null && (
         <div className="dp-body text-[11px] mb-3 flex items-center gap-1.5" style={{ color: INK + "88" }}>
           <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: GREEN }} />
-          {liveVoteCount} de {approvedMemberCount} miembro(s) han votado
+          {tf("qr.votedCount", siLang, { n: liveVoteCount, total: approvedMemberCount })}
         </div>
       )}
 
@@ -1998,8 +2301,8 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           {showDetails && (
             <React.Fragment>
               <div className="dp-body text-[11px] font-medium mb-2.5" style={{ color: INK + "99" }}>
-                {result.n} propuestas · {result.trimmedCount} recortadas de cada extremo
-                {result.suggestedMinPercent > question.trimPercent && <> · mínimo sugerido: {result.suggestedMinPercent}%</>}
+                {tf("qr.proposalsTrimmed", siLang, { n: result.n, trimmed: result.trimmedCount })}
+                {result.suggestedMinPercent > question.trimPercent && tf("qr.suggestedMin", siLang, { pct: result.suggestedMinPercent })}
               </div>
               <div className="flex flex-wrap gap-1.5 mb-3">
                 {result.sorted.map((v, i) => {
@@ -2022,7 +2325,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             </React.Fragment>
           )}
           <div className="flex items-baseline justify-between pt-2.5" style={{ borderTop: `1px solid ${BLUE}33` }}>
-            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>{tf("qr.collectiveDecision", siLang)}</span>
             <span className="dp-display text-3xl font-bold" style={{ color: BLUE }}>{result.average.toFixed(2)}</span>
           </div>
         </div>
@@ -2033,16 +2336,16 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} />
           {showDetails && (
             <React.Fragment>
-              <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>{result.totalVoters} voto(s)</div>
+              <div className="dp-body text-[11px] font-medium mb-3" style={{ color: INK + "99" }}>{tf("qr.votesCount", siLang, { n: result.totalVoters })}</div>
               {result.tally.map((t) => (
                 <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={result.winner === t.option} />
               ))}
             </React.Fragment>
           )}
           <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
-            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+            <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>{tf("qr.collectiveDecision", siLang)}</span>
             <span className="dp-display text-lg font-bold" style={{ color: result.winner ? GREEN : CORAL }}>
-              {result.winner || "sin ganador todavía"}
+              {result.winner || tf("qr.noWinnerYet", siLang)}
             </span>
           </div>
         </div>
@@ -2054,7 +2357,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           {showDetails && result.rounds.map((rd, i) => (
             <div key={i} className="mb-3">
               <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
-                Ronda {i + 1}{rd.eliminated ? ` · se elimina "${rd.eliminated}"` : ""}{rd.tie ? " · empate" : ""}
+                {tf("qr.round", siLang, { n: i + 1 })}{rd.eliminated ? tf("qr.eliminatesQuoted", siLang, { option: rd.eliminated }) : ""}{rd.tie ? tf("qr.tieShort", siLang) : ""}
               </div>
               {rd.tally.map((t) => (
                 <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={rd.winner === t.option} />
@@ -2063,7 +2366,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           ))}
           {result.winner && !freshTieBreak && (
             <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
-              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>{tf("qr.collectiveDecision", siLang)}</span>
               <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
             </div>
           )}
@@ -2072,11 +2375,11 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
 
       {freshTieBreak && (
         <div className="mb-4 rounded-xl p-3.5" style={{ background: CORAL + "12", border: `1px solid ${CORAL}33` }}>
-          <div className="dp-body text-[11px] font-semibold mb-2" style={{ color: CORAL }}>Desempate</div>
+          <div className="dp-body text-[11px] font-semibold mb-2" style={{ color: CORAL }}>{tf("qr.tieBreakTitle", siLang)}</div>
           <DetailsToggle show={showDetails} onToggle={() => setShowDetails(!showDetails)} color={CORAL} />
           {showDetails && freshTieBreak.completedRounds.map((rd, i) => (
             <div key={i} className="mb-2">
-              <div className="dp-body text-[10px] font-medium mb-1" style={{ color: INK + "99" }}>Ronda de desempate {rd.roundNum}</div>
+              <div className="dp-body text-[10px] font-medium mb-1" style={{ color: INK + "99" }}>{tf("qr.tieBreakRound", siLang, { n: rd.roundNum })}</div>
               {rd.tally.map((t) => (
                 <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
               ))}
@@ -2084,11 +2387,11 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           ))}
           {freshTieBreak.finished ? (
             <div className="flex items-baseline justify-between pt-2 mt-1" style={{ borderTop: `1px solid ${CORAL}33` }}>
-              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>{tf("qr.collectiveDecision", siLang)}</span>
               <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{freshTieBreak.winner}</span>
             </div>
           ) : (
-            <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>votación en curso entre: {freshTieBreak.currentOptions.join(", ")}</div>
+            <div className="dp-body text-[11px]" style={{ color: INK + "88" }}>{tf("qr.tieVotingAmong", siLang, { options: freshTieBreak.currentOptions.join(", ") })}</div>
           )}
         </div>
       )}
@@ -2101,7 +2404,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
               {result.completedRounds.map((rd) => (
                 <div key={rd.roundNum} className="mb-3">
                   <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>
-                    Ronda {rd.roundNum}{rd.tieBreak ? " (desempate)" : ""} · se elimina: {rd.eliminated.length ? rd.eliminated.join(", ") : "nadie"}
+                    {tf("qr.roundEliminatedList", siLang, { n: rd.roundNum, tie: rd.tieBreak ? tf("qr.tieParen", siLang) : "", list: rd.eliminated.length ? rd.eliminated.join(", ") : tf("qr.nobody", siLang) })}
                   </div>
                   {rd.tally.map((t) => (
                     <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
@@ -2110,7 +2413,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
               ))}
               {!result.finished && result.liveTally && (
                 <div className="mb-2">
-                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>Ronda {result.currentRound} (en curso)</div>
+                  <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK + "99" }}>{tf("qr.roundInProgress", siLang, { n: result.currentRound })}</div>
                   {result.liveTally.map((t) => (
                     <OptionBar key={t.option} option={t.option} count={t.count} percent={t.percent} highlight={false} />
                   ))}
@@ -2120,7 +2423,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
           )}
           {result.finished && (
             <div className="flex items-baseline justify-between pt-2.5 mt-1" style={{ borderTop: `1px solid ${BLUE}33` }}>
-              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>Decisión colectiva</span>
+              <span className="dp-body text-xs font-medium" style={{ color: INK + "99" }}>{tf("qr.collectiveDecision", siLang)}</span>
               <span className="dp-display text-lg font-bold" style={{ color: GREEN }}>{result.winner}</span>
             </div>
           )}
@@ -2133,7 +2436,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
         <div className="flex items-center gap-2 mb-2">
           <input
             type="number"
-            placeholder="tu propuesta"
+            placeholder={tf("qr.yourProposal", siLang)}
             value={value}
             disabled={isClosedForVoting}
             onChange={(e) => setValue(e.target.value)}
@@ -2178,7 +2481,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
       {isRankeado && inTieBreak && (
         <div className="flex flex-col gap-1.5 mb-2">
           <div className="dp-body text-[11px] mb-1" style={{ color: CORAL }}>
-            Hubo empate. Vota de nuevo solo entre las opciones empatadas.
+            {tf("qr.tieRevote", siLang)}
           </div>
           {freshTieBreak.currentOptions.map((opt) => (
             <button
@@ -2289,7 +2592,7 @@ function QuestionRunner({ backendUrl, groupCode, memberId, question, isAdmin, gr
             <div className="text-center mb-2">
               <div style={{ fontSize: "36px" }}>{decisionStatus === "resolved" ? <i className="ti ti-confetti" style={{ color: GREEN }}></i> : <i className="ti ti-scale" style={{ color: INK }}></i>}</div>
               <div className="dp-display text-lg font-bold mt-1" style={{ color: INK }}>
-                {decisionStatus === "resolved" ? "¡Felicidades!" : "¡Empate!"}
+                {decisionStatus === "resolved" ? tf("qr.congrats", siLang) : tf("qr.tied", siLang)}
               </div>
               <div className="dp-body text-[13px] mt-1" style={{ color: INK + "99" }}>
                 {decisionStatus === "resolved"
@@ -2672,6 +2975,62 @@ function getOnboardingSlides(lang) {
   ];
 }
 
+// Tarjetas de bienvenida para quien recibe la invitación a un grupo de
+// Cuotas. Hay dos secuencias: la de la versión simplificada (3 tarjetas,
+// que no se pueden cerrar) y la de la versión democrática (7 tarjetas).
+function getCuotasWelcomeSlides(lang, variant, info) {
+  const group = (info && info.group) || "";
+  const admin = (info && info.admin) || "";
+  const welcome = {
+    icon: "ti-heart-handshake",
+    title: tf("welcome.s1.title", lang, { group }),
+    text: admin ? tf("welcome.s1.text", lang, { admin }) : tf("welcome.s1.textNoAdmin", lang),
+  };
+  const how = {
+    icon: "ti-scale",
+    title: tf("welcome.how.title", lang),
+    text: tf("welcome.how.text", lang),
+    example: () => (
+      <OnbProposalExample
+        question={tf("onbEx.question", lang)}
+        people={[{ name: "Ana", amount: "$100", trimmed: false }, { name: "Luis", amount: "$150", trimmed: false }, { name: "Sofía", amount: "$200", trimmed: false }]}
+        calc="(100 + 150 + 200) ÷ 3 = $150"
+        result="$150"
+      />
+    ),
+  };
+
+  if (variant === "cuotasSimple") {
+    return [
+      welcome,
+      how,
+      { icon: "ti-circle-check", title: tf("welcome.ready.title", lang), text: tf("welcome.ready.text", lang) },
+    ];
+  }
+
+  return [
+    welcome,
+    how,
+    { icon: "ti-building-community", title: tf("welcome.d3.title", lang), text: tf("welcome.d3.text", lang) },
+    {
+      icon: "ti-calculator",
+      title: tf("welcome.d4.title", lang),
+      text: tf("welcome.d4.text", lang),
+      example: () => (
+        <OnbProposalExample
+          question={tf("welcome.d4.exampleQuestion", lang)}
+          people={[{ name: "Ana", amount: "3", trimmed: false }, { name: "Luis", amount: "1", trimmed: false }]}
+          calc="(3 + 1) ÷ 2 = 2"
+          result="2"
+        />
+      ),
+    },
+    { icon: "ti-git-merge", title: tf("welcome.d5.title", lang), text: tf("welcome.d5.text", lang) },
+    { icon: "ti-coin", title: tf("welcome.d6.title", lang), text: tf("welcome.d6.text", lang) },
+    { icon: "ti-circle-check", title: tf("welcome.ready.titleAdvance", lang), text: tf("welcome.ready.text", lang) },
+  ];
+}
+
 // Índices dentro de ONBOARDING_SLIDES para las versiones cortas
 // específicas de cada plantilla (al unirse a un grupo por invitación).
 const ONBOARDING_GROUP_SLIDES = {
@@ -2680,7 +3039,10 @@ const ONBOARDING_GROUP_SLIDES = {
   asociaciones: [2, 7, 8, 9],
 };
 
-function OnboardingCarousel({ slides, onClose, overlay = true }) {
+// "locked" = sin botón para cerrar (la persona tiene que leer todas las
+// tarjetas). "finalLabel" cambia el texto del botón de la última
+// tarjeta, y "onLearnMore" agrega debajo un enlace para conocer más.
+function OnboardingCarousel({ slides, onClose, overlay = true, locked = false, finalLabel, onLearnMore }) {
   const lang = useLang();
   const [idx, setIdx] = useState(0);
   const s = slides[idx];
@@ -2713,7 +3075,7 @@ function OnboardingCarousel({ slides, onClose, overlay = true }) {
       {overlay && (
         <div className="flex justify-between items-center mb-1.5">
           <span className="dp-mono text-[10px]" style={{ color: INK + "66" }}>{idx + 1} / {slides.length}</span>
-          <button onClick={onClose} className="dp-body text-sm" style={{ color: INK + "88" }}><i className="ti ti-x"></i></button>
+          {!locked && <button onClick={onClose} className="dp-body text-sm" style={{ color: INK + "88" }}><i className="ti ti-x"></i></button>}
         </div>
       )}
       <div className="mb-2.5"><OnbIcon name={s.icon} /></div>
@@ -2736,9 +3098,14 @@ function OnboardingCarousel({ slides, onClose, overlay = true }) {
           className="dp-body text-xs py-2 rounded-full text-white font-medium"
           style={{ background: BLUE, flex: idx > 0 ? 2 : 1 }}
         >
-          {idx === slides.length - 1 ? tf("onb.gotIt", lang) : tf("onb.next", lang)}
+          {idx === slides.length - 1 ? (finalLabel || tf("onb.gotIt", lang)) : tf("onb.next", lang)}
         </button>
       </div>
+      {idx === slides.length - 1 && onLearnMore && (
+        <button onClick={onLearnMore} className="dp-body w-full mt-2.5 text-xs font-medium underline" style={{ color: BLUE }}>
+          {tf("welcome.ready.more", lang)}
+        </button>
+      )}
     </div>
   );
 
@@ -3856,7 +4223,7 @@ function SharePromoScreen({ onBack }) {
           <p>{tf("promo.intro3", lang)}</p>
         </div>
         <div className="flex justify-center mb-3">
-          <img src={qrUrl} alt="Código QR" style={{ width: "160px", height: "160px", borderRadius: "12px" }} />
+          <img src={qrUrl} alt={tf("promo.qrAlt", lang)} style={{ width: "160px", height: "160px", borderRadius: "12px" }} />
         </div>
         <a href={APP_SHARE_URL} target="_blank" rel="noreferrer" className="dp-mono text-[11px] font-medium" style={{ color: BLUE, wordBreak: "break-all" }}>
           {APP_SHARE_URL}
@@ -4011,16 +4378,16 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
   );
 }
 
-function GroupCreatedScreen({ groupName, code, onContinue }) {
+function GroupCreatedScreen({ groupName, code, onContinue, deferShare }) {
   const lang = useLang();
   return (
     <div className="px-4 py-6">
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>{tf("groupCreated.title", lang, { name: groupName })}</div>
         <p className="dp-body text-[12px] mb-3" style={{ color: INK + "88" }}>
-          {tf("groupCreated.subtitle", lang)}
+          {deferShare ? tf("groupCreated.subtitleDefer", lang) : tf("groupCreated.subtitle", lang)}
         </p>
-        <ShareGroup groupName={groupName} code={code} />
+        {!deferShare && <ShareGroup groupName={groupName} code={code} />}
         <div className="mt-4">
           <PrimaryButton onClick={onContinue}>{tf("groupCreated.continue", lang)}</PrimaryButton>
         </div>
@@ -4040,6 +4407,15 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
   const [previewName, setPreviewName] = useState("");
   const [showGroupWelcome, setShowGroupWelcome] = useState(false);
   const [groupTemplate, setGroupTemplate] = useState(null);
+  const [inviterName, setInviterName] = useState("");
+  const [showFullExplanation, setShowFullExplanation] = useState(false);
+
+  // Las bienvenidas nuevas de Cuotas ("cuotasSimple" y "cuotasDemocratic")
+  // dependen de la versión que eligió el facilitador. Se recuerdan por
+  // grupo (no por tipo de proceso), porque mencionan el nombre del grupo
+  // y de quien invitó.
+  const isCuotasWelcome = groupTemplate === "cuotasSimple" || groupTemplate === "cuotasDemocratic";
+  const seenKey = isCuotasWelcome ? `org_onboarding_seen_${(initialCode || code || "").trim()}_${groupTemplate}` : `org_onboarding_seen_${groupTemplate}`;
 
   useEffect(() => {
     if (!initialCode) return;
@@ -4047,22 +4423,35 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         setPreviewName(data.name);
+        setInviterName((data.admin && data.admin.name) || "");
         const flows = data.flows || [];
         const active = flows.find((f) => f.status === "active") || flows[flows.length - 1];
         if (!active) return;
-        const template = active.chainNext === "presupuesto" || active.chainedFromFlowId ? "asociaciones" : active.template;
-        if (template && ONBOARDING_GROUP_SLIDES[template]) {
+        const cuotasMode = active.template === "cuotas" && active.config ? active.config.cuotasMode : null;
+        const template =
+          cuotasMode === "simple"
+            ? "cuotasSimple"
+            : cuotasMode === "democratic"
+            ? "cuotasDemocratic"
+            : active.chainNext === "presupuesto" || active.chainedFromFlowId
+            ? "asociaciones"
+            : active.template;
+        const isNew = template === "cuotasSimple" || template === "cuotasDemocratic";
+        if (isNew || (template && ONBOARDING_GROUP_SLIDES[template])) {
           setGroupTemplate(template);
-          if (!localStorage.getItem(`org_onboarding_seen_${template}`)) {
-            setShowGroupWelcome(true);
-          }
+          const key = isNew ? `org_onboarding_seen_${initialCode.trim()}_${template}` : `org_onboarding_seen_${template}`;
+          let seen = false;
+          try { seen = Boolean(localStorage.getItem(key)); } catch (e) { /* sin almacenamiento: se muestra siempre */ }
+          if (!seen) setShowGroupWelcome(true);
         }
       })
       .catch(() => {});
   }, [initialCode]);
 
   const closeGroupWelcome = () => {
-    if (groupTemplate) localStorage.setItem(`org_onboarding_seen_${groupTemplate}`, "true");
+    if (groupTemplate) {
+      try { localStorage.setItem(seenKey, "true"); } catch (e) { /* no pasa nada si no se puede guardar */ }
+    }
     setShowGroupWelcome(false);
   };
 
@@ -4115,10 +4504,25 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
 
       {showGroupWelcome && groupTemplate && (
         <OnboardingCarousel
-          slides={ONBOARDING_GROUP_SLIDES[groupTemplate].map((i) => getOnboardingSlides(lang)[i])}
+          slides={
+            isCuotasWelcome
+              ? getCuotasWelcomeSlides(lang, groupTemplate, { group: previewName, admin: inviterName })
+              : ONBOARDING_GROUP_SLIDES[groupTemplate].map((i) => getOnboardingSlides(lang)[i])
+          }
           onClose={closeGroupWelcome}
           overlay={true}
+          locked={groupTemplate === "cuotasSimple"}
+          finalLabel={isCuotasWelcome ? tf("welcome.ready.yes", lang) : undefined}
+          onLearnMore={isCuotasWelcome ? () => setShowFullExplanation(true) : undefined}
         />
+      )}
+
+      {showFullExplanation && (
+        <div className="fixed inset-0 overflow-y-auto" style={{ background: PAGE_BG, zIndex: 70 }}>
+          <div className="mx-auto" style={{ maxWidth: "420px" }}>
+            <ExplanationScreen onBack={() => setShowFullExplanation(false)} />
+          </div>
+        </div>
       )}
     </div>
   );
@@ -5002,7 +5406,7 @@ function StageInput({ stage, onSend, sending, disabled, flowConfig, approvedMemb
               />
               {lowered && (
                 <div className="dp-body text-[10px] mt-1" style={{ color: CORAL }}>
-                  <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>Estás bajando este gasto fijo, confirma que la cooperativa pueda cubrirlo con ese monto.
+                  <i className="ti ti-alert-triangle" style={{ marginRight: "4px" }}></i>{tf("input.lowerFixedWarning", siLang)}
                 </div>
               )}
             </div>
@@ -5119,14 +5523,31 @@ function StageResultView({ stage }) {
   const rLang = useLang();
   const r = stage.result;
 
+  if (stage.type === "eleccion_modo") {
+    return <div className="dp-body text-xs" style={{ color: INK + "99" }}>{tf(`result.mode.${r.mode}`, rLang)}</div>;
+  }
+
+  if (stage.type === "configurar_cuotas_simple") {
+    return (
+      <div className="dp-body text-xs" style={{ color: INK + "99" }}>
+        <div className="mb-0.5">{tf("result.simpleCategories", rLang, { list: r.categories.join(", ") })}</div>
+        <div>
+          {r.timeLimit
+            ? tf("result.timeLimit", rLang, { amount: r.timeLimit.amount, unit: tf(`simple.time.unit.${r.timeLimit.unit}`, rLang).toLowerCase() })
+            : tf("result.noTimeLimit", rLang)}
+        </div>
+      </div>
+    );
+  }
+
   if (stage.type === "conteo_miembros") {
     if (r.skipped) {
-      return <div className="dp-body text-xs" style={{ color: INK + "77" }}>El facilitador omitió este paso.</div>;
+      return <div className="dp-body text-xs" style={{ color: INK + "77" }}>{tf("result.skippedByFacilitator", rLang)}</div>;
     }
     return (
       <div className="dp-mono text-xs" style={{ color: INK + "99" }}>
         {Object.entries(r.memberCounts).map(([k, v]) => (
-          <div key={k}>{k === "single" ? "Miembros" : k}: {v}</div>
+          <div key={k}>{k === "single" ? tf("result.membersLabel", rLang) : k}: {v}</div>
         ))}
       </div>
     );
@@ -5148,7 +5569,7 @@ function StageResultView({ stage }) {
   if (stage.type === "configurar_candidatos") {
     return (
       <div className="dp-body text-xs" style={{ color: INK + "99" }}>
-        Candidatos: {r.candidates.join(", ")}
+        {tf("result.candidates", rLang, { list: r.candidates.join(", ") })}
       </div>
     );
   }
@@ -5258,12 +5679,12 @@ function StageResultView({ stage }) {
           <div key={g.nombre} className="flex justify-between py-0.5">
             <span>{g.nombre}</span>
             <span className="dp-mono font-semibold" style={{ color: g.montoFinal < g.montoOriginal ? CORAL : INK }}>
-              {formatMoney(g.montoFinal)}{g.montoFinal !== g.montoOriginal ? ` (era ${formatMoney(g.montoOriginal)})` : ""}
+              {formatMoney(g.montoFinal)}{g.montoFinal !== g.montoOriginal ? tf("result.was", rLang, { amount: formatMoney(g.montoOriginal) }) : ""}
             </span>
           </div>
         ))}
         <div className="flex justify-between pt-1 mt-1 font-semibold" style={{ borderTop: `1px solid ${BLUE}22` }}>
-          <span>Total gastos fijos</span>
+          <span>{tf("result.fixedTotal", rLang)}</span>
           <span className="dp-mono">{formatMoney(r.totalFinal)}</span>
         </div>
       </div>
@@ -5278,7 +5699,7 @@ function StageResultView({ stage }) {
           {r.roles.map((role) => (
             <div key={role.id} className="flex items-baseline justify-between py-0.5">
               <span className="dp-body text-xs" style={{ color: INK + "99" }}>{role.name}</span>
-              <span className="dp-display text-sm font-bold" style={{ color: GREEN }}>{r.assignment[role.id] || "—"}</span>
+              <span className="dp-display text-sm font-bold" style={{ color: GREEN }}>{r.assignment[role.id] || "·"}</span>
             </div>
           ))}
         </div>
@@ -5304,7 +5725,7 @@ function StageResultView({ stage }) {
                     <td className="py-1 px-1 dp-body font-medium" style={{ color: INK }}>{m.month}</td>
                     {r.roles.map((role) => (
                       <td key={role.id} className="py-1 px-1 text-center dp-mono font-semibold" style={{ color: GREEN }}>
-                        {m.assignment[role.id] || "—"}
+                        {m.assignment[role.id] || "·"}
                       </td>
                     ))}
                   </tr>
@@ -5970,6 +6391,345 @@ function LicitacionPanel({ backendUrl, groupCode, memberId, flow, isAdmin, onAdv
   );
 }
 
+// ==================== Ajustes avanzados, cuenta regresiva y asistente de cuotas simplificada ====================
+
+// Todo lo "técnico" que el facilitador puede mover (% mínimo de apoyo,
+// % de recorte, monto extra, minutos de desempate…) vive aquí, cerrado
+// por defecto: los valores recomendados ya vienen puestos, y quien no
+// necesite tocarlos ni los ve.
+function AdvancedSettings({ children }) {
+  const lang = useLang();
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mb-3">
+      <button
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        className="dp-body w-full flex items-center justify-between text-[11px] px-3 py-2 rounded-lg"
+        style={{ background: open ? BLUE_SOFT : "transparent", color: INK + "99", border: `1px dashed ${BLUE}55` }}
+      >
+        <span className="flex items-center gap-1.5"><i className="ti ti-settings"></i>{tf("adv.toggle", lang)}</span>
+        <i className={`ti ${open ? "ti-chevron-up" : "ti-chevron-down"}`}></i>
+      </button>
+      {open && (
+        <div className="rounded-lg p-3 mt-1.5" style={{ background: BLUE_SOFT }}>
+          <div className="dp-body text-[10.5px] mb-3" style={{ color: INK + "88" }}>{tf("adv.hint", lang)}</div>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatTimeLeft(ms) {
+  const totalMin = Math.max(1, Math.ceil(ms / 60000));
+  const d = Math.floor(totalMin / 1440);
+  const h = Math.floor((totalMin % 1440) / 60);
+  const m = totalMin % 60;
+  const parts = [];
+  if (d) parts.push(`${d} d`);
+  if (h) parts.push(`${h} h`);
+  if (!d && (m || parts.length === 0)) parts.push(`${m} min`);
+  return parts.join(" ");
+}
+
+// Cuenta regresiva de una etapa con límite de tiempo. Cuando llega a
+// cero, el servidor cierra la etapa solo en la siguiente actualización.
+function StageCountdown({ closesAt, extended }) {
+  const lang = useLang();
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(id);
+  }, []);
+  const msLeft = new Date(closesAt).getTime() - now;
+  const over = msLeft <= 0;
+  return (
+    <div className="mb-2">
+      <div
+        className="dp-body text-[11px] font-medium rounded-lg px-2.5 py-1.5 inline-flex items-center gap-1.5"
+        style={{ background: over ? CORAL + "15" : BLUE_SOFT, color: over ? CORAL : INK }}
+      >
+        <i className="ti ti-clock"></i>
+        {over ? tf("timer.over", lang) : tf("timer.left", lang, { time: formatTimeLeft(msLeft) })}
+      </div>
+      {extended > 0 && !over && (
+        <div className="dp-body text-[10px] mt-1" style={{ color: INK + "77" }}>{tf("timer.extended", lang)}</div>
+      )}
+    </div>
+  );
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const TIME_UNIT_MINUTES = { minutes: 1, hours: 60, days: 1440 };
+
+// Asistente del facilitador en la versión simplificada de Cuotas, en 3
+// pasos: 1) categorías, 2) límite de tiempo, 3) enviar las preguntas al
+// grupo (por correo y/o copiando el link).
+function SimpleCuotasSetup({ stage, backendUrl, groupCode, memberId, onSubmit, sending, sendError }) {
+  const lang = useLang();
+  const prefill = stage.config.prefillCategories || [];
+  const prefillTime = stage.config.prefillTimeLimit || null;
+  const [step, setStep] = useState(1);
+  const [cats, setCats] = useState(
+    prefill.length > 0 ? prefill.map((c) => ({ name: c.name, members: c.members ? String(c.members) : "" })) : [{ name: "", members: "" }]
+  );
+  const [useLimit, setUseLimit] = useState(Boolean(prefillTime));
+  const [amount, setAmount] = useState(prefillTime ? String(prefillTime.amount) : "1");
+  const [unit, setUnit] = useState(prefillTime ? prefillTime.unit : "days");
+  const [emails, setEmails] = useState([]);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [inviting, setInviting] = useState(false);
+  const [inviteWarning, setInviteWarning] = useState("");
+  const [copied, setCopied] = useState(false);
+  const link = buildJoinLink(groupCode);
+
+  const filledCats = cats.filter((c) => c.name.trim());
+  const timeOk = !useLimit || (Number(amount) > 0 && Number(amount) * TIME_UNIT_MINUTES[unit] <= 60 * 1440);
+  const updateCat = (i, field, val) => setCats(cats.map((c, idx) => (idx === i ? { ...c, [field]: val } : c)));
+
+  // Acepta uno o varios correos a la vez (separados por coma, espacio o salto de línea).
+  const addEmailsFromText = (text) => {
+    const parts = text.split(/[\s,;]+/).map((p) => p.trim().toLowerCase()).filter(Boolean);
+    if (parts.length === 0) return true;
+    const good = parts.filter((p) => EMAIL_PATTERN.test(p));
+    const bad = parts.filter((p) => !EMAIL_PATTERN.test(p));
+    if (good.length > 0) setEmails([...new Set([...emails, ...good])]);
+    if (bad.length > 0) {
+      setEmailError(tf("simple.send.invalidEmail", lang));
+      setEmailDraft(bad.join(" "));
+      return false;
+    }
+    setEmailError("");
+    setEmailDraft("");
+    return true;
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      // Si el navegador bloquea el portapapeles, no pasa nada grave.
+    }
+  };
+
+  const finish = async (skipInvites) => {
+    setInviteWarning("");
+    let list = emails;
+    if (emailDraft.trim()) {
+      const parts = emailDraft.split(/[\s,;]+/).map((p) => p.trim().toLowerCase()).filter((p) => EMAIL_PATTERN.test(p));
+      list = [...new Set([...emails, ...parts])];
+    }
+    if (list.length > 0 && !skipInvites) {
+      setInviting(true);
+      try {
+        const res = await fetch(`${backendUrl}/api/groups/${groupCode}/invite`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ memberId, emails: list }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setInviteWarning(tf("simple.send.noneSent", lang, { msg: data.error || "" }));
+          setInviting(false);
+          return;
+        }
+        if (data.failed && data.failed.length > 0) {
+          setInviteWarning(tf("simple.send.partial", lang, { n: data.sent, list: data.failed.join(", ") }));
+          setInviting(false);
+          return;
+        }
+      } catch (e) {
+        setInviteWarning(tf("simple.send.noneSent", lang, { msg: e.message }));
+        setInviting(false);
+        return;
+      }
+      setInviting(false);
+    }
+    await onSubmit({
+      categories: filledCats.map((c) => ({ name: c.name.trim(), members: c.members === "" ? null : Number(c.members) })),
+      timeLimit: useLimit ? { amount: Number(amount), unit } : null,
+    });
+  };
+
+  const inputStyle = { background: "#fff", color: INK, border: `1px solid ${BLUE}33` };
+  const secondaryBtn = { background: "#fff", color: INK, border: `1.5px solid ${BLUE}55` };
+
+  return (
+    <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+      <div className="dp-mono text-[10px] mb-1.5" style={{ color: INK + "77" }}>{tf("simple.step", lang, { n: step })}</div>
+
+      {step === 1 && (
+        <div>
+          <div className="dp-body text-[14px] font-semibold mb-1" style={{ color: INK }}>{tf("simple.cat.title", lang)}</div>
+          <div className="dp-body text-[11.5px] mb-3" style={{ color: INK + "99", lineHeight: 1.5 }}>{tf("simple.cat.help", lang)}</div>
+          {cats.map((c, i) => (
+            <div key={i} className="rounded-lg p-2.5 mb-2" style={{ background: "#fff" }}>
+              <div className="flex items-center gap-2 mb-1.5">
+                <input
+                  value={c.name}
+                  onChange={(e) => updateCat(i, "name", e.target.value)}
+                  placeholder={tf("simple.cat.placeholder", lang)}
+                  maxLength={60}
+                  className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
+                  style={{ background: BLUE_SOFT, color: INK }}
+                />
+                {cats.length > 1 && (
+                  <button onClick={() => setCats(cats.filter((_, idx) => idx !== i))} className="dp-body text-xs px-1" style={{ color: CORAL }}><i className="ti ti-x"></i></button>
+                )}
+              </div>
+              <input
+                type="number" min="1" value={c.members}
+                onChange={(e) => updateCat(i, "members", e.target.value)}
+                placeholder={tf("simple.cat.membersPlaceholder", lang)}
+                className="dp-body w-full rounded-lg px-2.5 py-1.5 text-xs outline-none"
+                style={{ background: BLUE_SOFT, color: INK }}
+              />
+            </div>
+          ))}
+          {cats.length < 12 && (
+            <button onClick={() => setCats([...cats, { name: "", members: "" }])} className="dp-body text-xs font-medium mb-2" style={{ color: BLUE }}>
+              {tf("simple.cat.add", lang)}
+            </button>
+          )}
+          <div className="dp-body text-[10.5px] mb-3" style={{ color: INK + "77" }}>{tf("simple.cat.membersHint", lang)}</div>
+          {filledCats.length === 0 && <div className="dp-body text-[10.5px] mb-2" style={{ color: CORAL }}>{tf("simple.cat.needOne", lang)}</div>}
+          <button
+            onClick={() => setStep(2)}
+            disabled={filledCats.length === 0}
+            className="dp-body w-full text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+            style={{ background: BLUE }}
+          >
+            {tf("onb.next", lang)}
+          </button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div>
+          <div className="dp-body text-[14px] font-semibold mb-1" style={{ color: INK }}>{tf("simple.time.title", lang)}</div>
+          <div className="dp-body text-[11.5px] mb-3" style={{ color: INK + "99", lineHeight: 1.5 }}>{tf("simple.time.help", lang)}</div>
+          <div className="flex gap-2 mb-3">
+            <button
+              onClick={() => setUseLimit(false)}
+              className="dp-body flex-1 text-xs py-2 rounded-full font-medium"
+              style={!useLimit ? { background: BLUE, color: "#fff" } : secondaryBtn}
+            >
+              {tf("simple.time.no", lang)}
+            </button>
+            <button
+              onClick={() => setUseLimit(true)}
+              className="dp-body flex-1 text-xs py-2 rounded-full font-medium"
+              style={useLimit ? { background: BLUE, color: "#fff" } : secondaryBtn}
+            >
+              {tf("simple.time.yes", lang)}
+            </button>
+          </div>
+          {useLimit && (
+            <div className="rounded-lg p-2.5 mb-3" style={{ background: "#fff" }}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="dp-body text-xs" style={{ color: INK }}>{tf("simple.time.amount", lang)}</span>
+                <input
+                  type="number" min="1" value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="dp-mono w-20 rounded-lg px-2 py-1.5 text-sm text-center outline-none"
+                  style={{ background: BLUE_SOFT, color: INK }}
+                />
+              </div>
+              <div className="flex gap-1.5">
+                {["minutes", "hours", "days"].map((u) => (
+                  <button
+                    key={u}
+                    onClick={() => setUnit(u)}
+                    className="dp-body flex-1 text-[11px] py-1.5 rounded-full font-medium"
+                    style={unit === u ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+                  >
+                    {tf(`simple.time.unit.${u}`, lang)}
+                  </button>
+                ))}
+              </div>
+              <div className="dp-body text-[10px] mt-2" style={{ color: timeOk ? INK + "77" : CORAL }}>{tf("simple.time.max", lang)}</div>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button onClick={() => setStep(1)} className="dp-body flex-1 text-xs py-2 rounded-full font-medium" style={secondaryBtn}>{tf("onb.back", lang)}</button>
+            <button
+              onClick={() => setStep(3)}
+              disabled={!timeOk}
+              className="dp-body text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+              style={{ background: BLUE, flex: 2 }}
+            >
+              {tf("onb.next", lang)}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div>
+          <div className="dp-body text-[14px] font-semibold mb-1" style={{ color: INK }}>{tf("simple.send.title", lang)}</div>
+          <div className="dp-body text-[11.5px] mb-3" style={{ color: INK + "99", lineHeight: 1.5 }}>{tf("simple.send.help", lang)}</div>
+
+          <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>{tf("simple.send.emails", lang)}</div>
+          {emails.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {emails.map((e) => (
+                <span key={e} className="dp-body text-[11px] px-2.5 py-1 rounded-full flex items-center gap-1.5" style={{ background: "#fff", color: INK }}>
+                  {e}
+                  <button onClick={() => setEmails(emails.filter((x) => x !== e))} style={{ color: CORAL }}><i className="ti ti-x"></i></button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center gap-2 mb-1">
+            <input
+              type="email"
+              value={emailDraft}
+              onChange={(e) => { setEmailDraft(e.target.value); setEmailError(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addEmailsFromText(emailDraft); } }}
+              placeholder={tf("simple.send.emailPlaceholder", lang)}
+              className="dp-body flex-1 rounded-lg px-2.5 py-1.5 text-sm outline-none"
+              style={inputStyle}
+            />
+            <button onClick={() => addEmailsFromText(emailDraft)} disabled={!emailDraft.trim()} className="dp-body text-xs font-medium px-2 disabled:opacity-40" style={{ color: BLUE }}>
+              {tf("simple.send.addEmail", lang)}
+            </button>
+          </div>
+          {emailError && <div className="dp-body text-[10.5px] mb-1" style={{ color: CORAL }}>{emailError}</div>}
+
+          <div className="dp-body text-[11px] font-medium mt-3 mb-1.5" style={{ color: INK }}>{tf("simple.send.orLink", lang)}</div>
+          <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5 mb-3" style={{ background: "#fff" }}>
+            <span className="dp-mono text-[11px] truncate mr-2" style={{ color: INK + "aa" }}>{link}</span>
+            <button onClick={copyLink} className="dp-body text-[11px] font-medium shrink-0" style={{ color: BLUE }}>
+              {copied ? <span><i className="ti ti-check" style={{ marginRight: "3px" }}></i>{tf("share.copied", lang)}</span> : tf("share.copyLink", lang)}
+            </button>
+          </div>
+
+          {inviteWarning && (
+            <div className="dp-body text-[11px] mb-2 rounded-lg p-2" style={{ background: CORAL + "15", color: CORAL }}>{inviteWarning}</div>
+          )}
+          {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
+
+          <div className="flex gap-2">
+            <button onClick={() => setStep(2)} disabled={sending || inviting} className="dp-body flex-1 text-xs py-2 rounded-full font-medium disabled:opacity-40" style={secondaryBtn}>{tf("onb.back", lang)}</button>
+            <button
+              onClick={() => finish(Boolean(inviteWarning))}
+              disabled={sending || inviting || filledCats.length === 0 || !timeOk}
+              className="dp-body text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
+              style={{ background: GREEN, flex: 2 }}
+            >
+              {inviting || sending ? tf("simple.send.sending", lang) : inviteWarning ? tf("simple.send.continueAnyway", lang) : tf("simple.send.button", lang)}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, groupResponses, approvedMemberCount, approvedMemberNames, onAdvance, onSwitchFlow, cooperativasMode, onFinishedStandalone, onDownloadPdf }) {
   const uiLang = useLang();
   const [sending, setSending] = useState(false);
@@ -6026,7 +6786,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
       const licitacionConfig = { tieRoundMinutes: tieRoundMinutes === "" ? null : Number(tieRoundMinutes), reopenEmptyMinutes: reopenEmptyMinutes === "" ? null : Number(reopenEmptyMinutes) };
       const config =
         flow.template === "cuotas"
-          ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent), memberCounts }
+          ? { categoryThresholdPercent: Number(categoryThresholdPercent), quotaTrimPercent: Number(quotaTrimPercent) }
           : flow.template === "tabuladorSueldos"
           ? { sueldoTrimPercent: Number(sueldoTrimPercent) }
           : flow.template === "responsabilidades"
@@ -6155,35 +6915,29 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   return (
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="dp-body text-xs font-semibold mb-3" style={{ color: BLUE }}>
-        {flow.template === "cuotas"
-          ? "Cuotas participativas"
-          : flow.template === "responsabilidades"
-          ? "Selección de responsables"
-          : flow.template === "tabuladorSueldos"
-          ? "Tabulador de sueldos"
-          : flow.template === "presupuestoCooperativa"
-          ? "Presupuesto participativo (cooperativa)"
-          : "Presupuesto participativo"}
-        {flow.status === "finished" ? " · terminado" : ""}
+        {flowTemplateLabel(flow.template, uiLang)}
+        {flow.status === "finished" ? ` · ${tf("flow.finished", uiLang)}` : ""}
       </div>
 
       {isAdmin && flow.status === "active" && flow.template !== "tabuladorSueldos" && (
-        <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
-          <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
-            <span className="flex items-center">
-              {flow.template === "responsabilidades" ? tf("flow.thresholdLabel.puestos", uiLang) : tf("flow.thresholdLabel", uiLang)}
-              <InfoButton
-                title={tf("flow.thresholdInfo.title", uiLang)}
-                text={flow.template === "responsabilidades" ? tf("flow.thresholdInfo.text.puestos", uiLang) : tf("flow.thresholdInfo.text.categorias", uiLang)}
+        <AdvancedSettings>
+          {!(flow.template === "cuotas" && flow.config?.cuotasMode === "simple") && (
+            <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
+              <span className="flex items-center">
+                {flow.template === "responsabilidades" ? tf("flow.thresholdLabel.puestos", uiLang) : tf("flow.thresholdLabel", uiLang)}
+                <InfoButton
+                  title={tf("flow.thresholdInfo.title", uiLang)}
+                  text={flow.template === "responsabilidades" ? tf("flow.thresholdInfo.text.puestos", uiLang) : tf("flow.thresholdInfo.text.categorias", uiLang)}
+                />
+              </span>
+              <input
+                type="number" min="0" max="100" value={categoryThresholdPercent}
+                onChange={(e) => setCategoryThresholdPercent(e.target.value)}
+                className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none ml-2"
+                style={{ background: "#fff" }}
               />
-            </span>
-            <input
-              type="number" min="0" max="100" value={categoryThresholdPercent}
-              onChange={(e) => setCategoryThresholdPercent(e.target.value)}
-              className="dp-mono w-14 rounded-lg px-2 py-1 text-center outline-none ml-2"
-              style={{ background: "#fff" }}
-            />
-          </label>
+            </label>
+          )}
           {flow.template === "cuotas" && (
             <label className="dp-body flex items-center justify-between text-xs mb-3" style={{ color: INK }}>
               <span className="flex items-center">
@@ -6203,12 +6957,12 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           )}
           {flow.template === "presupuesto" && isChainedBudget && flow.stages.length === 0 && (
             <div className="mb-3">
-              <div className="dp-body text-xs mb-1.5" style={{ color: INK }}>Presupuesto total (de Cuotas + extra)</div>
+              <div className="dp-body text-xs mb-1.5" style={{ color: INK }}>{tf("adv.budgetTotalTitle", uiLang)}</div>
               <div className="dp-mono text-[11px] mb-1.5" style={{ color: INK + "99" }}>
-                De cuotas: {formatMoney(cuotasTotal)}
+                {tf("adv.fromCuotas", uiLang, { amount: formatMoney(cuotasTotal) })}
               </div>
               <label className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
-                Monto extra (ahorros, otros ingresos)
+                {tf("adv.extraAmount", uiLang)}
                 <input
                   type="number" min="0" value={extraAmount}
                   onChange={(e) => setExtraAmount(e.target.value)}
@@ -6218,28 +6972,28 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 />
               </label>
               <div className="dp-mono text-xs font-semibold" style={{ color: BLUE }}>
-                Total: {formatMoney(effectiveTotalBudget)}
+                {tf("adv.total", uiLang, { amount: formatMoney(effectiveTotalBudget) })}
               </div>
             </div>
           )}
           {flow.licitacion && (
             <React.Fragment>
               <label className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
-                Minutos para rondas de desempate (vacío = tú cierras a mano)
+                {tf("adv.tieMinutes", uiLang)}
                 <input
                   type="number" min="0" value={tieRoundMinutes}
                   onChange={(e) => setTieRoundMinutes(e.target.value)}
-                  placeholder="ej. 1440"
+                  placeholder={tf("adv.minutesPlaceholder", uiLang)}
                   className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
                   style={{ background: "#fff" }}
                 />
               </label>
               <label className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
-                Minutos al reabrir categorías vacías
+                {tf("adv.reopenMinutes", uiLang)}
                 <input
                   type="number" min="0" value={reopenEmptyMinutes}
                   onChange={(e) => setReopenEmptyMinutes(e.target.value)}
-                  placeholder="ej. 1440"
+                  placeholder={tf("adv.minutesPlaceholder", uiLang)}
                   className="dp-mono w-20 rounded-lg px-2 py-1 text-center outline-none ml-2"
                   style={{ background: "#fff" }}
                 />
@@ -6257,17 +7011,17 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           >
             {savingConfig ? tf("flow.saving", uiLang) : tf("flow.save", uiLang)}
           </button>
-        </div>
+        </AdvancedSettings>
       )}
 
       {isAdmin && flow.status === "active" && flow.template === "tabuladorSueldos" && (
-        <div className="rounded-lg p-3 mb-3" style={{ background: BLUE_SOFT }}>
+        <AdvancedSettings>
           <label className="dp-body flex items-center justify-between text-xs mb-1.5" style={{ color: INK }}>
             <span className="flex items-center">
-              % de recorte (alto y bajo) en los sueldos propuestos
+              {tf("adv.sueldoTrim.label", uiLang)}
               <InfoButton
-                title="% de recorte"
-                text={"Antes de promediar las propuestas de todos para cada puesto, se descartan las más extremas, las más altas y las más bajas, en la misma proporción.\n\nPor ejemplo, con 10%: se descarta el 10% de las propuestas más altas y el 10% más bajas de ese puesto, y solo se promedia lo que queda en medio.\n\nEsto evita que una sola persona (o un grupito) jale el sueldo de un puesto hacia un extremo proponiendo un número absurdo a propósito."}
+                title={tf("adv.sueldoTrim.title", uiLang)}
+                text={tf("adv.sueldoTrim.text", uiLang)}
               />
             </span>
             <input
@@ -6278,7 +7032,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
             />
           </label>
           <div className="dp-body text-[10px] mb-2" style={{ color: INK + "77" }}>
-            Antes de promediar cada puesto, se descartan las propuestas más extremas. Solo afecta las etapas que todavía no se han calculado.
+            {tf("adv.sueldoTrim.note", uiLang)}
           </div>
           <button
             onClick={saveConfig}
@@ -6288,7 +7042,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           >
             {savingConfig ? tf("flow.saving", uiLang) : tf("flow.save", uiLang)}
           </button>
-        </div>
+        </AdvancedSettings>
       )}
 
       {flow.stages.map((s, i) => (
@@ -6313,6 +7067,55 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         );
       })()}
 
+      {stage && stage.type === "eleccion_modo" && (
+        <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+          <div className="dp-body text-[14px] mb-3" style={{ color: INK, lineHeight: 1.5 }}>{stage.text}</div>
+          {isAdmin ? (
+            <React.Fragment>
+              {[["simple", "ti-bolt"], ["democratic", "ti-users-group"]].map(([mode, icon]) => (
+                <button
+                  key={mode}
+                  onClick={() => submitAndClose(mode)}
+                  disabled={sending}
+                  className="dp-body w-full text-left rounded-xl p-3.5 mb-2.5 disabled:opacity-40"
+                  style={{ background: "#fff", border: `1.5px solid ${BLUE}55` }}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold flex items-center gap-1.5" style={{ color: INK }}>
+                      <i className={`ti ${icon}`} style={{ color: BLUE }}></i>{tf(`cuotasMode.${mode}.title`, uiLang)}
+                    </span>
+                    <span className="text-[9px] font-semibold px-2 py-0.5 rounded-full" style={{ background: BLUE_SOFT, color: BLUE }}>{tf(`cuotasMode.${mode}.badge`, uiLang)}</span>
+                  </div>
+                  <div className="text-xs" style={{ color: INK + "99", lineHeight: 1.5 }}>{tf(`cuotasMode.${mode}.desc`, uiLang)}</div>
+                </button>
+              ))}
+              {sendError && <div className="dp-body text-[11px] mt-1" style={{ color: CORAL }}>{sendError}</div>}
+            </React.Fragment>
+          ) : (
+            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ {tf("cuotasMode.waiting", uiLang)}</div>
+          )}
+        </div>
+      )}
+
+      {stage && stage.type === "configurar_cuotas_simple" && (
+        isAdmin ? (
+          <SimpleCuotasSetup
+            key={stage.instanceIndex}
+            stage={stage}
+            backendUrl={backendUrl}
+            groupCode={groupCode}
+            memberId={memberId}
+            onSubmit={submitAndClose}
+            sending={sending}
+            sendError={sendError}
+          />
+        ) : (
+          <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
+            <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>⏳ {tf("simple.waiting", uiLang)}</div>
+          </div>
+        )
+      )}
+
       {stage && stage.type === "conteo_miembros" && (
         <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
           <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
@@ -6323,7 +7126,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
               <React.Fragment>
                 {stage.config.mode === "single" && (
                   <label className="dp-body flex items-center justify-between text-xs mb-2" style={{ color: INK }}>
-                    Número de miembros
+                    {tf("memberSetup.number", uiLang)}
                     <input
                       type="number" min="0" value={memberCounts.single ?? ""}
                       onChange={(e) => setMemberCounts({ ...memberCounts, single: e.target.value })}
@@ -6351,7 +7154,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                     className="dp-body flex-1 text-xs py-2 rounded-full text-white font-medium disabled:opacity-40"
                     style={{ background: GREEN }}
                   >
-                    {sending ? "Guardando…" : "Guardar y continuar"}
+                    {sending ? tf("flow.saving", uiLang) : tf("memberSetup.saveContinue", uiLang)}
                   </button>
                   <button
                     onClick={() => submitMemberSetup({})}
@@ -6359,14 +7162,14 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                     className="dp-body flex-1 text-xs py-2 rounded-full font-medium disabled:opacity-40"
                     style={{ background: "#fff", color: INK, border: `1px solid ${BLUE}55` }}
                   >
-                    Omitir, no es necesario
+                    {tf("memberSetup.skip", uiLang)}
                   </button>
                 </div>
               </React.Fragment>
             );
           })() : (
             <div className="dp-body text-[13px] text-center py-3" style={{ color: INK + "88" }}>
-              ⏳ El facilitador está indicando el número de miembros…
+              ⏳ {tf("memberSetup.waiting", uiLang)}
             </div>
           )}
         </div>
@@ -6508,7 +7311,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                         body: JSON.stringify({ memberId }),
                       });
                       const data = await res.json();
-                      if (!res.ok) throw new Error(data.error || "No se pudo regresar");
+                      if (!res.ok) throw new Error(data.error || tf("error.goBack", uiLang));
                       await onAdvance();
                     } catch (e) {
                       await customAlert(e.message);
@@ -6696,14 +7499,15 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         );
       })()}
 
-      {stage && !["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos", "fusionar_candidatos"].includes(stage.type) && (
+      {stage && !["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos", "fusionar_candidatos", "eleccion_modo", "configurar_cuotas_simple"].includes(stage.type) && (
         <div>
           <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{stage.text}</div>
           <div className="dp-body text-[11px] mb-2" style={{ color: INK + "88" }}>
-            {liveCount} de {approvedMemberCount} miembro(s) han respondido
+            {tf("flow.responded", uiLang, { n: liveCount, total: approvedMemberCount })}
           </div>
+          {stage.config.closesAt && <StageCountdown closesAt={stage.config.closesAt} extended={stage.config.timeExtensions || 0} />}
           <StageInput key={stage.key} stage={stage} onSend={sendResponse} sending={sending} disabled={sent} flowConfig={{ ...flow.config, totalBudget: effectiveTotalBudget }} approvedMemberNames={approvedMemberNames} />
-          {sent && <div className="dp-body text-[11px] mb-2 flex items-center gap-1" style={{ color: GREEN }}><i className="ti ti-circle-check"></i>Guardado</div>}
+          {sent && <div className="dp-body text-[11px] mb-2 flex items-center gap-1" style={{ color: GREEN }}><i className="ti ti-circle-check"></i>{tf("flow.saved", uiLang)}</div>}
           {sendError && <div className="dp-body text-[11px] mb-2" style={{ color: CORAL }}>{sendError}</div>}
           {isAdmin && (
             <button
@@ -6756,7 +7560,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                     className="dp-body text-xs px-3 py-2 rounded-full text-white font-medium"
                     style={{ background: BLUE }}
                   >
-                    ¿Hacer otro proceso? →
+                    {tf("flow.anotherProcess", uiLang)}
                   </button>
                 );
               }
@@ -6819,7 +7623,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
                 className="dp-body w-full mt-2 text-xs py-2 rounded-full font-medium"
                 style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}
               >
-                ⬇ Descargar resultados (PDF)
+                ⬇ {tf("flow.downloadPdf", uiLang)}
               </button>
             )}
           </div>
@@ -6866,7 +7670,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
     try {
       const res = await fetch(`${backendUrl}/api/groups/${groupCode}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Grupo no encontrado");
+      if (!res.ok) throw new Error(data.error || tf("connected.notFound", csLang));
       setGroup(data);
       if (onGroupNameChange) onGroupNameChange(data.name);
 
@@ -6879,8 +7683,8 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
         typeof Notification !== "undefined" &&
         Notification.permission === "granted"
       ) {
-        new Notification("Nueva solicitud pendiente", {
-          body: `Alguien quiere unirse a "${data.name}". Entra a la app para aprobar o rechazar.`,
+        new Notification(tf("connected.newRequest.title", csLang), {
+          body: tf("connected.newRequest.body", csLang, { name: data.name }),
         });
       }
       prevPendingCount.current = pendingCount;
@@ -6888,7 +7692,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
     } catch (e) {
       setError(
         e.message === "Failed to fetch"
-          ? "No se pudo conectar al backend. ¿Sigue corriendo npm start en tu terminal?"
+          ? tf("createGroup.error.connection", csLang)
           : e.message
       );
       return null;
@@ -6941,7 +7745,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   };
 
   if (loading && !group) {
-    return <div className="dp-body text-sm text-center py-10" style={{ color: INK + "88" }}>Conectando…</div>;
+    return <div className="dp-body text-sm text-center py-10" style={{ color: INK + "88" }}>{tf("connected.connecting", csLang)}</div>;
   }
   if (error && !group) {
     return (
@@ -6964,7 +7768,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
         <div className="flex items-start justify-between">
           <div>
             <div className="dp-body text-sm font-semibold" style={{ color: INK }}>{group.name}</div>
-            <div className="dp-mono text-xs mt-0.5" style={{ color: INK + "88" }}>código: {group.code}</div>
+            <div className="dp-mono text-xs mt-0.5" style={{ color: INK + "88" }}>{tf("connected.code", csLang, { code: group.code })}</div>
           </div>
           <button onClick={onExit} className="dp-body text-[11px]" style={{ color: INK + "77" }}>{tf("connected.exit", csLang)}</button>
         </div>
@@ -6994,7 +7798,11 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
             <div className="dp-body text-xs font-medium mb-2" style={{ color: INK }}>
               {tf("connected.inviteLink", csLang)}
             </div>
-            <ShareGroup groupName={group.name} code={group.code} />
+            {activeFlow && activeFlow.template === "cuotas" && activeFlow.status === "active" && activeFlow.currentStage && activeFlow.currentStage.key === "modo" ? (
+              <div className="dp-body text-[11.5px]" style={{ color: INK + "99" }}>{tf("connected.inviteAfterMode", csLang)}</div>
+            ) : (
+              <ShareGroup groupName={group.name} code={group.code} />
+            )}
           </div>
         )}
       </div>
@@ -7073,9 +7881,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-coin"></i>Iniciar Cuotas participativas</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-coin"></i>{tf("starter.cuotas.title", csLang)}</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
-                Un flujo guiado de varias etapas para decidir las cuotas del grupo.
+                {tf("starter.cuotas.desc", csLang)}
               </div>
             </button>
             <button
@@ -7091,9 +7899,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-chart-pie"></i>Iniciar Presupuesto participativo</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-chart-pie"></i>{tf("starter.presupuesto.title", csLang)}</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
-                Un flujo guiado para decidir en qué se gasta el presupuesto del grupo.
+                {tf("starter.presupuesto.desc", csLang)}
               </div>
             </button>
             <button
@@ -7109,9 +7917,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
               className="dp-body w-full text-left rounded-2xl p-4 shadow-sm"
               style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}` }}
             >
-              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-building-community"></i>Iniciar Asociaciones (Cuotas + Presupuesto)</div>
+              <div className="text-sm font-semibold mb-1 flex items-center gap-1.5" style={{ color: INK }}><i className="ti ti-building-community"></i>{tf("starter.asociaciones.title", csLang)}</div>
               <div className="text-xs" style={{ color: INK + "88" }}>
-                Corre los dos flujos, uno después del otro.
+                {tf("starter.asociaciones.desc", csLang)}
               </div>
             </button>
           </div>
@@ -7200,7 +8008,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
 
           {group.questions.length === 0 && (
             <div className="dp-body text-xs text-center py-4" style={{ color: INK + "77" }}>
-              Este grupo todavía no tiene preguntas.
+              {tf("connected.noQuestions", csLang)}
             </div>
           )}
 
@@ -7371,6 +8179,8 @@ function LoginScreen({ onBack }) {
   );
 }
 
+const STEP_CHAIN_KEYS = ["responsables", "cuotas", "presupuesto", "asociaciones", "municipios", "cooperativas"];
+
 function DemocraciaPorPromedioConectada() {
   const [backendUrl, setBackendUrl] = useState("https://democracia-por-promedio.onrender.com");
   const [showSettings, setShowSettings] = useState(false);
@@ -7418,31 +8228,18 @@ function DemocraciaPorPromedioConectada() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  const OPTION_TITLES = {
-    explain: "Explicación y ejemplos",
-    custom: "Crea tu grupo y tus propias preguntas",
-    cuotas: "Cuotas participativas",
-    presupuesto: "Presupuestos participativos",
-    asociaciones: "Asociaciones, clubes y orgs",
-    responsables: "Selección de responsables",
-    municipios: "Municipios o países",
-    cooperativas: "Cooperativas",
+  const optionTitle = (opt) => {
+    if (!opt) return "";
+    if (opt === "responsables") return tf("hdr.title.responsables", lang);
+    return tf(`home.${opt}.title`, lang);
   };
-  const STEP_CHAINS = {
-    default: ["Arma tu grupo", "Escribe las preguntas", "Elige el proceso", "Envía a tu grupo", "¡Decidan juntos!"],
-    responsables: ["Arma tu grupo", "Define los cargos", "Agrega candidatos", "Sortea", "¡Responsable elegido!"],
-    cuotas: ["Arma tu grupo", "Decidan las categorías", "Propongan la cuota", "Aprueben el resultado", "¡Cobren juntos!"],
-    presupuesto: ["Arma tu grupo", "Propongan categorías", "Repartan el %", "Aprueben el resultado", "¡Gasten juntos!"],
-    asociaciones: ["Arma tu grupo", "Decidan las cuotas", "Repartan el presupuesto", "Propongan proyectos", "¡Decidan juntos!"],
-    municipios: ["Impuestos", "Presupuesto", "Otras preguntas"],
-    cooperativas: ["Arma tu grupo", "Elige un proceso", "Decidan juntos", "¡Listo!"],
-  };
+  const stepChain = (opt) => tf(`hdr.steps.${STEP_CHAIN_KEYS.includes(opt) ? opt : "default"}`, lang).split("|");
   const HOME_TAGLINE = tf("home.tagline", lang);
-  const headerTitle = connectedGroupName || OPTION_TITLES[selectedOption] || tf("home.title", lang);
+  const headerTitle = connectedGroupName || optionTitle(selectedOption) || tf("home.title", lang);
   const sessionName = session ? (session.user.user_metadata && session.user.user_metadata.name) || "" : "";
   const sessionEmail = session ? session.user.email : "";
   const isHomeHeader = !connectedGroupName && !selectedOption;
-  const headerSteps = STEP_CHAINS[selectedOption] || STEP_CHAINS.default;
+  const headerSteps = stepChain(selectedOption);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -7651,6 +8448,7 @@ function DemocraciaPorPromedioConectada() {
           <GroupCreatedScreen
             groupName={createdGroupName}
             code={groupCode}
+            deferShare={entryPurpose === "cuotas" || entryPurpose === "asociaciones"}
             onContinue={() => setView("connected")}
           />
         )}
@@ -7708,7 +8506,7 @@ function DemocraciaPorPromedioConectada() {
             className="dp-body text-[10px]"
             style={{ color: INK + "55" }}
           >
-            servidor: {backendUrl} {showSettings ? "▲" : "▼"}
+            {tf("footer.server", lang)}: {backendUrl} {showSettings ? "▲" : "▼"}
           </button>
           {showSettings && (
             <input
