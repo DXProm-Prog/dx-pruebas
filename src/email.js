@@ -6,7 +6,7 @@ function isConfigured() {
   return Boolean(process.env.BREVO_API_KEY && process.env.SENDER_EMAIL);
 }
 
-async function sendEmail({ to, subject, text }) {
+async function sendEmail({ to, subject, text, senderName }) {
   if (!isConfigured() || !to) {
     return { sent: false, reason: "Brevo no configurado o falta destinatario" };
   }
@@ -21,7 +21,7 @@ async function sendEmail({ to, subject, text }) {
       body: JSON.stringify({
         sender: {
           email: process.env.SENDER_EMAIL,
-          name: process.env.SENDER_NAME || "Organicen y decidan",
+          name: senderName || process.env.SENDER_NAME || "Organicen y decidan",
         },
         to: [{ email: to }],
         subject,
@@ -150,4 +150,49 @@ async function notifyProposalWinner({ memberEmail, memberName, groupName, catego
   });
 }
 
-module.exports = { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner, isConfigured };
+
+// Invitación que el facilitador manda a una persona para que se una al
+// grupo. El link lleva solo el código (la persona elige su nombre al
+// entrar), y la app le muestra la bienvenida al proceso.
+async function notifyInvitation({ to, groupName, adminName, code, frontendUrl, lang }) {
+  const en = lang === "en";
+  const link = frontendUrl ? `${frontendUrl}${frontendUrl.includes("?") ? "&" : "?"}code=${code}` : null;
+
+  if (en) {
+    return sendEmail({
+      to,
+      senderName: "Organize and Decide",
+      subject: `${adminName} invited you to "${groupName}"`,
+      text: [
+        `Hi,`,
+        ``,
+        `${adminName} invited you to decide together in the group "${groupName}" on Organize and Decide.`,
+        ``,
+        link ? `Open this link to join:\n${link}` : null,
+        ``,
+        `Or enter this group code in the app: ${code}`,
+      ]
+        .filter((line) => line !== null)
+        .join("\n"),
+    });
+  }
+
+  return sendEmail({
+    to,
+    senderName: "Organicen y decidan",
+    subject: `${adminName} te invitó a "${groupName}"`,
+    text: [
+      `Hola,`,
+      ``,
+      `${adminName} te invitó a decidir juntos en el grupo "${groupName}" en Organicen y decidan.`,
+      ``,
+      link ? `Entra a este link para unirte:\n${link}` : null,
+      ``,
+      `O escribe este código del grupo en la app: ${code}`,
+    ]
+      .filter((line) => line !== null)
+      .join("\n"),
+  });
+}
+
+module.exports = { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner, notifyInvitation, isConfigured };

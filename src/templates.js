@@ -48,12 +48,38 @@ function buildBudgetStage(stages, survivorCategories, labelKey, lang) {
 const cuotas = {
   defaultConfig: { categoryThresholdPercent: 10, quotaTrimPercent: 10 },
 
-  getInitialStage(flowConfig = {}) {
+  // Primera etapa del flujo. Si el facilitador todavía no eligió la
+  // versión (simplificada o democrática), lo primero es preguntárselo.
+  // Cuando se vuelve a empezar (porque no se aprobó el resultado), la
+  // versión ya elegida se respeta, y en la simplificada se precargan
+  // las categorías y el límite de tiempo que el facilitador puso antes.
+  getInitialStage(flowConfig = {}, stages = []) {
     const trimPercent = flowConfig.quotaTrimPercent ?? 10;
+    const lang = flowConfig.lang;
+    if (!flowConfig.cuotasMode) {
+      return {
+        key: "modo",
+        type: "eleccion_modo",
+        text: t("cuotas.modo", lang),
+        config: { options: ["simple", "democratic"] },
+      };
+    }
+    if (flowConfig.cuotasMode === "simple") {
+      const prevSetup = [...stages].reverse().find((s) => s.key === "simpleSetup");
+      return {
+        key: "simpleSetup",
+        type: "configurar_cuotas_simple",
+        text: t("cuotas.simple.setup", lang),
+        config: {
+          prefillCategories: prevSetup ? prevSetup.result.categoryDetails : [],
+          prefillTimeLimit: prevSetup ? prevSetup.result.timeLimit : null,
+        },
+      };
+    }
     return {
       key: "count",
       type: "promedio",
-      text: t("cuotas.count", flowConfig.lang),
+      text: t("cuotas.count", lang),
       config: { trimPercent },
     };
   },
@@ -66,6 +92,23 @@ const cuotas = {
     const thresholdPercent = flowConfig.categoryThresholdPercent ?? 10;
     const lang = flowConfig.lang;
     const last = stages[stages.length - 1];
+
+    // El facilitador acaba de elegir la versión: arranca la que eligió.
+    if (last.key === "modo") {
+      return cuotas.getInitialStage({ ...flowConfig, cuotasMode: last.result.mode }, stages);
+    }
+
+    // Versión simplificada: las categorías ya las puso el facilitador,
+    // así que se salta directo a que cada integrante proponga su cuota.
+    if (last.key === "simpleSetup") {
+      const categories = last.result.categories;
+      return {
+        key: "quotas",
+        type: "promedio_por_categoria",
+        text: categories.length === 1 ? t("cuotas.singleQuota", lang) : t("cuotas.quotas", lang),
+        config: { categories, trimPercent },
+      };
+    }
 
     if (last.key === "count") {
       const countValue = Math.max(1, roundHalfDown(last.result.average));
@@ -161,7 +204,7 @@ const cuotas = {
 
     if (last.key === "approval") {
       if (last.result.winner === "Sí") return null;
-      return cuotas.getInitialStage(flowConfig);
+      return cuotas.getInitialStage(flowConfig, stages);
     }
 
     return null;

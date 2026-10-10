@@ -187,6 +187,34 @@ function computeStageResult(stage, responses, flowConfig = {}) {
     };
   }
 
+  // Etapa de una sola respuesta (la del facilitador): elegir la versión
+  // de Cuotas, "simple" (él decide las categorías) o "democratic" (se
+  // le pregunta todo al grupo).
+  if (stage.type === "eleccion_modo") {
+    const mode = values.length && values[values.length - 1] === "simple" ? "simple" : "democratic";
+    return { type: "eleccion_modo", mode };
+  }
+
+  // Etapa de una sola respuesta (la del facilitador) de la versión
+  // simplificada de Cuotas: sus categorías (con el número de personas
+  // de cada una, opcional) y el límite de tiempo que quiere darle al grupo.
+  if (stage.type === "configurar_cuotas_simple") {
+    const last = values.length ? values[values.length - 1] : { categories: [], timeLimitMinutes: null, timeLimit: null };
+    const details = last.categories || [];
+    const memberCounts = {};
+    details.forEach((c) => {
+      if (c.members) memberCounts[c.name] = c.members;
+    });
+    return {
+      type: "configurar_cuotas_simple",
+      categories: details.map((c) => c.name),
+      categoryDetails: details,
+      memberCounts,
+      timeLimitMinutes: last.timeLimitMinutes || null,
+      timeLimit: last.timeLimit || null,
+    };
+  }
+
   // Etapa de una sola respuesta (la del administrador): número de
   // miembros por categoría, o vacío si decidió omitirla.
   if (stage.type === "conteo_miembros") {

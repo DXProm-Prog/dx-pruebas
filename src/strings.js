@@ -25,6 +25,17 @@ const STRINGS = {
     "cuotas.memberSetup.categories": "¿Cuántos miembros hay en cada categoría? (opcional, solo para ver cuánto se recauda. El administrador puede omitir este paso)",
     "cuotas.singleQuota": "¿Cuánto debe ser la cuota?",
     "cuotas.quotas": "Propón la cuota que crees justa para cada categoría.",
+    "cuotas.modo": "¿Quieres la versión simplificada, en la que tú decides cuántas categorías de cuotas hay, o la versión más democrática, en la que se pregunta todo a los integrantes del grupo?",
+    "cuotas.simple.setup": "Escribe las categorías de cuota, decide si habrá un límite de tiempo y envía las preguntas a tu grupo.",
+    "error.timeUp": "El tiempo para decidir ya terminó.",
+    "error.needCategory": "Escribe al menos una categoría de cuota.",
+    "error.badMode": "Elige una de las dos versiones.",
+    "error.badTimeLimit": "El límite de tiempo no es válido.",
+    "error.noValidEmails": "Escribe al menos un correo válido.",
+    "error.tooManyEmails": "Puedes invitar a 50 personas por envío como máximo.",
+    "error.inviteLimit": "Llegaste al límite de invitaciones por correo de hoy. Comparte el link del grupo.",
+    "error.emailNotConfigured": "El envío de correos no está disponible por ahora. Comparte el link del grupo.",
+    "error.onlyAdminInvite": "Solo el administrador puede invitar por correo.",
     "approval": "¿Apruebas el resultado colectivo de {label}?",
     "approval.label.cuotas": "las cuotas",
     "approval.label.presupuesto": "el presupuesto",
@@ -80,6 +91,17 @@ const STRINGS = {
     "cuotas.memberSetup.categories": "How many members are in each category? (optional, just to see how much gets collected. The admin can skip this step)",
     "cuotas.singleQuota": "How much should the dues or fees be?",
     "cuotas.quotas": "Propose the amount you think is fair for each category.",
+    "cuotas.modo": "Do you want the simplified version, where you decide how many categories of dues or fees there are, or the more democratic version, where everything is asked to the group members?",
+    "cuotas.simple.setup": "Write the dues or fees categories, decide whether there will be a time limit, and send the questions to your group.",
+    "error.timeUp": "The time to decide has ended.",
+    "error.needCategory": "Write at least one dues or fees category.",
+    "error.badMode": "Choose one of the two versions.",
+    "error.badTimeLimit": "The time limit is not valid.",
+    "error.noValidEmails": "Write at least one valid email.",
+    "error.tooManyEmails": "You can invite at most 50 people at a time.",
+    "error.inviteLimit": "You reached today's limit of email invitations. Share the group link instead.",
+    "error.emailNotConfigured": "Sending emails is not available right now. Share the group link instead.",
+    "error.onlyAdminInvite": "Only the admin can invite by email.",
     "approval": "Do you approve the collective result of {label}?",
     "approval.label.cuotas": "the dues or fees",
     "approval.label.presupuesto": "the budget",
@@ -131,7 +153,7 @@ function t(key, lang, vars = {}) {
   const dict = STRINGS[lang] || STRINGS.es;
   let str = dict[key] || STRINGS.es[key] || key;
   Object.entries(vars).forEach(([k, v]) => {
-    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), v);
+    str = str.replace(new RegExp(`\\{${k}\\}`, "g"), () => String(v));
   });
   return str;
 }

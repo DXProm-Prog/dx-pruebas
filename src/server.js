@@ -7,7 +7,8 @@ const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, p
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
-const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner } = require("./email");
+const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner, notifyInvitation, isConfigured: emailConfigured } = require("./email");
+const { t } = require("./strings");
 const { computeStageResult, drawResponsabilidades } = require("./flowEngine");
 const { TEMPLATES, rolesFromNames } = require("./templates");
 
@@ -130,7 +131,11 @@ app.get("/api/groups/:code", async (req, res) => {
   (group.flows || []).forEach((flow) => {
     if (flow.licitacion && checkLicitacionTimers(flow.licitacion, flow.config || {})) changed = true;
   });
+  // Si alguna etapa tenía límite de tiempo y ya se acabó, se cierra sola.
+  const deadlines = checkFlowDeadlines(group);
+  if (deadlines.changed) changed = true;
   if (changed) await save(db);
+  deadlines.closedFlows.forEach((flow) => notifyFlowFinished(group, flow));
 
   res.json(group);
 });
@@ -599,7 +604,7 @@ app.get("/api/groups/:code/questions/:questionId/results", async (req, res) => {
         notifyResultsToMembers({
           group,
           questionText: question.text,
-          summaryText: `"${question.text}"\nHubo un empate entre: ${out.tiedOptions.join(", ")}. Se necesita una ronda de desempate — entra a votar de nuevo.`,
+          summaryText: `"${question.text}"\nHubo un empate entre: ${out.tiedOptions.join(", ")}. Se necesita una ronda de desempate. Entra a votar de nuevo.`,
           frontendUrl: process.env.FRONTEND_URL,
           subjectPrefix: "Se necesita un desempate",
         }).catch((err) => console.error("Error de correo (desempate):", err.message));
@@ -853,6 +858,12 @@ function summarizeStage(s) {
     const lines = Object.entries(s.result.puestos).map(([id, p]) => `  - ${roleName(id)}: $${p.amount}/${s.config.frequency}${p.adjusted ? ` (ajustado, era $${p.original})` : ""}`);
     return `${s.text}\n${lines.join("\n")}`;
   }
+  if (s.type === "eleccion_modo") {
+    return `${s.text}\n→ ${s.result.mode === "simple" ? "simplificada" : "democrática"}`;
+  }
+  if (s.type === "configurar_cuotas_simple") {
+    return `${s.text}\n→ categorías: ${s.result.categories.join(", ")}`;
+  }
   if (s.type === "gastos_fijos") {
     const lines = s.result.gastos.map((g) => `  - ${g.nombre}: $${g.monto}`);
     return `${s.text}\n  ingresos: $${s.result.ingresos}\n${lines.join("\n")}`;
@@ -864,7 +875,7 @@ function summarizeStage(s) {
   if (s.type === "realizar_sorteo") {
     const roleName = (id) => (s.result.roles.find((role) => role.id === id) || {}).name || id;
     if (s.result.frequency === "once") {
-      const lines = s.result.roles.map((role) => `  - ${role.name}: ${s.result.assignment[role.id] || "—"}`);
+      const lines = s.result.roles.map((role) => `  - ${role.name}: ${s.result.assignment[role.id] || "(sin asignar)"}`);
       return `${s.text}\n${lines.join("\n")}`;
     }
     return `${s.text}\n→ calendario rotativo de ${s.result.months.length} meses (ver el detalle en la app)`;
@@ -933,6 +944,51 @@ app.get("/api/groups/:code/flows/:flowId", async (req, res) => {
   res.json({ ...flow, liveCount });
 });
 
+// El facilitador invita por correo a quienes escriba. Los correos NO se
+// guardan en ningún lado: solo se usan para mandar la invitación. Hay un
+// tope diario por grupo para que nadie use esto para mandar spam.
+const inviteCounters = new Map();
+const INVITES_PER_DAY = 150;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+app.post("/api/groups/:code/invite", async (req, res) => {
+  const { memberId, emails } = req.body;
+  const db = await load(req.params.code);
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: t("error.onlyAdminInvite", group.lang) });
+  if (!Array.isArray(emails)) return res.status(400).json({ error: "emails debe ser una lista" });
+
+  const clean = [...new Set(emails.map((e) => String(e).trim().toLowerCase()).filter(Boolean))];
+  const valid = clean.filter((e) => EMAIL_REGEX.test(e));
+  const invalid = clean.filter((e) => !EMAIL_REGEX.test(e));
+  if (valid.length === 0) return res.status(400).json({ error: t("error.noValidEmails", group.lang), invalid });
+  if (valid.length > 50) return res.status(400).json({ error: t("error.tooManyEmails", group.lang) });
+  if (!emailConfigured()) return res.status(503).json({ error: t("error.emailNotConfigured", group.lang) });
+
+  const now = Date.now();
+  const counter = inviteCounters.get(group.code);
+  const current = counter && counter.resetAt > now ? counter : { count: 0, resetAt: now + 24 * 60 * 60 * 1000 };
+  if (current.count + valid.length > INVITES_PER_DAY) return res.status(429).json({ error: t("error.inviteLimit", group.lang) });
+  current.count += valid.length;
+  inviteCounters.set(group.code, current);
+
+  const results = await Promise.all(
+    valid.map((to) =>
+      notifyInvitation({
+        to,
+        groupName: group.name,
+        adminName: group.admin.name,
+        code: group.code,
+        frontendUrl: process.env.FRONTEND_URL,
+        lang: group.lang,
+      })
+    )
+  );
+  const failed = valid.filter((_, i) => !results[i].sent);
+  res.json({ sent: valid.length - failed.length, failed, invalid });
+});
+
 // El administrador ajusta la configuración del flujo (ej. % mínimo de
 // apoyo para que sobreviva una categoría, % de recorte en las cuotas).
 // Solo afecta a las etapas que TODAVÍA no se han calculado.
@@ -971,11 +1027,15 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
   if (flow.status !== "active") return res.status(403).json({ error: "Este flujo ya terminó" });
 
   const stage = flow.currentStage;
-  if (
-    ["conteo_miembros", "configurar_puestos", "configurar_candidatos", "realizar_sorteo", "gastos_fijos", "fusionar_candidatos"].includes(stage.type) &&
-    group.admin.id !== memberId
-  ) {
+  if (ADMIN_ONLY_STAGE_TYPES.includes(stage.type) && group.admin.id !== memberId) {
     return res.status(403).json({ error: "Solo el facilitador responde esta etapa" });
+  }
+
+  // Si la etapa tenía límite de tiempo y ya se acabó (y hay respuestas,
+  // así que se va a cerrar sola), ya no se aceptan más respuestas.
+  if (stage.config && stage.config.closesAt && new Date(stage.config.closesAt).getTime() < Date.now()) {
+    const already = group.responses.filter((r) => r.flowId === flow.id && r.stageInstanceIndex === stage.instanceIndex).length;
+    if (already > 0) return res.status(403).json({ error: t("error.timeUp", group.lang) });
   }
   let storedValue;
 
@@ -1022,6 +1082,41 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
     });
     if (Object.keys(cleaned).length === 0) return res.status(400).json({ error: "Asigna al menos un %" });
     storedValue = cleaned;
+  } else if (stage.type === "eleccion_modo") {
+    if (value !== "simple" && value !== "democratic") return res.status(400).json({ error: t("error.badMode", group.lang) });
+    storedValue = value;
+  } else if (stage.type === "configurar_cuotas_simple") {
+    if (typeof value !== "object" || value === null || !Array.isArray(value.categories)) {
+      return res.status(400).json({ error: "value debe ser un objeto {categories, timeLimit}" });
+    }
+    const seen = new Set();
+    const categories = value.categories
+      .map((c) => ({
+        name: String((c && c.name) || "").trim().slice(0, 60),
+        members: Number(c && c.members) > 0 ? Math.floor(Number(c.members)) : null,
+      }))
+      .filter((c) => {
+        if (!c.name) return false;
+        const key = c.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .slice(0, 12);
+    if (categories.length === 0) return res.status(400).json({ error: t("error.needCategory", group.lang) });
+
+    let timeLimit = null;
+    let timeLimitMinutes = null;
+    if (value.timeLimit) {
+      const amount = Number(value.timeLimit.amount);
+      const minutesPerUnit = { minutes: 1, hours: 60, days: 1440 }[value.timeLimit.unit];
+      if (!minutesPerUnit || !(amount > 0) || amount * minutesPerUnit > 60 * 1440) {
+        return res.status(400).json({ error: t("error.badTimeLimit", group.lang) });
+      }
+      timeLimit = { amount, unit: value.timeLimit.unit };
+      timeLimitMinutes = Math.round(amount * minutesPerUnit);
+    }
+    storedValue = { categories, timeLimit, timeLimitMinutes };
   } else if (stage.type === "conteo_miembros") {
     // value puede venir vacío ({}) si el administrador decidió omitir
     // este paso — es válido, simplemente no se calculará recaudación.
@@ -1070,7 +1165,7 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
       const ratio = Math.max(...amounts) / Math.min(...amounts);
       if (ratio > stage.config.limitTimes + 0.001) {
         return res.status(400).json({
-          error: `Tu propuesta tiene una desigualdad de ${ratio.toFixed(2)} veces entre el puesto que más y el que menos gana — el límite acordado es ${stage.config.limitTimes} veces. Ajusta tus montos.`,
+          error: `Tu propuesta tiene una desigualdad de ${ratio.toFixed(2)} veces entre el puesto que más y el que menos gana. El límite acordado es ${stage.config.limitTimes} veces. Ajusta tus montos.`,
         });
       }
     }
@@ -1137,19 +1232,42 @@ app.post("/api/groups/:code/flows/:flowId/responses", async (req, res) => {
   res.json({ status: "guardado" });
 });
 
-// El administrador cierra la etapa actual del flujo: calcula el
-// resultado, y avanza a la siguiente etapa (o termina el flujo).
-app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
-  const { memberId } = req.body;
-  const db = await load(req.params.code);
-  const group = db.groups[req.params.code];
-  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
-  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede cerrar la etapa" });
+// Error con código HTTP, para que las funciones que cierran etapas
+// puedan avisar "esto no se puede" sin depender de la respuesta HTTP
+// (también las usa el cierre automático por límite de tiempo).
+class FlowError extends Error {
+  constructor(message, status = 400) {
+    super(message);
+    this.status = status;
+  }
+}
 
-  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
-  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
-  if (flow.status !== "active") return res.status(400).json({ error: "Este flujo ya terminó" });
+// Etapas que responde solo el facilitador (nunca llevan límite de tiempo).
+const ADMIN_ONLY_STAGE_TYPES = [
+  "conteo_miembros",
+  "configurar_puestos",
+  "configurar_candidatos",
+  "realizar_sorteo",
+  "gastos_fijos",
+  "fusionar_candidatos",
+  "eleccion_modo",
+  "configurar_cuotas_simple",
+];
 
+// Si el flujo tiene un límite de tiempo (flow.config.timeLimitMinutes),
+// toda etapa que respondan los integrantes arranca con su hora de cierre.
+function applyStageDeadline(flow) {
+  const minutes = Number(flow.config && flow.config.timeLimitMinutes);
+  const st = flow.currentStage;
+  if (!st || !minutes || minutes <= 0) return;
+  if (ADMIN_ONLY_STAGE_TYPES.includes(st.type)) return;
+  st.config = { ...st.config, closesAt: new Date(Date.now() + minutes * 60000).toISOString() };
+}
+
+// Cierra la etapa actual de un flujo: calcula el resultado, y avanza a
+// la siguiente etapa (o termina el flujo). La usan tanto el botón del
+// facilitador como el cierre automático cuando se acaba el tiempo.
+function closeCurrentStage(group, flow) {
   const stage = flow.currentStage;
   const responses = group.responses.filter((r) => r.flowId === flow.id && r.stageInstanceIndex === stage.instanceIndex);
   const effectiveConfig = getEffectiveFlowConfig(group, flow);
@@ -1166,7 +1284,7 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
     const freqStage = [...flow.stages].reverse().find((s) => s.key === "frequencyVote");
     const candStage = [...flow.stages].reverse().find((s) => s.key === "fusionarCandidatos" || s.key === "configurarCandidatos");
     if ((!configuredRolesStage && !votedRolesStage) || !freqStage || !candStage) {
-      return res.status(400).json({ error: "Faltan datos de etapas anteriores para poder sortear" });
+      throw new FlowError("Faltan datos de etapas anteriores para poder sortear");
     }
     let roles;
     if (configuredRolesStage) {
@@ -1182,7 +1300,7 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
     }
     const candidates = candStage.result.candidates;
     if (candidates.length < roles.length) {
-      return res.status(400).json({ error: `Se necesitan al menos ${roles.length} candidatos para ${roles.length} puesto(s), y solo hay ${candidates.length}.` });
+      throw new FlowError(`Se necesitan al menos ${roles.length} candidatos para ${roles.length} puesto(s), y solo hay ${candidates.length}.`);
     }
     const frequency = freqStage.result.winner === "Una sola vez" ? "once" : "monthly";
     const draw = drawResponsabilidades(roles, candidates, frequency);
@@ -1209,9 +1327,25 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
     flow.config.memberCounts = { ...flow.config.memberCounts, ...result.memberCounts };
   }
 
+  // Versión de Cuotas que eligió el facilitador.
+  if (stage.type === "eleccion_modo") {
+    flow.config.cuotasMode = result.mode;
+  }
+
+  // Versión simplificada: el número de personas por categoría y el
+  // límite de tiempo (si lo hay) quedan guardados en la configuración
+  // del flujo. Se reemplazan por completo (no se mezclan con los de un
+  // intento anterior), porque el facilitador pudo haber cambiado las
+  // categorías.
+  if (stage.type === "configurar_cuotas_simple") {
+    flow.config.memberCounts = result.memberCounts;
+    flow.config.timeLimitMinutes = result.timeLimitMinutes;
+  }
+
   const nextStage = TEMPLATES[flow.template].getNextStage(flow.stages, getEffectiveFlowConfig(group, flow));
   if (nextStage) {
     flow.currentStage = { ...nextStage, instanceIndex: flow.stages.length };
+    applyStageDeadline(flow);
   } else if (stage.key === "openBids" && result.winner === "Sí") {
     flow.currentStage = null;
     flow.licitacion = initLicitacion(flow);
@@ -1250,20 +1384,75 @@ app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
       });
     }
   }
+}
 
-  await save(db);
+// Revisa si alguna etapa con límite de tiempo ya venció. Si ya hay al
+// menos una respuesta, la cierra sola. Si nadie ha respondido, reinicia
+// el tiempo (para no dejar el flujo atorado con una etapa vacía).
+function checkFlowDeadlines(group) {
+  let changed = false;
+  const closedFlows = [];
+  (group.flows || []).forEach((flow) => {
+    if (flow.status !== "active" || !flow.currentStage) return;
+    const closesAt = flow.currentStage.config && flow.currentStage.config.closesAt;
+    if (!closesAt || new Date(closesAt).getTime() > Date.now()) return;
 
-  if (flow.status === "finished") {
-    const summary = flow.stages.map(summarizeStage).join("\n\n");
-    notifyResultsToMembers({
-      group,
-      questionText: TEMPLATE_LABELS[flow.template] || flow.template,
-      summaryText: summary,
-      frontendUrl: process.env.FRONTEND_URL,
-      subjectPrefix: "Resultado final",
-    }).catch((err) => console.error("Error de correo (flujo):", err.message));
+    const count = group.responses.filter((r) => r.flowId === flow.id && r.stageInstanceIndex === flow.currentStage.instanceIndex).length;
+    if (count === 0) {
+      const minutes = Number(flow.config && flow.config.timeLimitMinutes) || 60;
+      flow.currentStage.config = {
+        ...flow.currentStage.config,
+        closesAt: new Date(Date.now() + minutes * 60000).toISOString(),
+        timeExtensions: (flow.currentStage.config.timeExtensions || 0) + 1,
+      };
+      changed = true;
+      return;
+    }
+    try {
+      closeCurrentStage(group, flow);
+      closedFlows.push(flow);
+      changed = true;
+    } catch (err) {
+      console.error("No se pudo cerrar la etapa por límite de tiempo:", err.message);
+    }
+  });
+  return { changed, closedFlows };
+}
+
+// Avisa por correo a los integrantes cuando un flujo terminó.
+function notifyFlowFinished(group, flow) {
+  if (flow.status !== "finished") return;
+  const summary = flow.stages.map(summarizeStage).join("\n\n");
+  notifyResultsToMembers({
+    group,
+    questionText: TEMPLATE_LABELS[flow.template] || flow.template,
+    summaryText: summary,
+    frontendUrl: process.env.FRONTEND_URL,
+    subjectPrefix: "Resultado final",
+  }).catch((err) => console.error("Error de correo (flujo):", err.message));
+}
+
+// El administrador cierra la etapa actual del flujo.
+app.post("/api/groups/:code/flows/:flowId/close-stage", async (req, res) => {
+  const { memberId } = req.body;
+  const db = await load(req.params.code);
+  const group = db.groups[req.params.code];
+  if (!group) return res.status(404).json({ error: "Grupo no encontrado" });
+  if (group.admin.id !== memberId) return res.status(403).json({ error: "Solo el administrador puede cerrar la etapa" });
+
+  const flow = (group.flows || []).find((f) => f.id === req.params.flowId);
+  if (!flow) return res.status(404).json({ error: "Flujo no encontrado" });
+  if (flow.status !== "active") return res.status(400).json({ error: "Este flujo ya terminó" });
+
+  try {
+    closeCurrentStage(group, flow);
+  } catch (err) {
+    if (err instanceof FlowError) return res.status(err.status).json({ error: err.message });
+    throw err;
   }
 
+  await save(db);
+  notifyFlowFinished(group, flow);
   res.json(flow);
 });
 
@@ -1301,7 +1490,7 @@ app.post("/api/groups/:code/flows/:flowId/reopen-candidatos", async (req, res) =
   flow.currentStage = {
     key: "configurarCandidatos",
     type: "configurar_candidatos",
-    text: "Agrega más candidatos — no hay suficientes para todos los puestos que se van a sortear.",
+    text: "Agrega más candidatos, no hay suficientes para todos los puestos que se van a sortear.",
     config: { minCandidates, prefillCandidates: previousCandidates },
     instanceIndex: flow.stages.length,
   };
@@ -1523,7 +1712,7 @@ app.post("/api/groups/:code/flows/:flowId/close-voting", async (req, res) => {
       const p = flow.licitacion.proposals.find((pp) => pp.id === s.winner);
       return `${cat}: ganó "${p ? p.name : "?"}"`;
     }
-    if (s.status === "collecting" && s.round > 1) return `${cat}: empate — se abrió una ronda extra para desempatar`;
+    if (s.status === "collecting" && s.round > 1) return `${cat}: empate, se abrió una ronda extra para desempatar`;
     if (s.status === "empty" || s.status === "empty_closed") return `${cat}: sin propuestas`;
     return `${cat}: en curso`;
   });
@@ -1582,7 +1771,7 @@ app.get("/api/groups/:code/export/resultados.csv", async (req, res) => {
     if (r.type === "promedio") detalle = `decisión: ${r.average}`;
     else if (r.majorityRule === "segunda_vuelta") detalle = `ronda ${r.round.roundNum}, eliminadas: ${r.round.eliminated.join(", ")}${r.finished ? `, GANADOR: ${r.winner}` : ""}`;
     else if (r.majorityRule === "rankeado") detalle = `${r.finished ? "GANADOR: " + r.winner : "sin ganador aún"}`;
-    else detalle = `ganador: ${r.winner ?? "sin ganador"} — ${JSON.stringify(r.tally)}`;
+    else detalle = `ganador: ${r.winner ?? "sin ganador"}; ${JSON.stringify(r.tally)}`;
     rows.push([r.timestamp, question ? question.text : r.questionId, r.majorityRule || r.type, detalle]);
   }
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
