@@ -255,11 +255,20 @@ function computeStageResult(stage, responses, flowConfig = {}) {
   // categoría. Se promedia cada categoría por separado, y si la suma de
   // los promedios pasa de 100%, se normaliza proporcionalmente para que
   // quede en 100% exacto.
+  //
+  // IMPORTANTE: cada categoría se promedia entre TODAS las personas que
+  // respondieron esta etapa, no solo entre las que le pusieron un número.
+  // Quien no le dio nada a una categoría le dio 0% (la app no manda las
+  // categorías que la persona dejó sin tocar, por eso aquí se rellenan).
   if (stage.type === "porcentaje_por_categoria") {
     const raw = {};
     const individualValues = {};
+    const respondents = responses.filter((r) => r.value && typeof r.value === "object" && !Array.isArray(r.value));
     stage.config.categories.forEach((cat) => {
-      const vals = responses.map((r) => r.value && r.value[cat]).filter((v) => typeof v === "number" && !isNaN(v));
+      const vals = respondents.map((r) => {
+        const v = r.value[cat];
+        return typeof v === "number" && !isNaN(v) ? v : 0;
+      });
       individualValues[cat] = vals;
       raw[cat] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     });
