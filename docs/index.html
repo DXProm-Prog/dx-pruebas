@@ -163,7 +163,7 @@ const FRONTEND_STRINGS = {
     "home.presupuesto.subtitle": "Decidamos juntos en qué invertir o gastar el dinero que tenemos.",
     "home.responsables.title": "Selección de responsabilidades por sorteo",
     "home.responsables.subtitle": "Para asignar responsabilidades no hace falta votar por personas, asignemos responsabilidades por sorteo.",
-    "home.asociaciones.title": "Asociaciones, clubes y orgs",
+    "home.asociaciones.title": "Flujo completo para asociaciones y organizaciones",
     "home.asociaciones.subtitle": "Cuotas, presupuesto, proyectos y responsables, un solo proceso conectado.",
     "home.cooperativas.title": "Cooperativas",
     "home.cooperativas.subtitle": "Tabulador de sueldos y presupuesto participativo, pensados para cooperativas.",
@@ -173,6 +173,80 @@ const FRONTEND_STRINGS = {
     "home.municipios.subtitle": "Demo interactiva: impuestos y presupuesto participativo a la escala de un país, con datos reales.",
     "home.share.title": "Invita a otros",
     "home.share.subtitle": "Comparte la app con tu comunidad, código QR y link listos para mandar.",
+    "home.promedio.title": "Democracia por promedio",
+    "home.promedio.subtitle": "Todos proponen un número y el grupo decide con el promedio.",
+    "home.mayoria.title": "Democracia por mayoría",
+    "home.mayoria.subtitle": "Elijan entre opciones: mayoría simple, absoluta, calificada, voto ranqueado o segunda vuelta.",
+    "home.tabulador.title": "Tabulador de sueldos",
+    "home.tabulador.subtitle": "Definan los puestos y decidan cuánto gana cada uno, con o sin límite de desigualdad.",
+    "home.howBtn": "¿Cómo funciona la app?",
+    "hdr.steps.promedio": "Arma tu grupo|Escribe las preguntas|Comparte el link|Participa tú también|¡Decidan juntos!",
+    "hdr.steps.mayoria": "Arma tu grupo|Preguntas y opciones|Comparte el link|Participa tú también|¡Decidan juntos!",
+    "hdr.steps.tabulador": "Arma tu grupo|Definan los puestos|Propongan los sueldos|Aprueben el resultado|¡Decidan juntos!",
+    "mun.tab.objetivocracia": "Objetivocracia",
+    "secex.ask.title": "¿Quieres ver cómo funciona esta sección?",
+    "secex.ask.body": "Te explico con un ejemplo qué haces tú como facilitador, cómo participa cada persona, qué opciones tienes y cómo se calculan los resultados.",
+    "secex.ask.yes": "Ver la explicación",
+    "secex.ask.no": "Seguir sin verla",
+    "secex.ask.again": "Ver la explicación de esta sección",
+    "secex.title.1": "Qué haces tú como facilitador",
+    "secex.title.2": "Cómo participan las personas",
+    "secex.title.3": "Las opciones que tienes",
+    "secex.title.4": "Cómo se calculan los resultados",
+    "secex.title.5": "Un ejemplo",
+    "secex.promedio.1": "Creas el grupo y escribes una o más preguntas cuya respuesta es un número. Por ejemplo: ¿cuántas horas por semana dedicamos a limpiar el parque?\nEliges si quieres recortar los extremos y si habrá límite de tiempo.\nCompartes el link del grupo. Si elegiste aprobar solicitudes, tú decides quién entra.\nTú también puedes participar con tu propia propuesta, igual que cualquier miembro.\nCuando se acaba el tiempo, o cuando tú lo decides, cierras las preguntas y la app calcula el resultado.",
+    "secex.promedio.2": "Cada persona entra con el link y escribe su nombre.\nVe las preguntas una por una, escribe el número que le parece justo y lo envía.\nNo hace falta ponerse de acuerdo antes: cada quien propone lo que piensa.\nSi elegiste propuestas secretas, al final solo se ven los números, no quién propuso cuál.\nCuando cierras, todas las personas ven el resultado del grupo.",
+    "secex.promedio.3": "• Más preguntas: puedes agregar varias preguntas al mismo grupo, antes de poner el límite de tiempo.\n• Recorte: un porcentaje que quita los extremos más altos y más bajos antes de promediar. Con 0% se promedia todo.\n• Límite de tiempo: sí o no, en días, horas y minutos. Al terminar, la app cierra y calcula sola. Sin límite, cierras tú.\n• Quién participa: apruebas cada solicitud, o entra cualquiera que tenga el código.\n• Propuestas: secretas, solo números, o visibles, con el nombre de cada quien.",
+    "secex.promedio.4": "La app ordena todas las propuestas de menor a mayor.\nQuita el porcentaje de recorte en cada extremo: el mismo número de propuestas muy bajas y muy altas.\nPromedia las que quedan. Ese promedio es la decisión del grupo.\nNadie pesa más que nadie: cada persona aporta un solo número y todos valen igual.",
+    "secex.promedio.5": "Pregunta: ¿cuántas horas por semana dedicamos a limpiar el parque?\n10 personas proponen: 2, 3, 3, 4, 4, 5, 5, 6, 8 y 10.\nCon un recorte de 10% se descartan el 2 y el 10.\nSe promedian 3, 3, 4, 4, 5, 5, 6 y 8. Suman 38, y 38 entre 8 es 4.75.\nLa decisión del grupo es 4.75 horas por semana.",
+    "secex.mayoria.1": "Creas el grupo y escribes una pregunta con las opciones que verán todas las personas. Por ejemplo: ¿qué día hacemos la asamblea?\nEliges cómo se define quién gana: mayoría simple, absoluta, calificada, voto ranqueado o segunda vuelta electoral.\nPuedes agregar más preguntas, cada una con sus opciones y su propia regla, y decides si habrá límite de tiempo.\nCompartes el link. Al terminar el tiempo, o cuando tú lo decidas, la app calcula el resultado. En segunda vuelta, si no pusiste límite, tú cierras cada ronda.\nTú también puedes votar, igual que cualquier miembro.",
+    "secex.mayoria.2": "Cada persona ve la pregunta y las mismas opciones que todos.\nVota por la opción que prefiere. En voto ranqueado ordena todas las opciones, de la que más le gusta a la que menos.\nEn segunda vuelta vota en rondas: al cerrar cada ronda se eliminan las opciones menos votadas y se vota de nuevo entre las que quedan.\nAl final todos ven el resultado y cómo se calculó.",
+    "secex.mayoria.3": "• Simple: gana la opción con más votos, sin importar el porcentaje.\n• Absoluta: la opción ganadora necesita más del 50% de los votos.\n• Calificada: la opción ganadora necesita superar el porcentaje que tú definas, mayor al 50%.\n• Voto ranqueado: cada quien ordena las opciones y la app calcula sola, en rondas, quién gana.\n• Segunda vuelta: se vota en rondas. Tú defines cuántas rondas hay y el % mínimo para sobrevivir.\n• Más preguntas: las agregas antes del límite de tiempo. Cada una puede tener una regla distinta.\n• Límite de tiempo: sí o no. En segunda vuelta aplica a cada ronda.",
+    "secex.mayoria.4": "• Simple: se cuentan los votos y gana la opción con más. Si hay empate, se vota de nuevo solo entre las opciones empatadas.\n• Absoluta: gana la que pase del 50%. Si ninguna lo logra, se necesita otra ronda de participación.\n• Calificada: igual que la absoluta, pero con el porcentaje que definiste.\n• Voto ranqueado: se cuentan los primeros lugares. Si nadie pasa del 50%, se elimina la opción con menos votos y esos votos pasan a la siguiente preferencia de cada persona. Se repite hasta que alguien pase del 50%.\n• Segunda vuelta: en cada ronda se eliminan las opciones sin votos y las que quedan por debajo del % mínimo. Después se vota de nuevo entre las que quedan.",
+    "secex.mayoria.5": "Pregunta: ¿qué día hacemos la asamblea? Votan 11 personas: Sábado 5, Viernes 4 y Domingo 2.\nMayoría simple: gana Sábado, que tiene más votos.\nMayoría absoluta: no hay ganador, porque 5 de 11 es 45% y ninguna opción pasa del 50%.\nVoto ranqueado: se elimina Domingo y sus 2 votos pasan a la siguiente preferencia de cada persona. Si uno va a Sábado y otro a Viernes, Sábado queda con 6 votos y Viernes con 5. Sábado gana con 55%.",
+    "secex.cuotas.1": "Creas el grupo y eliges una de dos versiones.\nVersión simplificada: tú escribes cuántas categorías de cuota hay y cómo se llaman (por ejemplo, Casas y Locales comerciales, o una sola si todos pagan igual), decides si habrá límite de tiempo y envías las preguntas.\nVersión más democrática: el grupo decide todo, desde cuántas categorías hay hasta cuánto paga cada una.\nEn las dos, al final el grupo aprueba o rechaza el resultado. Si lo rechaza, el proceso se repite.",
+    "secex.cuotas.2": "Versión simplificada: cada persona propone cuánto debería ser la cuota de cada categoría.\nVersión democrática: primero proponen cuántas categorías debe haber y cómo se llaman, marcan juntas las que son la misma, las ordenan por preferencia y después proponen la cuota de cada una.\nAl final todos votan si aprueban el resultado.",
+    "secex.cuotas.3": "• Versión: simplificada, que es más rápida, o más democrática, que es más participativa.\n• Categorías: en la simplificada las escribes tú. Puedes poner cuántas personas hay en cada una, para que la app calcule cuánto se recauda.\n• Límite de tiempo: en la versión simplificada, sí o no, en minutos, horas o días. El máximo es de 60 días.\n• Recorte: se quitan los extremos más altos y más bajos antes de promediar. Por defecto es 10%.\n• % mínimo de apoyo: en la democrática, una categoría propuesta necesita este apoyo para quedarse. Por defecto es 10%.",
+    "secex.cuotas.4": "• Cuántas categorías: se promedian las propuestas y se redondea. Si queda exactamente en .5, se redondea hacia abajo.\n• Nombres: se cuenta el apoyo de cada nombre. Los que no llegan al % mínimo se descartan, y si más de la mitad juntó dos nombres, pasan a ser uno. Después se ordenan por preferencia y quedan las que se decidieron.\n• Cuota de cada categoría: se promedian las propuestas, quitando el recorte de extremos.\n• Total recaudado: si pusiste cuántas personas hay en cada categoría, la app multiplica y suma.\n• Aprobación: gana Sí o No por mayoría simple.",
+    "secex.cuotas.5": "Un condominio con 10 vecinos. Con la versión simplificada, escribes dos categorías: Casas, con 8 personas, y Locales comerciales, con 2.\nLos vecinos proponen la cuota de cada una. Después del recorte, los promedios son 500 para Casas y 900 para Locales comerciales.\nLa app calcula: 8 × 500 + 2 × 900 = 5,800 recaudados en total.\nDespués los vecinos votan si aprueban el resultado.",
+    "secex.presupuesto.1": "Creas el grupo y escribes los gastos fijos que ya existen, como la renta o los servicios. Si quieres, también el presupuesto disponible.\nCompartes el link. El grupo propone categorías de gasto, junta las que son la misma, elige las que importan y reparte el 100% del presupuesto.\nCierras cada etapa cuando ya respondieron todos o cuando quieras avanzar.\nAl final el grupo aprueba el resultado y decide si abre un proceso de propuestas de proyectos.",
+    "secex.presupuesto.2": "1. Cada persona propone categorías de gasto, hasta 5.\n2. Todos ven la lista completa y marcan juntas las que son la misma.\n3. Cada quien elige las categorías que le importan.\n4. Cada quien reparte el 100% del presupuesto entre las categorías que quedaron. Los gastos fijos ya vienen con un % de referencia que se puede mover.\n5. Todos votan si aprueban el resultado.",
+    "secex.presupuesto.3": "• Gastos fijos: los escribes tú, con su monto. Se precargan como porcentaje de referencia.\n• Presupuesto disponible: es opcional. Si lo pones, la app convierte cada % en dinero.\n• % mínimo de apoyo: una categoría necesita este apoyo para quedarse. Por defecto es 10%.\n• Cierre de etapas: tú decides cuándo termina cada una y avanzas.\n• Propuestas de proyectos: al final, el grupo decide si abre ese proceso.",
+    "secex.presupuesto.4": "• Categorías: se descartan las que no llegan al % mínimo de apoyo. Si ninguna llega, se queda la más apoyada.\n• Reparto: se promedia el % que cada persona asignó a cada categoría. Quien no puso nada cuenta como 0%.\n• Ajuste: si los promedios no suman 100%, la app los ajusta proporcionalmente.\n• Dinero: si pusiste el presupuesto disponible, cada % se muestra también en dinero.",
+    "secex.presupuesto.5": "Un grupo con 10,000 disponibles y tres categorías: Mantenimiento, Fiestas y Ahorro.\nLos promedios de todos son: Mantenimiento 50%, Fiestas 30% y Ahorro 20%.\nLa app muestra el reparto en dinero: 5,000, 3,000 y 2,000.\nEl grupo vota si aprueba el resultado.",
+    "secex.responsables.1": "Creas el grupo y compartes el link. No eliges a nadie a mano: la app guía el proceso.\nEl grupo propone los puestos (ya hay algunos sugeridos: Tesorero, Auditor y Facilitador), decide cuáles se quedan y si el sorteo es una sola vez o un calendario rotativo de 12 meses.\nLa lista de candidatos se llena sola con los miembros del grupo, y el grupo la aprueba o la ajusta.\nCuando todo está listo, tú haces el sorteo.",
+    "secex.responsables.2": "Cada persona propone puestos y marca juntos los que son el mismo.\nElige los puestos que cree que el grupo debe tener.\nVota si los puestos se reparten una sola vez o con un calendario rotativo.\nAprueba la lista de candidatos, o pide quitar o agregar personas.\nNadie vota por personas: el sorteo decide.",
+    "secex.responsables.3": "• Una sola vez: se sortea cada puesto una vez, sin calendario, y esa persona se queda de forma indefinida.\n• Calendario rotativo: se sortea de una sola vez un calendario de 12 meses con quién tiene cada puesto, mes por mes.\n• Candidatos: se llenan con los miembros del grupo. Si el grupo no aprueba la lista, se quitan o se agregan personas.\n• % mínimo de apoyo: un puesto propuesto necesita este apoyo para quedarse. Por defecto es 10%.",
+    "secex.responsables.4": "La app elige al azar entre los candidatos, de forma segura e imposible de manipular.\nNadie repite el mismo puesto dos veces seguidas ni tiene dos puestos en el mismo periodo.\nEn el calendario rotativo, cada persona sale del sorteo cuando le toca un puesto, hasta que todos hayan tenido uno. Entonces vuelven todos al sorteo y se sigue repartiendo.\nTodos ven el resultado del sorteo y el historial.",
+    "secex.responsables.5": "Un grupo de 6 personas con 3 puestos: Tesorero, Auditor y Facilitador.\nLa app sortea de una vez el calendario de 12 meses.\nEn el primer mes salen Marta, Luis y Ana, y salen del sorteo. En el segundo mes se sortea entre las otras 3 personas.\nDel tercer mes en adelante todos vuelven a entrar y el ciclo se repite.",
+    "secex.tabulador.1": "Creas el grupo y compartes el link.\nEl grupo decide primero si quiere un límite de desigualdad entre quien más gana y quien menos gana.\nTú defines los puestos, y el grupo aprueba la lista.\nEl grupo elige si los sueldos se deciden por hora o por mes, y propone cuánto gana cada puesto.\nCierras cada etapa cuando quieras avanzar.",
+    "secex.tabulador.2": "Votan si quieren un límite de desigualdad. Si dicen que sí, cada persona propone cuántas veces más debe ganar quien más gana.\nAprueban o rechazan la lista de puestos que definiste.\nVotan si los sueldos son por hora o por mes.\nProponen cuánto debe ganar cada puesto. Si hay límite, la app no deja enviar una propuesta que lo pase.\nAl final aprueban o rechazan el resultado.",
+    "secex.tabulador.3": "• Límite de desigualdad: el grupo decide si existe. Si existe, define cuántas veces más puede ganar el puesto mejor pagado.\n• Puestos: los defines tú. Si el grupo no los aprueba, los ajustas.\n• Por hora o por mes: lo decide el grupo por mayoría simple.\n• Recorte: se quitan los extremos más altos y más bajos de los sueldos propuestos. Por defecto es 10%.",
+    "secex.tabulador.4": "• Límite: se promedian las respuestas de todos, sin recorte. Si el promedio es 3, el puesto mejor pagado no puede ganar más de 3 veces el peor pagado.\n• Sueldo de cada puesto: se promedian las propuestas de ese puesto, quitando el recorte.\n• Aprobaciones: la lista de puestos y el resultado final necesitan más del 50%. Si no se aprueban, se vuelve a proponer.",
+    "secex.tabulador.5": "Un grupo decide que sí habrá límite. Las propuestas de todos dan un promedio de 3 veces.\nPuestos: Coordinación, Taller y Limpieza. Los sueldos son por mes.\nDespués del recorte, los promedios son: Coordinación 12,000, Taller 8,000 y Limpieza 5,000.\nLa diferencia entre quien más gana y quien menos gana es de 2.4 veces, dentro del límite de 3.",
+    "secex.asociaciones.1": "Creas el grupo una sola vez y corres cuatro procesos conectados, uno después del otro: cuotas, presupuesto, propuestas de proyectos y selección de responsabilidades.\nAl cerrar un proceso, la app te lleva al siguiente. El dinero que se recauda con las cuotas llega solo como presupuesto a repartir.\nTú decides cuándo cerrar cada etapa. Las propuestas de proyectos y la selección de responsabilidades solo se abren si el grupo lo vota.",
+    "secex.asociaciones.2": "Participan en orden:\n1. Cuotas: proponen cuánto debe pagar cada categoría y aprueban el resultado.\n2. Presupuesto: proponen categorías de gasto, eligen las que importan y reparten el 100%.\n3. Propuestas de proyectos: en cada categoría, cada quien puede proponer proyectos con su costo. Se revelan todos juntos al cerrar la recepción, y después cada quien vota por un proyecto en cada categoría.\n4. Responsabilidades: proponen puestos, aprueban candidatos y se hace el sorteo.",
+    "secex.asociaciones.3": "• Cuotas y presupuesto: tienen las mismas opciones que cuando se usan por separado.\n• Propuestas de proyectos: el grupo vota si las abre. Tú cierras la recepción para pasar a votación, cierras la votación y puedes reabrir las categorías que se quedaron sin propuestas.\n• Responsabilidades: se abren solo si más del 50% del grupo vota que sí.\n• Tiempos: cierras cada etapa a tu ritmo.",
+    "secex.asociaciones.4": "• Cuotas y presupuesto: se calculan igual que por separado.\n• Dinero: lo recaudado con las cuotas se convierte en el presupuesto a repartir.\n• Proyectos: en cada categoría gana el proyecto con más votos. Si hay empate, se abre otra ronda en la que se pueden editar o agregar propuestas. Si el empate sigue después de varias rondas, esa categoría queda sin ganador.\n• Responsabilidades: se sortean entre los candidatos, sin repetir.",
+    "secex.asociaciones.5": "Un club de 10 personas. Cuotas: se recaudan 5,800.\nPresupuesto: Mantenimiento recibe 50%, es decir 2,900.\nProyectos: para Mantenimiento se proponen pintar el salón y arreglar la bomba de agua, cada uno con su costo. Al cerrar la recepción se revelan y el club vota. Gana el que tenga más votos.\nResponsabilidades: el club vota si quiere sortear puestos y la app asigna Tesorero, Auditor y Facilitador.",
+    "qwel.title": "Te damos la bienvenida a: {group}",
+    "qwel.invited": "{admin} te invitó a este grupo.",
+    "qwel.invitedNoAdmin": "Te invitaron a este grupo.",
+    "qwel.decide": "Juntos van a decidir:",
+    "qwel.how": "¿Cómo vamos a decidir?",
+    "qwel.part": "¿Cómo participas?",
+    "qwel.ruleIntro1": "El facilitador eligió esta forma de decidir:",
+    "qwel.ruleIntroN": "El facilitador eligió estas formas de decidir, una por pregunta:",
+    "qwel.prom": "Cada integrante propone un número para cada pregunta.\n\nDespués se promedian todas las propuestas, y ese promedio es la decisión colectiva. Si el facilitador pidió recorte, antes se descartan las propuestas más altas y más bajas.\n\nA esta forma de decidir se le llama democracia por promedio.",
+    "qwel.promPart": "Cada persona entra con el link y escribe su nombre.\nVe las preguntas una por una, escribe el número que le parece justo y lo envía.\nNo hace falta ponerse de acuerdo antes: cada quien propone lo que piensa.\nSi elegiste propuestas secretas, al final solo se ven los números, no quién propuso cuál.\nCuando cierras, todas las personas ven el resultado del grupo.",
+    "qwel.mayPart": "Cada pregunta tiene las mismas opciones para todos. Eliges la que prefieres y envías tu voto.\n\nSi hay límite de tiempo, verás una cuenta regresiva.",
+    "qwel.mayPartRank": "Para ordenar, toca las opciones en el orden de tu preferencia: primero la que más te gusta.",
+    "qwel.mayPartSeg": "Vas a votar en más de una ronda. Cuando cierre una ronda, vuelves a votar entre las opciones que quedan.",
+    "qwel.rule.simple": "Cada persona vota por una opción. Gana la opción con más votos, sin importar el porcentaje.\n\nPor ejemplo, si Sábado tiene 5 votos, Viernes 4 y Domingo 2, gana Sábado.",
+    "qwel.rule.absoluta": "Cada persona vota por una opción. Para ganar, una opción necesita más del 50% de los votos.\n\nPor ejemplo, con 11 votos, una opción necesita al menos 6. Si la más votada tiene 5, nadie gana y hace falta otra ronda de participación.",
+    "qwel.rule.calificada": "Cada persona vota por una opción. Para ganar, una opción necesita superar un porcentaje que definió el facilitador, mayor al 50%.\n\nPor ejemplo, si el porcentaje es 66% y votan 11 personas, una opción necesita al menos 8 votos.",
+    "qwel.rule.rankeado": "No votas por una sola opción: las ordenas de la que más te gusta a la que menos. La app cuenta los primeros lugares. Si ninguna pasa del 50%, elimina la opción con menos votos y reparte esos votos a la siguiente preferencia de cada persona. Repite hasta que una opción pase del 50%.\n\nAsí tu voto no se pierde si tu opción favorita queda eliminada.",
+    "qwel.rule.segunda_vuelta": "Votas por una sola opción en cada ronda. Cuando se cierra la ronda, se eliminan las opciones sin votos y las que quedaron por debajo del porcentaje mínimo que definió el facilitador. Después se vota de nuevo entre las que quedan.\n\nPor ejemplo, si Domingo queda con 18% y el mínimo es 20%, Domingo se elimina y la ronda 2 es solo entre Sábado y Viernes.",
     "home.title": "Organicen y decidan",
     "home.tagline": "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.",
     "flow.availableBudget": "Presupuesto disponible (opcional)",
@@ -466,12 +540,12 @@ const FRONTEND_STRINGS = {
     "obj.collapseAll": "Cerrar todo",
     "obj.closing": "Las herramientas existen. Lo que falta es atrevernos a imaginar que millones de personas pueden decidir juntas. Tal vez entonces dejemos de marchar para pedirles a los políticos que lleven agua limpia a nuestros hogares, porque las decisiones sobre el agua, y sobre todo lo demás, estarán en nuestras manos.",
     "obj.soonNote": "Próximamente, la aplicación te permitirá practicar el sistema completo.",
-    "obj.s1.title": "1. Elegimos los objetivos entre todos",
-    "obj.s1.body": "Todo parte de una pregunta: ¿qué queremos obtener de nuestra sociedad? Cada persona tiene 100 puntos positivos para repartir entre lo que quiere que su sociedad tenga, como educación, seguridad, derechos humanos o protección del medio ambiente. También tiene 100 puntos negativos para lo que quiere que la sociedad combata o deje atrás.\n\nCada quien puede dividir un objetivo en subobjetivos. Por ejemplo, dentro de educación: primaria, secundaria, superior o educación continua.\n\nSe promedian los puntos de todas las personas y el resultado es la escala de objetivos de la sociedad. Nadie pesa más que nadie. Por ejemplo, si una persona le da 30 puntos a la educación y otra le da 40, para la sociedad la educación vale 35.\n\nEl dinero público se reparte en proporción a esos puntos: un objetivo que recibe 10 puntos recibe el 10% de los fondos públicos.",
+    "obj.s1.title": "1. Los objetivos son lo que decidimos financiar",
+    "obj.s1.body": "Los objetivos de una sociedad son aquello en lo que está dispuesta a invertir sus recursos. Por eso no hace falta una votación aparte: los objetivos se obtienen del presupuesto participativo.\n\nCada persona reparte el 100% del presupuesto entre las áreas que le importan, como educación, seguridad, salud o protección del medio ambiente. Puede dividir un área en subáreas. Por ejemplo, dentro de educación: primaria, secundaria, superior o educación continua.\n\nSe promedian los porcentajes de todas las personas, contando como 0% a quien no puso nada en un área. El resultado es la escala de objetivos de la sociedad. Nadie pesa más que nadie. Por ejemplo, si una persona le da 30% a la educación y otra le da 40%, para la sociedad la educación recibe 35%.\n\nAsí, cada objetivo recibe del dinero público justo lo que la sociedad decidió invertir en él: un objetivo que recibe el 10% del presupuesto recibe el 10% de los fondos públicos.",
     "obj.s2.title": "2. Cómo se lleva a cabo lo que decidimos",
     "obj.s2.body": "Una vez decididos el presupuesto o los objetivos, hay que decidir cómo se ejercen los recursos. Hay tres caminos, que se pueden combinar:\n• La república actual: el Poder Ejecutivo ejerce el presupuesto que definió la ciudadanía y el Legislativo hace leyes con base en los objetivos. Puede ser el inicio del proceso, pero por las fallas propias de la república no resuelve por completo los problemas estructurales.\n• Licitaciones: una licitación es una convocatoria abierta en la que cooperativas, universidades, investigadores y ciudadanos presentan proyectos o leyes que cumplan los objetivos y compiten por los fondos públicos. Por ejemplo, una universidad puede diseñar una presa y supervisar su construcción, que realizan trabajadores del Estado o cooperativas. Así las universidades se vuelven motores de investigación y desarrollo.\n• Comités ciudadanos: poco a poco se sustituye la estructura de la república por comités de ciudadanos que prestan un servicio social. Es la parte más radical de la propuesta. Quien esté de acuerdo con los impuestos y presupuestos participativos pero no con los comités puede quedarse con los dos primeros caminos.",
     "obj.s3.title": "3. Quién hace qué",
-    "obj.s3.body": "En lugar de gobierno hay administraciones, porque nadie es gobernado. Cada una está formada por:\n• Ciudadanos: eligen los objetivos, el presupuesto y los impuestos, y deciden otros temas, como los derechos laborales y los límites a la desigualdad. También pueden vetar decisiones, pedir cambios y pedir auditorías.\n• Administradores: una asamblea elegida por sorteo, dividida en comités por tema. No hacen leyes ni ejecutan obras. Recaudan, reparten los fondos según la escala de objetivos, abren licitaciones, evalúan las propuestas y firman los contratos en nombre de todos.\n• Licitantes: cualquier ciudadano, cooperativa, universidad o investigador que presente un proyecto o un contrato colectivo para lograr los objetivos. No pueden participar quienes estén o hayan estado en la administración, ni quienes hayan sido condenados por corrupción o fraude.\n• Auditores: otra asamblea elegida por sorteo. Vigilan a administradores y licitantes y pueden cancelar proyectos.\n• Otros comités: evaluadores que estudian a fondo un tema, tesoreros que cobran y entregan los recursos, organizadores de las consultas y procesos participativos, y comités judiciales, cuyos jurados también se eligen por sorteo.\n• Trabajadores permanentes: hacen las tareas que requieren continuidad, como el mantenimiento de presas y carreteras, siguiendo los proyectos ganadores y bajo la supervisión de los auditores.",
+    "obj.s3.body": "En lugar de gobierno hay administraciones, porque nadie es gobernado. Cada una está formada por:\n• Ciudadanos: reparten el presupuesto, que es lo que define los objetivos, deciden los impuestos y otros temas, como los derechos laborales y los límites a la desigualdad. También pueden vetar decisiones, pedir cambios y pedir auditorías.\n• Administradores: una asamblea elegida por sorteo, dividida en comités por tema. No hacen leyes ni ejecutan obras. Recaudan, reparten los fondos según la escala de objetivos, abren licitaciones, evalúan las propuestas y firman los contratos en nombre de todos.\n• Licitantes: cualquier ciudadano, cooperativa, universidad o investigador que presente un proyecto o un contrato colectivo para lograr los objetivos. No pueden participar quienes estén o hayan estado en la administración, ni quienes hayan sido condenados por corrupción o fraude.\n• Auditores: otra asamblea elegida por sorteo. Vigilan a administradores y licitantes y pueden cancelar proyectos.\n• Otros comités: evaluadores que estudian a fondo un tema, tesoreros que cobran y entregan los recursos, organizadores de las consultas y procesos participativos, y comités judiciales, cuyos jurados también se eligen por sorteo.\n• Trabajadores permanentes: hacen las tareas que requieren continuidad, como el mantenimiento de presas y carreteras, siguiendo los proyectos ganadores y bajo la supervisión de los auditores.",
     "obj.s4.title": "4. Contratos colectivos y proyectos",
     "obj.s4.body": "Las leyes se sustituyen por contratos colectivos. Y las acciones que hoy hace el gobierno, como construir caminos, operar escuelas o dar seguridad, se convierten en proyectos que ganan una licitación. Esto no significa que los servicios sean privados: significa que ciudadanos y grupos son quienes los administran y los proporcionan.\n\nPara que un proyecto sea elegido:\n• Quien lo propone: explica a qué objetivos aporta, qué hará, quién lo hará, cuánto cuesta cada parte, qué resultados medibles promete a corto, mediano y largo plazo, y qué efectos negativos obligarían a detenerlo. También declara si trabajará con familiares o amigos y por qué.\n• Los administradores: lo evalúan por su apego a los objetivos, su eficiencia (qué resultados da por lo que cuesta), su viabilidad y el historial de quien lo propone. Pueden contratar expertos para ayudarse, y las razones de su decisión son públicas.\n• Las personas más afectadas: pueden pedir cambios antes de que se apruebe.\n• Todos los ciudadanos: pueden juntar firmas para vetarlo. El número de firmas necesario también se decide por promedio. Si nadie lo veta, los administradores lo firman en nombre de todos.\n\nUna vez en marcha, los auditores revisan los resultados al menos una vez al año:\n• Menos del 70% de lo prometido: el proyecto se cancela.\n• Menos del 50% de lo prometido: además se puede investigar y llevar a juicio por fraude a quien lo propuso.\n• Una administración completa por debajo del 70%: se investiga y se le puede quitar el cargo.\n• Otras causas de cancelación: mal uso de fondos, corrupción, falta de transparencia, ganancias no declaradas para quien lo propuso o su familia, o efectos secundarios contrarios a los objetivos.",
     "obj.s5.title": "5. Servicio social y comités por sorteo",
@@ -600,7 +674,7 @@ const FRONTEND_STRINGS = {
     "hdr.steps.cuotas": "Arma tu grupo|Definan las categorías|Propongan la cuota|Aprueben el resultado|¡Cobren juntos!",
     "hdr.steps.presupuesto": "Arma tu grupo|Propongan categorías|Repartan el %|Aprueben el resultado|¡Gasten juntos!",
     "hdr.steps.asociaciones": "Arma tu grupo|Decidan las cuotas|Repartan el presupuesto|Propongan proyectos|¡Decidan juntos!",
-    "hdr.steps.municipios": "Impuestos|Presupuesto|Otras preguntas",
+    "hdr.steps.municipios": "Impuestos|Presupuesto|Otras preguntas|Objetivocracia",
     "hdr.steps.cooperativas": "Arma tu grupo|Elige un proceso|Decidan juntos|¡Listo!",
     "result.skippedByFacilitator": "El facilitador omitió este paso.",
     "result.membersLabel": "Miembros",
@@ -850,7 +924,7 @@ const FRONTEND_STRINGS = {
     "home.presupuesto.subtitle": "Decide together where to invest or spend the money you have.",
     "home.responsables.title": "Assigning responsibilities by sortition",
     "home.responsables.subtitle": "You don't need to vote for people to assign responsibilities, assign them by lottery instead.",
-    "home.asociaciones.title": "Associations, clubs & orgs",
+    "home.asociaciones.title": "Complete flow for associations and organizations",
     "home.asociaciones.subtitle": "Dues, budget, projects, and responsibilities, one connected process.",
     "home.cooperativas.title": "Cooperatives",
     "home.cooperativas.subtitle": "Wage tabulators and participatory budgets, built for cooperatives.",
@@ -860,6 +934,80 @@ const FRONTEND_STRINGS = {
     "home.municipios.subtitle": "Interactive demo: taxes and participatory budgeting at a country scale, with real data.",
     "home.share.title": "Invite others",
     "home.share.subtitle": "Share the app with your community. QR code and link ready to send.",
+    "home.promedio.title": "Average-Based Democracy",
+    "home.promedio.subtitle": "Everyone proposes a number and the group decides with the average.",
+    "home.mayoria.title": "Democracy by majority",
+    "home.mayoria.subtitle": "Choose between options: simple, absolute or qualified majority, ranked voting or runoff.",
+    "home.tabulador.title": "Wage tabulator",
+    "home.tabulador.subtitle": "Define the roles and decide how much each one earns, with or without an inequality limit.",
+    "home.howBtn": "How does the app work?",
+    "hdr.steps.promedio": "Build your group|Write the questions|Share the link|Take part too|Decide together!",
+    "hdr.steps.mayoria": "Build your group|Questions and options|Share the link|Take part too|Decide together!",
+    "hdr.steps.tabulador": "Build your group|Define the roles|Propose the wages|Approve the result|Decide together!",
+    "mun.tab.objetivocracia": "Objetivocracia",
+    "secex.ask.title": "Do you want to see how this section works?",
+    "secex.ask.body": "I will explain with an example what you do as the facilitator, how each person takes part, what options you have and how the results are calculated.",
+    "secex.ask.yes": "See the explanation",
+    "secex.ask.no": "Continue without it",
+    "secex.ask.again": "See this section's explanation",
+    "secex.title.1": "What you do as the facilitator",
+    "secex.title.2": "How people take part",
+    "secex.title.3": "Your options",
+    "secex.title.4": "How the results are calculated",
+    "secex.title.5": "An example",
+    "secex.promedio.1": "You create the group and write one or more questions whose answer is a number. For example: how many hours a week do we spend cleaning the park?\nYou choose whether to trim the extremes and whether there will be a time limit.\nYou share the group link. If you chose to approve requests, you decide who gets in.\nYou can also take part with your own proposal, just like any member.\nWhen time runs out, or when you decide, you close the questions and the app calculates the result.",
+    "secex.promedio.2": "Each person enters with the link and writes their name.\nThey see the questions one by one, write the number they think is fair and send it.\nNobody needs to agree beforehand: each person proposes what they think.\nIf you chose anonymous proposals, only the numbers are shown at the end, not who proposed which.\nWhen you close, everyone sees the group's result.",
+    "secex.promedio.3": "• More questions: you can add several questions to the same group, before setting the time limit.\n• Trim: a percentage that removes the highest and lowest extremes before averaging. With 0% everything is averaged.\n• Time limit: yes or no, in days, hours and minutes. When it ends, the app closes and calculates on its own. With no limit, you close.\n• Who takes part: you approve each request, or anyone with the code can join.\n• Proposals: anonymous, numbers only, or visible, with each person's name.",
+    "secex.promedio.4": "The app sorts all the proposals from lowest to highest.\nIt removes the trim percentage at each end: the same number of very low and very high proposals.\nIt averages the ones that remain. That average is the group's decision.\nNo one weighs more than anyone else: each person contributes a single number and all count the same.",
+    "secex.promedio.5": "Question: how many hours a week do we spend cleaning the park?\n10 people propose: 2, 3, 3, 4, 4, 5, 5, 6, 8 and 10.\nWith a 10% trim, the 2 and the 10 are discarded.\n3, 3, 4, 4, 5, 5, 6 and 8 are averaged. They add up to 38, and 38 divided by 8 is 4.75.\nThe group's decision is 4.75 hours a week.",
+    "secex.mayoria.1": "You create the group and write a question with the options everyone will see. For example: which day do we hold the assembly?\nYou choose how the winner is defined: simple, absolute or qualified majority, ranked voting or a runoff election.\nYou can add more questions, each with its own options and its own rule, and you decide whether there will be a time limit.\nYou share the link. When time runs out, or when you decide, the app calculates the result. In a runoff, if you set no limit, you close each round.\nYou can also vote, just like any member.",
+    "secex.mayoria.2": "Each person sees the question and the same options as everyone else.\nThey vote for the option they prefer. In ranked voting they rank all the options, from the one they like most to the one they like least.\nIn a runoff they vote in rounds: when each round closes the least-voted options are eliminated and people vote again among the ones left.\nAt the end everyone sees the result and how it was calculated.",
+    "secex.mayoria.3": "• Simple: the option with the most votes wins, regardless of the percentage.\n• Absolute: the winning option needs more than 50% of the votes.\n• Qualified: the winning option needs to pass the percentage you set, over 50%.\n• Ranked voting: each person ranks the options and the app calculates the winner on its own, in rounds.\n• Runoff: voting happens in rounds. You set how many rounds there are and the minimum % to survive.\n• More questions: you add them before the time limit. Each one can have a different rule.\n• Time limit: yes or no. In a runoff it applies to each round.",
+    "secex.mayoria.4": "• Simple: the votes are counted and the option with the most wins. If there is a tie, people vote again only among the tied options.\n• Absolute: the one that passes 50% wins. If none does, another round of participation is needed.\n• Qualified: the same as absolute, but with the percentage you set.\n• Ranked voting: first places are counted. If nobody passes 50%, the option with the fewest votes is eliminated and those votes pass to each person's next preference. This repeats until someone passes 50%.\n• Runoff: in each round the options with no votes and those below the minimum % are eliminated. Then people vote again among the ones left.",
+    "secex.mayoria.5": "Question: which day do we hold the assembly? 11 people vote: Saturday 5, Friday 4 and Sunday 2.\nSimple majority: Saturday wins, because it has the most votes.\nAbsolute majority: there is no winner, because 5 of 11 is 45% and no option passes 50%.\nRanked voting: Sunday is eliminated and its 2 votes pass to each person's next preference. If one goes to Saturday and one to Friday, Saturday ends with 6 votes and Friday with 5. Saturday wins with 55%.",
+    "secex.cuotas.1": "You create the group and choose one of two versions.\nSimplified version: you write how many dues or fees categories there are and what they are called (for example, Houses and Shops, or just one if everyone pays the same), decide whether there will be a time limit and send the questions.\nMore democratic version: the group decides everything, from how many categories there are to how much each one pays.\nIn both, at the end the group approves or rejects the result. If it is rejected, the process starts again.",
+    "secex.cuotas.2": "Simplified version: each person proposes how much the dues or fees of each category should be.\nDemocratic version: first they propose how many categories there should be and what they are called, mark together the ones that are the same, rank them by preference and then propose the amount for each one.\nAt the end everyone votes on whether they approve the result.",
+    "secex.cuotas.3": "• Version: simplified, which is faster, or more democratic, which is more participatory.\n• Categories: in the simplified one you write them. You can enter how many people are in each one, so the app calculates how much is collected.\n• Time limit: in the simplified version, yes or no, in minutes, hours or days. The maximum is 60 days.\n• Trim: the highest and lowest extremes are removed before averaging. The default is 10%.\n• Minimum % of support: in the democratic one, a proposed category needs this support to stay. The default is 10%.",
+    "secex.cuotas.4": "• How many categories: the proposals are averaged and rounded. If it lands exactly on .5, it rounds down.\n• Names: the support for each name is counted. Those that do not reach the minimum % are discarded, and if more than half merged two names, they become one. Then they are ranked by preference and the number decided stays.\n• Amount for each category: the proposals are averaged, after removing the trim at the extremes.\n• Total collected: if you entered how many people are in each category, the app multiplies and adds.\n• Approval: Yes or No wins by simple majority.",
+    "secex.cuotas.5": "A condo with 10 neighbors. With the simplified version, you write two categories: Houses, with 8 people, and Shops, with 2.\nThe neighbors propose the amount for each one. After the trim, the averages are 500 for Houses and 900 for Shops.\nThe app calculates: 8 × 500 + 2 × 900 = 5,800 collected in total.\nThen the neighbors vote on whether they approve the result.",
+    "secex.presupuesto.1": "You create the group and write the fixed expenses that already exist, such as rent or utilities. If you want, also the available budget.\nYou share the link. The group proposes spending categories, merges the ones that are the same, chooses the ones that matter and distributes 100% of the budget.\nYou close each stage when everyone has answered or whenever you want to move on.\nAt the end the group approves the result and decides whether to open a project proposal process.",
+    "secex.presupuesto.2": "1. Each person proposes spending categories, up to 5.\n2. Everyone sees the full list and marks together the ones that are the same.\n3. Each person chooses the categories that matter to them.\n4. Each person distributes 100% of the budget among the categories that remain. Fixed expenses already come with a reference % that can be moved.\n5. Everyone votes on whether they approve the result.",
+    "secex.presupuesto.3": "• Fixed expenses: you write them, with their amount. They are preloaded as a reference percentage.\n• Available budget: it is optional. If you enter it, the app converts each % into money.\n• Minimum % of support: a category needs this support to stay. The default is 10%.\n• Closing stages: you decide when each one ends and move on.\n• Project proposals: at the end, the group decides whether to open that process.",
+    "secex.presupuesto.4": "• Categories: those that do not reach the minimum % of support are discarded. If none does, the most supported one stays.\n• Distribution: the % each person assigned to each category is averaged. Anyone who left it blank counts as 0%.\n• Adjustment: if the averages do not add up to 100%, the app adjusts them proportionally.\n• Money: if you entered the available budget, each % is also shown as money.",
+    "secex.presupuesto.5": "A group with 10,000 available and three categories: Maintenance, Parties and Savings.\nEveryone's averages are: Maintenance 50%, Parties 30% and Savings 20%.\nThe app shows the split as money: 5,000, 3,000 and 2,000.\nThe group votes on whether it approves the result.",
+    "secex.responsables.1": "You create the group and share the link. You do not pick anyone by hand: the app guides the process.\nThe group proposes the roles (some are already suggested: Treasurer, Auditor and Facilitator), decides which ones stay and whether the drawing is just once or a rotating 12-month schedule.\nThe candidate list fills itself with the group's members, and the group approves or adjusts it.\nWhen everything is ready, you run the drawing.",
+    "secex.responsables.2": "Each person proposes roles and marks together the ones that are the same.\nThey choose the roles they think the group should have.\nThey vote on whether roles are assigned just once or with a rotating schedule.\nThey approve the candidate list, or ask to remove or add people.\nNobody votes for people: the drawing decides.",
+    "secex.responsables.3": "• Just once: each role is drawn once, with no schedule, and that person stays indefinitely.\n• Rotating schedule: a 12-month calendar is drawn all at once saying who holds each role, month by month.\n• Candidates: they are filled in with the group's members. If the group does not approve the list, people are removed or added.\n• Minimum % of support: a proposed role needs this support to stay. The default is 10%.",
+    "secex.responsables.4": "The app picks at random among the candidates, securely and impossible to manipulate.\nNo one repeats the same role twice in a row or holds two roles in the same period.\nIn the rotating schedule, each person drops out of the drawing once they get a role, until everyone has had one. Then everyone is back in the pool and the assigning continues.\nEveryone sees the result of the drawing and the history.",
+    "secex.responsables.5": "A group of 6 people with 3 roles: Treasurer, Auditor and Facilitator.\nThe app draws the 12-month calendar all at once.\nIn the first month Marta, Luis and Ana come out, and they leave the drawing. In the second month the draw is among the other 3 people.\nFrom the third month on everyone goes back in and the cycle repeats.",
+    "secex.tabulador.1": "You create the group and share the link.\nThe group first decides whether it wants a limit on the inequality between the highest and lowest earner.\nYou define the roles, and the group approves the list.\nThe group chooses whether wages are decided per hour or per month, and proposes how much each role earns.\nYou close each stage whenever you want to move on.",
+    "secex.tabulador.2": "They vote on whether they want an inequality limit. If they say yes, each person proposes how many times more the highest earner should make.\nThey approve or reject the list of roles you defined.\nThey vote on whether wages are per hour or per month.\nThey propose how much each role should earn. If there is a limit, the app does not let a proposal that goes over it be sent.\nAt the end they approve or reject the result.",
+    "secex.tabulador.3": "• Inequality limit: the group decides whether it exists. If it does, it sets how many times more the best paid role can earn.\n• Roles: you define them. If the group does not approve them, you adjust them.\n• Per hour or per month: the group decides by simple majority.\n• Trim: the highest and lowest extremes of the proposed wages are removed. The default is 10%.",
+    "secex.tabulador.4": "• Limit: everyone's answers are averaged, with no trim. If the average is 3, the best paid role cannot earn more than 3 times the lowest paid.\n• Wage for each role: the proposals for that role are averaged, after removing the trim.\n• Approvals: the list of roles and the final result need more than 50%. If they are not approved, people propose again.",
+    "secex.tabulador.5": "A group decides there will be a limit. Everyone's proposals average 3 times.\nRoles: Coordination, Workshop and Cleaning. Wages are per month.\nAfter the trim, the averages are: Coordination 12,000, Workshop 8,000 and Cleaning 5,000.\nThe difference between the highest and lowest earner is 2.4 times, within the limit of 3.",
+    "secex.asociaciones.1": "You create the group once and run four connected processes, one after the other: dues or fees, budget, project proposals and assigning responsibilities.\nWhen a process closes, the app takes you to the next one. The money collected with the dues or fees arrives on its own as the budget to distribute.\nYou decide when to close each stage. Project proposals and assigning responsibilities only open if the group votes for it.",
+    "secex.asociaciones.2": "They take part in order:\n1. Dues or fees: they propose how much each category should pay and approve the result.\n2. Budget: they propose spending categories, choose the ones that matter and distribute 100%.\n3. Project proposals: in each category, anyone can propose projects with their cost. They are all revealed together when submissions close, and then each person votes for one project in each category.\n4. Responsibilities: they propose roles, approve candidates and the drawing is run.",
+    "secex.asociaciones.3": "• Dues or fees and budget: they have the same options as when used separately.\n• Project proposals: the group votes on whether to open them. You close submissions to move to voting, close the voting and can reopen the categories that got no proposals.\n• Responsibilities: they only open if more than 50% of the group votes yes.\n• Timing: you close each stage at your own pace.",
+    "secex.asociaciones.4": "• Dues or fees and budget: they are calculated the same way as separately.\n• Money: what is collected with the dues or fees becomes the budget to distribute.\n• Projects: in each category the project with the most votes wins. If there is a tie, another round opens in which proposals can be edited or added. If the tie continues after several rounds, that category is left with no winner.\n• Responsibilities: they are drawn among the candidates, with no repeats.",
+    "secex.asociaciones.5": "A club of 10 people. Dues or fees: 5,800 are collected.\nBudget: Maintenance receives 50%, that is 2,900.\nProjects: for Maintenance, painting the hall and fixing the water pump are proposed, each with its cost. When submissions close they are revealed and the club votes. The one with the most votes wins.\nResponsibilities: the club votes on whether it wants to draw roles and the app assigns Treasurer, Auditor and Facilitator.",
+    "qwel.title": "Welcome to: {group}",
+    "qwel.invited": "{admin} invited you to this group.",
+    "qwel.invitedNoAdmin": "You were invited to this group.",
+    "qwel.decide": "Together you will decide:",
+    "qwel.how": "How are we going to decide?",
+    "qwel.part": "How do you take part?",
+    "qwel.ruleIntro1": "The facilitator chose this way of deciding:",
+    "qwel.ruleIntroN": "The facilitator chose these ways of deciding, one per question:",
+    "qwel.prom": "Each member proposes a number for each question.\n\nThen all the proposals are averaged, and that average is the collective decision. If the facilitator asked for a trim, the highest and lowest proposals are discarded first.\n\nThis way of deciding is called average-based democracy.",
+    "qwel.promPart": "Each person enters with the link and writes their name.\nThey see the questions one by one, write the number they think is fair and send it.\nNobody needs to agree beforehand: each person proposes what they think.\nIf you chose anonymous proposals, only the numbers are shown at the end, not who proposed which.\nWhen you close, everyone sees the group's result.",
+    "qwel.mayPart": "Each question has the same options for everyone. You choose the one you prefer and send your vote.\n\nIf there is a time limit, you will see a countdown.",
+    "qwel.mayPartRank": "To rank, tap the options in the order of your preference: the one you like most first.",
+    "qwel.mayPartSeg": "You will vote in more than one round. When a round closes, you vote again among the options that remain.",
+    "qwel.rule.simple": "Each person votes for one option. The option with the most votes wins, regardless of the percentage.\n\nFor example, if Saturday has 5 votes, Friday 4 and Sunday 2, Saturday wins.",
+    "qwel.rule.absoluta": "Each person votes for one option. To win, an option needs more than 50% of the votes.\n\nFor example, with 11 votes, an option needs at least 6. If the most voted has 5, nobody wins and another round of participation is needed.",
+    "qwel.rule.calificada": "Each person votes for one option. To win, an option needs to pass a percentage the facilitator set, over 50%.\n\nFor example, if the percentage is 66% and 11 people vote, an option needs at least 8 votes.",
+    "qwel.rule.rankeado": "You do not vote for a single option: you rank them from the one you like most to the one you like least. The app counts first places. If none passes 50%, it eliminates the option with the fewest votes and passes those votes to each person's next preference. It repeats until one option passes 50%.\n\nThis way your vote is not lost if your favorite option is eliminated.",
+    "qwel.rule.segunda_vuelta": "You vote for a single option in each round. When the round closes, the options with no votes and those below the minimum percentage the facilitator set are eliminated. Then people vote again among the ones left.\n\nFor example, if Sunday ends with 18% and the minimum is 20%, Sunday is eliminated and round 2 is only between Saturday and Friday.",
     "home.title": "Organize and Decide",
     "home.tagline": "How much do we need to pay? What should we spend our resources on? Who's responsible for what? Decide together, with horizontal, fast, and effective processes, without giving power to anyone or dividing the group.",
     "flow.availableBudget": "Available budget (optional)",
@@ -1153,12 +1301,12 @@ const FRONTEND_STRINGS = {
     "obj.collapseAll": "Close all",
     "obj.closing": "The tools exist. What we lack is the courage to imagine that millions of people can decide together. Maybe then we will stop marching to ask politicians to bring clean water to our homes, because the decisions about water, and about everything else, will be in our hands.",
     "obj.soonNote": "Coming soon, the app will let you practice the complete system.",
-    "obj.s1.title": "1. We choose the objectives together",
-    "obj.s1.body": "It all starts with one question: what do we want to get from our society? Each person has 100 positive points to distribute among the things they want their society to have, such as education, safety, human rights or environmental protection. They also have 100 negative points for what they want society to fight against or leave behind.\n\nEach person can split an objective into sub-objectives. For example, within education: primary, secondary, higher or continuing education.\n\nEveryone's points are averaged, and the result is the society's scale of objectives. Nobody weighs more than anybody else. For example, if one person gives 30 points to education and another gives 40, then for society education is worth 35.\n\nPublic money is distributed in proportion to those points: an objective that receives 10 points receives 10% of the public funds.",
+    "obj.s1.title": "1. The objectives are what we decide to fund",
+    "obj.s1.body": "The objectives of a society are what it is willing to invest its resources in. That is why no separate vote is needed: the objectives come from the participatory budget.\n\nEach person distributes 100% of the budget among the areas they care about, such as education, safety, health or environmental protection. They can split an area into sub-areas. For example, within education: primary, secondary, higher or continuing education.\n\nEveryone's percentages are averaged, counting as 0% anyone who left an area blank. The result is the society's scale of objectives. Nobody weighs more than anybody else. For example, if one person gives 30% to education and another gives 40%, then for society education receives 35%.\n\nThis way, each objective receives from public money exactly what society decided to invest in it: an objective that receives 10% of the budget receives 10% of the public funds.",
     "obj.s2.title": "2. How we carry out what we decide",
     "obj.s2.body": "Once the budget or the objectives are decided, we need to decide how the resources are used. There are three paths, which can be combined:\n• The current republic: the Executive branch spends the budget that citizens defined and the Legislature makes laws based on the objectives. It can be the start of the process, but because of the republic's own flaws it does not fully solve the structural problems.\n• Open bids: an open bid is a public call in which cooperatives, universities, researchers and citizens present projects or laws that meet the objectives and compete for public funds. For example, a university can design a dam and supervise its construction, which is carried out by state workers or cooperatives. This way universities become engines of research and development.\n• Citizen committees: little by little, the republic's structure is replaced by committees of citizens who perform social service. This is the most radical part of the proposal. Whoever agrees with participatory taxes and budgets but not with the committees can stay with the first two paths.",
     "obj.s3.title": "3. Who does what",
-    "obj.s3.body": "Instead of a government there are administrations, because nobody is ruled. Each one is made up of:\n• Citizens: they choose the objectives, the budget and the taxes, and decide other issues, such as labor rights and limits on inequality. They can also veto decisions, ask for changes and ask for audits.\n• Administrators: an assembly chosen by lottery, divided into committees by topic. They do not make laws or carry out works. They collect funds, distribute them according to the scale of objectives, open bids, evaluate proposals and sign contracts on behalf of everyone.\n• Bidders: any citizen, cooperative, university or researcher who presents a project or a collective contract to achieve the objectives. People who are or have been in the administration cannot take part, nor can anyone convicted of corruption or fraud.\n• Auditors: another assembly chosen by lottery. They watch over administrators and bidders and can cancel projects.\n• Other committees: evaluators who study a topic in depth, treasurers who collect and deliver the resources, organizers of consultations and participatory processes, and judicial committees, whose juries are also chosen by lottery.\n• Permanent workers: they do the tasks that need continuity, such as maintaining dams and roads, following the winning projects and under the supervision of the auditors.",
+    "obj.s3.body": "Instead of a government there are administrations, because nobody is ruled. Each one is made up of:\n• Citizens: they distribute the budget, which is what defines the objectives, decide the taxes and other issues, such as labor rights and limits on inequality. They can also veto decisions, ask for changes and ask for audits.\n• Administrators: an assembly chosen by lottery, divided into committees by topic. They do not make laws or carry out works. They collect funds, distribute them according to the scale of objectives, open bids, evaluate proposals and sign contracts on behalf of everyone.\n• Bidders: any citizen, cooperative, university or researcher who presents a project or a collective contract to achieve the objectives. People who are or have been in the administration cannot take part, nor can anyone convicted of corruption or fraud.\n• Auditors: another assembly chosen by lottery. They watch over administrators and bidders and can cancel projects.\n• Other committees: evaluators who study a topic in depth, treasurers who collect and deliver the resources, organizers of consultations and participatory processes, and judicial committees, whose juries are also chosen by lottery.\n• Permanent workers: they do the tasks that need continuity, such as maintaining dams and roads, following the winning projects and under the supervision of the auditors.",
     "obj.s4.title": "4. Collective contracts and projects",
     "obj.s4.body": "Laws are replaced by collective contracts. And the actions that governments do today, such as building roads, running schools or providing security, become projects that win an open bid. This does not mean services become private: it means citizens and groups are the ones who manage and provide them.\n\nFor a project to be chosen:\n• Whoever proposes it: explains which objectives it serves, what will be done, who will do it, what each part costs, what measurable results it promises in the short, medium and long term, and what negative effects would force it to stop. They also state whether they will work with relatives or friends, and why.\n• The administrators: evaluate it by how well it fits the objectives, its efficiency (what results it gives for what it costs), its viability and the track record of whoever proposes it. They can hire experts to help, and the reasons for their decision are public.\n• The people most affected: can ask for changes before it is approved.\n• All citizens: can gather signatures to veto it. The number of signatures needed is also decided by averaging. If nobody vetoes it, the administrators sign it on behalf of everyone.\n\nOnce a project is running, the auditors review the results at least once a year:\n• Less than 70% of what was promised: the project is canceled.\n• Less than 50% of what was promised: whoever proposed it can also be investigated and taken to trial for fraud.\n• A whole administration below 70%: it is investigated and can be removed from office.\n• Other reasons for cancellation: misuse of funds, corruption, lack of transparency, undisclosed gains for the proposer or their family, or side effects that go against the objectives.",
     "obj.s5.title": "5. Social service and committees by lottery",
@@ -1287,7 +1435,7 @@ const FRONTEND_STRINGS = {
     "hdr.steps.cuotas": "Build your group|Define the categories|Propose the amount|Approve the result|Collect together!",
     "hdr.steps.presupuesto": "Build your group|Propose categories|Split the %|Approve the result|Spend together!",
     "hdr.steps.asociaciones": "Build your group|Decide the dues or fees|Split the budget|Propose projects|Decide together!",
-    "hdr.steps.municipios": "Taxes|Budget|Other questions",
+    "hdr.steps.municipios": "Taxes|Budget|Other questions|Objetivocracia",
     "hdr.steps.cooperativas": "Build your group|Choose a process|Decide together|Done!",
     "result.skippedByFacilitator": "The facilitator skipped this step.",
     "result.membersLabel": "Members",
@@ -3057,6 +3205,68 @@ function getOnboardingSlides(lang) {
   ];
 }
 
+// Tarjetas de explicación que se le ofrecen al facilitador al crear un
+// grupo: qué hace, cómo participan las personas, las opciones que tiene
+// y cómo se calculan los resultados, para cada sección.
+const SECEX_SECTIONS = ["promedio", "mayoria", "cuotas", "presupuesto", "responsables", "tabulador", "asociaciones"];
+const SECEX_ICONS = ["ti-user-star", "ti-users-group", "ti-adjustments-horizontal", "ti-calculator", "ti-list-check"];
+function getSectionExplainSlides(lang, section) {
+  return [1, 2, 3, 4, 5].map((n) => ({
+    icon: SECEX_ICONS[n - 1],
+    title: tf(`secex.title.${n}`, lang),
+    text: tf(`secex.${section}.${n}`, lang),
+  }));
+}
+
+// Tarjetas de bienvenida para quien llega invitado a un grupo de
+// preguntas (democracia por promedio o por mayoría): saludo con el
+// nombre del grupo y de quien invita, la lista de preguntas que
+// escribió el facilitador, y la explicación solo de las reglas que
+// eligió.
+function getQuestionsWelcomeSlides(lang, info) {
+  const group = (info && info.group) || "";
+  const admin = (info && info.admin) || "";
+  const questions = (info && info.questions) || [];
+  const promQs = questions.filter((q) => q.type === "promedio");
+  const mayQs = questions.filter((q) => q.type === "mayoria");
+  const ruleKeys = [];
+  mayQs.forEach((q) => {
+    const r = q.majorityRule || "simple";
+    if (!ruleKeys.includes(r)) ruleKeys.push(r);
+  });
+  const ruleLabel = {
+    simple: tf("nq.rule.simple", lang),
+    absoluta: tf("nq.rule.absoluta", lang),
+    calificada: tf("nq.rule.calificada", lang),
+    rankeado: tf("nq.rule.rankeado", lang),
+    segunda_vuelta: tf("nq.rule.segundaVuelta", lang),
+  };
+  const introText =
+    (admin ? tf("qwel.invited", lang, { admin }) : tf("qwel.invitedNoAdmin", lang)) +
+    "\n\n" + tf("qwel.decide", lang) + "\n" +
+    questions.map((q) => "• " + q.text).join("\n");
+  const howParts = [];
+  if (promQs.length) howParts.push(tf("qwel.prom", lang));
+  if (ruleKeys.length) {
+    howParts.push(tf(ruleKeys.length > 1 ? "qwel.ruleIntroN" : "qwel.ruleIntro1", lang));
+    ruleKeys.forEach((r) => {
+      howParts.push((ruleLabel[r] || r) + ":\n" + tf(`qwel.rule.${r}`, lang));
+    });
+  }
+  const partParts = [];
+  if (promQs.length) partParts.push(tf("qwel.promPart", lang));
+  if (mayQs.length) {
+    partParts.push(tf("qwel.mayPart", lang));
+    if (ruleKeys.includes("rankeado")) partParts.push(tf("qwel.mayPartRank", lang));
+    if (ruleKeys.includes("segunda_vuelta")) partParts.push(tf("qwel.mayPartSeg", lang));
+  }
+  return [
+    { icon: "ti-heart-handshake", title: tf("qwel.title", lang, { group }), text: introText },
+    { icon: "ti-scale", title: tf("qwel.how", lang), text: howParts.join("\n\n") },
+    { icon: "ti-send", title: tf("qwel.part", lang), text: partParts.join("\n\n") },
+  ];
+}
+
 // Tarjetas de bienvenida para quien recibe la invitación a un grupo de
 // Cuotas. Hay dos secuencias: la de la versión simplificada (3 tarjetas,
 // que no se pueden cerrar) y la de la versión democrática (7 tarjetas).
@@ -3863,7 +4073,7 @@ function MunOtraPreguntaTab({ title, unit, resultLabel, resultSuffix, defaultVal
   );
 }
 
-function MunFullResumen({ taxResults, presupuestoResult, otrasResults, onBack, onOpenObjetivocracia }) {
+function MunFullResumen({ taxResults, presupuestoResult, otrasResults, onBack }) {
   const lang = useLang();
   const [expandedSections, setExpandedSections] = useState({ ingresos: true, vivienda: false, productos: false, riqueza: false, presupuesto: false });
   const toggle = (key) => setExpandedSections({ ...expandedSections, [key]: !expandedSections[key] });
@@ -3943,10 +4153,6 @@ function MunFullResumen({ taxResults, presupuestoResult, otrasResults, onBack, o
       ))}
 
       <button onClick={onBack} className="dp-body w-full mt-3 text-xs py-2 rounded-full font-medium" style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}>{tf("mun.backToQuestions", lang)}</button>
-      <button onClick={onOpenObjetivocracia} className="dp-body w-full mt-3 text-xs py-2.5 rounded-full font-semibold flex items-center justify-center gap-1.5 text-white" style={{ background: BLUE }}>
-        <i className="ti ti-sparkles"></i> {tf("mun.openObjetivocracia", lang)}
-      </button>
-      <div className="dp-body text-[10.5px] text-center mt-1.5" style={{ color: INK + "77" }}>{tf("mun.trueSystemNote", lang)}</div>
     </div>
   );
 }
@@ -4007,7 +4213,7 @@ function ObjBody({ text }) {
 
 const OBJ_SECTION_NUMBERS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-function ObjetivocraciaInfo({ onBack }) {
+function ObjetivocraciaInfo({ onBack, embedded }) {
   const lang = useLang();
   const [open, setOpen] = useState({});
   useEffect(() => {
@@ -4019,14 +4225,14 @@ function ObjetivocraciaInfo({ onBack }) {
     OBJ_SECTION_NUMBERS.forEach((n) => { o[n] = v; });
     setOpen(o);
   };
-  const backBtn = (
+  const backBtn = embedded ? null : (
     <button onClick={onBack} className="dp-body w-full text-xs py-2 rounded-full font-medium" style={{ border: `1.5px solid ${BLUE}55`, color: BLUE, background: "#fff" }}>
       {tf("obj.backToResults", lang)}
     </button>
   );
   return (
-    <div className="px-4 py-6">
-      <div className="mb-3">{backBtn}</div>
+    <div className={embedded ? "" : "px-4 py-6"}>
+      {backBtn && <div className="mb-3">{backBtn}</div>}
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="mb-2"><OnbIcon name="ti-sparkles" /></div>
         <div className="dp-display text-xl font-bold" style={{ color: INK }}>{tf("obj.title", lang)}</div>
@@ -4062,7 +4268,7 @@ function ObjetivocraciaInfo({ onBack }) {
         </div>
         <div className="dp-body text-[10.5px] text-center mt-3" style={{ color: INK + "77" }}>{tf("obj.soonNote", lang)}</div>
       </div>
-      <div className="mt-3">{backBtn}</div>
+      {backBtn && <div className="mt-3">{backBtn}</div>}
     </div>
   );
 }
@@ -4095,7 +4301,6 @@ function MunIntroCard({ onContinue, onBack }) {
 function MunicipiosDemo({ onBack }) {
   const lang = useLang();
   const [showIntro, setShowIntro] = useState(true);
-  const [showObjetivocracia, setShowObjetivocracia] = useState(false);
   const [mainTab, setMainTab] = useState("impuestos");
   const [taxSubTab, setTaxSubTab] = useState("ingresos");
   const [otraSubTab, setOtraSubTab] = useState("salario");
@@ -4108,26 +4313,23 @@ function MunicipiosDemo({ onBack }) {
     return <MunIntroCard onContinue={() => setShowIntro(false)} onBack={onBack} />;
   }
 
-  if (showObjetivocracia) {
-    return <ObjetivocraciaInfo onBack={() => setShowObjetivocracia(false)} />;
-  }
-
   const mainTabs = [
     { key: "impuestos", label: tf("mun.tab.impuestos", lang) },
     { key: "presupuesto", label: tf("mun.tab.presupuesto", lang) },
     { key: "otras", label: tf("mun.tab.otras", lang) },
+    { key: "objetivocracia", label: tf("mun.tab.objetivocracia", lang) },
   ];
 
   return (
     <div className="px-4 py-6">
       <BackButton onClick={onBack} />
-      <div className="flex gap-1.5 mb-2.5">
+      <div className="flex gap-1 mb-2.5 flex-wrap">
         {mainTabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setMainTab(t.key)}
-            className="dp-body flex-1 text-[11px] font-semibold py-2 rounded-lg"
-            style={mainTab === t.key ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }}
+            className="dp-body flex-1 text-[10.5px] font-semibold py-2 px-1 rounded-lg"
+            style={{ minWidth: "88px", ...(mainTab === t.key ? { background: BLUE, color: "#fff" } : { background: BLUE_SOFT, color: INK }) }}
           >
             {t.label}
           </button>
@@ -4161,6 +4363,8 @@ function MunicipiosDemo({ onBack }) {
           ))}
         </div>
       )}
+      {mainTab === "objetivocracia" && <ObjetivocraciaInfo embedded />}
+      {mainTab !== "objetivocracia" && (
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         {mainTab === "impuestos" && taxSubTab === "ingresos" && (
           <MunIngresosTab onNext={() => setTaxSubTab("vivienda")} savedResult={taxResults.ingresos} onSubmitResult={(r) => setTaxResults({ ...taxResults, ingresos: r })} />
@@ -4178,7 +4382,7 @@ function MunicipiosDemo({ onBack }) {
           <MunPresupuestoTab onNext={() => setMainTab("otras")} savedResult={presupuestoResult} onSubmitResult={setPresupuestoResult} />
         )}
         {mainTab === "otras" && showOtrasSummary && (
-          <MunFullResumen taxResults={taxResults} presupuestoResult={presupuestoResult} otrasResults={otrasResults} onBack={() => setShowOtrasSummary(false)} onOpenObjetivocracia={() => setShowObjetivocracia(true)} />
+          <MunFullResumen taxResults={taxResults} presupuestoResult={presupuestoResult} otrasResults={otrasResults} onBack={() => setShowOtrasSummary(false)} />
         )}
         {mainTab === "otras" && !showOtrasSummary && otraSubTab === "salario" && (
           <MunOtraPreguntaTab
@@ -4236,6 +4440,7 @@ function MunicipiosDemo({ onBack }) {
           />
         )}
       </div>
+      )}
 
     </div>
   );
@@ -4313,64 +4518,36 @@ function HomeIconButton({ icon, title, subtitle, badge, onClick }) {
   );
 }
 
-function HomeScreen({ onChooseExplain, onChooseCustom, onChooseCuotas, onChoosePresupuesto, onChooseAsociaciones, onChooseResponsables, onChooseMunicipios, onChooseCooperativas, onChooseShare }) {
+function HomeScreen({ onChooseExplain, onChoosePromedio, onChooseMayoria, onChooseCuotas, onChoosePresupuesto, onChooseResponsables, onChooseTabulador, onChooseAsociaciones, onChooseMunicipios }) {
   const lang = useLang();
+  const items = [
+    { icon: "ti-calculator", key: "promedio", onClick: onChoosePromedio },
+    { icon: "ti-checkbox", key: "mayoria", onClick: onChooseMayoria },
+    { icon: "ti-coin", key: "cuotas", onClick: onChooseCuotas },
+    { icon: "ti-chart-pie", key: "presupuesto", onClick: onChoosePresupuesto },
+    { icon: "ti-dice-5", key: "responsables", onClick: onChooseResponsables },
+    { icon: "ti-cash", key: "tabulador", onClick: onChooseTabulador },
+    { icon: "ti-building-community", key: "asociaciones", onClick: onChooseAsociaciones },
+    { icon: "ti-building-bank", key: "municipios", onClick: onChooseMunicipios },
+  ];
   return (
     <div className="px-4 py-6 flex flex-col gap-3">
-      <HomeIconButton
-        icon="ti-book-2"
-        title={tf("home.explain.title", lang)}
-        subtitle={tf("home.explain.subtitle", lang)}
+      <button
         onClick={onChooseExplain}
-      />
-      <HomeIconButton
-        icon="ti-coin"
-        title={tf("home.cuotas.title", lang)}
-        subtitle={tf("home.cuotas.subtitle", lang)}
-        onClick={onChooseCuotas}
-      />
-      <HomeIconButton
-        icon="ti-chart-pie"
-        title={tf("home.presupuesto.title", lang)}
-        subtitle={tf("home.presupuesto.subtitle", lang)}
-        onClick={onChoosePresupuesto}
-      />
-      <HomeIconButton
-        icon="ti-dice-5"
-        title={tf("home.responsables.title", lang)}
-        subtitle={tf("home.responsables.subtitle", lang)}
-        onClick={onChooseResponsables}
-      />
-      <HomeIconButton
-        icon="ti-building-community"
-        title={tf("home.asociaciones.title", lang)}
-        subtitle={tf("home.asociaciones.subtitle", lang)}
-        onClick={onChooseAsociaciones}
-      />
-      <HomeIconButton
-        icon="ti-users-group"
-        title={tf("home.cooperativas.title", lang)}
-        subtitle={tf("home.cooperativas.subtitle", lang)}
-        onClick={onChooseCooperativas}
-      />
-      <HomeIconButton
-        icon="ti-pencil"
-        title={tf("home.custom.title", lang)}
-        subtitle={tf("home.custom.subtitle", lang)}
-        onClick={onChooseCustom}
-      />
-      <HomeIconButton
-        icon="ti-building-bank"
-        title={tf("home.municipios.title", lang)}
-        subtitle={tf("home.municipios.subtitle", lang)}
-        onClick={onChooseMunicipios}
-      />
-      <HomeIconButton
-        icon="ti-share"
-        title={tf("home.share.title", lang)}
-        subtitle={tf("home.share.subtitle", lang)}
-        onClick={onChooseShare}
-      />
+        className="dp-body self-start flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full"
+        style={{ background: WARM_WHITE, color: BLUE, border: `1.5px solid ${BLUE}55` }}
+      >
+        <i className="ti ti-book-2"></i>{tf("home.howBtn", lang)}
+      </button>
+      {items.map((it) => (
+        <HomeIconButton
+          key={it.key}
+          icon={it.icon}
+          title={tf(`home.${it.key}.title`, lang)}
+          subtitle={tf(`home.${it.key}.subtitle`, lang)}
+          onClick={it.onClick}
+        />
+      ))}
     </div>
   );
 }
@@ -4454,8 +4631,9 @@ function CustomEntryScreen({ onBack, onChooseCreate, onChooseAdminReturn, onChoo
   );
 }
 
-function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefillEmail, userId }) {
+function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefillEmail, userId, section }) {
   const currentLang = useLang();
+  const [askState, setAskState] = useState(section ? "ask" : "done");
   const [name, setName] = useState("");
   const [adminName, setAdminName] = useState(prefillName || "");
   const [adminEmail, setAdminEmail] = useState(prefillEmail || "");
@@ -4491,6 +4669,28 @@ function CreateGroupScreen({ backendUrl, onBack, onCreated, prefillName, prefill
   return (
     <div className="px-4 py-6">
       <BackButton onClick={onBack} />
+      {section && askState === "ask" && (
+        <div className="rounded-2xl p-4 mb-3" style={{ background: BLUE_SOFT, border: `1.5px solid ${BLUE}55` }}>
+          <div className="dp-body text-sm font-semibold mb-1" style={{ color: INK }}>{tf("secex.ask.title", currentLang)}</div>
+          <div className="dp-body text-[12px] mb-3" style={{ color: INK + "99", lineHeight: 1.5 }}>{tf("secex.ask.body", currentLang)}</div>
+          <div className="flex gap-2">
+            <button onClick={() => setAskState("open")} className="dp-body flex-1 text-xs py-2 rounded-full text-white font-medium" style={{ background: BLUE }}>
+              {tf("secex.ask.yes", currentLang)}
+            </button>
+            <button onClick={() => setAskState("done")} className="dp-body flex-1 text-xs py-2 rounded-full font-medium" style={{ background: "#fff", color: INK, border: `1.5px solid ${BLUE}55` }}>
+              {tf("secex.ask.no", currentLang)}
+            </button>
+          </div>
+        </div>
+      )}
+      {section && askState === "done" && (
+        <button onClick={() => setAskState("open")} className="dp-body text-[11px] font-medium mb-3 underline self-start" style={{ color: BLUE }}>
+          {tf("secex.ask.again", currentLang)}
+        </button>
+      )}
+      {section && askState === "open" && (
+        <OnboardingCarousel slides={getSectionExplainSlides(currentLang, section)} onClose={() => setAskState("done")} overlay={true} />
+      )}
       <div className="rounded-2xl p-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
         <div className="dp-body text-sm font-medium mb-3" style={{ color: INK }}>{tf("createGroup.title", currentLang)}</div>
         <div className="flex flex-col gap-2.5 mb-3">
@@ -4594,6 +4794,7 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
   const [showGroupWelcome, setShowGroupWelcome] = useState(false);
   const [groupTemplate, setGroupTemplate] = useState(null);
   const [inviterName, setInviterName] = useState("");
+  const [groupQuestions, setGroupQuestions] = useState([]);
   const [showFullExplanation, setShowFullExplanation] = useState(false);
 
   // Las bienvenidas nuevas de Cuotas ("cuotasSimple" y "cuotasDemocratic")
@@ -4601,7 +4802,8 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
   // grupo (no por tipo de proceso), porque mencionan el nombre del grupo
   // y de quien invitó.
   const isCuotasWelcome = groupTemplate === "cuotasSimple" || groupTemplate === "cuotasDemocratic";
-  const seenKey = isCuotasWelcome ? `org_onboarding_seen_${(initialCode || code || "").trim()}_${groupTemplate}` : `org_onboarding_seen_${groupTemplate}`;
+  const isQuestionsWelcome = groupTemplate === "preguntas";
+  const seenKey = isCuotasWelcome || isQuestionsWelcome ? `org_onboarding_seen_${(initialCode || code || "").trim()}_${groupTemplate}` : `org_onboarding_seen_${groupTemplate}`;
 
   useEffect(() => {
     if (!initialCode) return;
@@ -4612,7 +4814,20 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
         setInviterName((data.admin && data.admin.name) || "");
         const flows = data.flows || [];
         const active = flows.find((f) => f.status === "active") || flows[flows.length - 1];
-        if (!active) return;
+        if (!active) {
+          // Grupo de preguntas sueltas (democracia por promedio o por
+          // mayoría): bienvenida con el nombre del grupo, quién invita y
+          // las preguntas que escribió el facilitador.
+          const qs = Array.isArray(data.questions) ? data.questions.filter((q) => q.type === "promedio" || q.type === "mayoria") : [];
+          if (!qs.length) return;
+          setGroupQuestions(qs);
+          setGroupTemplate("preguntas");
+          const qKey = `org_onboarding_seen_${initialCode.trim()}_preguntas`;
+          let qSeen = false;
+          try { qSeen = Boolean(localStorage.getItem(qKey)); } catch (e) { /* sin almacenamiento: se muestra siempre */ }
+          if (!qSeen) setShowGroupWelcome(true);
+          return;
+        }
         const cuotasMode = active.template === "cuotas" && active.config ? active.config.cuotasMode : null;
         const template =
           cuotasMode === "simple"
@@ -4693,12 +4908,14 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
           slides={
             isCuotasWelcome
               ? getCuotasWelcomeSlides(lang, groupTemplate, { group: previewName, admin: inviterName })
+              : isQuestionsWelcome
+              ? getQuestionsWelcomeSlides(lang, { group: previewName, admin: inviterName, questions: groupQuestions })
               : ONBOARDING_GROUP_SLIDES[groupTemplate].map((i) => getOnboardingSlides(lang)[i])
           }
           onClose={closeGroupWelcome}
           overlay={true}
           locked={groupTemplate === "cuotasSimple"}
-          finalLabel={isCuotasWelcome ? tf("welcome.ready.yes", lang) : undefined}
+          finalLabel={isCuotasWelcome || isQuestionsWelcome ? tf("welcome.ready.yes", lang) : undefined}
           onLearnMore={isCuotasWelcome ? () => setShowFullExplanation(true) : undefined}
         />
       )}
@@ -4714,9 +4931,9 @@ function JoinGroupScreen({ backendUrl, initialCode, onBack, onJoined, prefillNam
   );
 }
 
-function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
+function NewQuestionForm({ backendUrl, groupCode, onAdded, fixedType }) {
   const lang = useLang();
-  const [type, setType] = useState("promedio");
+  const [type, setType] = useState(fixedType || "promedio");
   const [text, setText] = useState("");
   const [trimPercent, setTrimPercent] = useState("5");
   const [options, setOptions] = useState(["", ""]);
@@ -4808,8 +5025,9 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
     <div className="rounded-2xl p-4 mb-4" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
       <div className="dp-body text-xs font-medium mb-3" style={{ color: INK }}>{tf("nq.title", lang)}</div>
 
+      {!fixedType && (
       <div className="flex gap-1.5 mb-3">
-        {[{ key: "promedio", label: tf("onbEx.chip.promedio", lang) }, { key: "mayoria", label: tf("onbEx.chip.mayoria", lang) }, { key: "sorteo", label: tf("onbEx.chip.sorteo", lang) }].map((t) => (
+        {[{ key: "promedio", label: tf("onbEx.chip.promedio", lang) }, { key: "mayoria", label: tf("onbEx.chip.mayoria", lang) }].map((t) => (
           <button
             key={t.key}
             onClick={() => setType(t.key)}
@@ -4820,6 +5038,7 @@ function NewQuestionForm({ backendUrl, groupCode, onAdded }) {
           </button>
         ))}
       </div>
+      )}
 
       <textarea
         rows={2}
@@ -7844,7 +8063,7 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
   );
 }
 
-function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameChange, hideFlowStarters, cooperativasMode }) {
+function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameChange, hideFlowStarters, tabuladorMode, questionType, cooperativasMode }) {
   const csLang = useLang();
   const [group, setGroup] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -7863,6 +8082,8 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
   // pruebas anteriores no se cuela aquí ni confunde la pantalla.
   const relevantFlows = hideFlowStarters
     ? flows.filter((f) => f.template === "responsabilidades")
+    : tabuladorMode
+    ? flows.filter((f) => f.template === "tabuladorSueldos")
     : cooperativasMode
     ? flows.filter((f) => ["tabuladorSueldos", "presupuestoCooperativa", "responsabilidades"].includes(f.template))
     : flows;
@@ -8089,7 +8310,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
           />
         </React.Fragment>
       ) : (
-        isAdmin && !hideFlowStarters && !cooperativasMode && (
+        isAdmin && !hideFlowStarters && !tabuladorMode && !cooperativasMode && (
           <div className="flex flex-col gap-2 mb-4">
             <button
               onClick={async () => {
@@ -8225,9 +8446,9 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
         )
       )}
 
-      {!activeFlow && !cooperativasMode && (
+      {!activeFlow && !cooperativasMode && !tabuladorMode && (
         <React.Fragment>
-          {isAdmin && <NewQuestionForm backendUrl={backendUrl} groupCode={groupCode} onAdded={fetchGroup} />}
+          {isAdmin && <NewQuestionForm backendUrl={backendUrl} groupCode={groupCode} onAdded={fetchGroup} fixedType={questionType} />}
 
           {group.questions.length === 0 && (
             <div className="dp-body text-xs text-center py-4" style={{ color: INK + "77" }}>
@@ -8402,7 +8623,7 @@ function LoginScreen({ onBack }) {
   );
 }
 
-const STEP_CHAIN_KEYS = ["responsables", "cuotas", "presupuesto", "asociaciones", "municipios", "cooperativas"];
+const STEP_CHAIN_KEYS = ["promedio", "mayoria", "tabulador", "responsables", "cuotas", "presupuesto", "asociaciones", "municipios", "cooperativas"];
 
 function DemocraciaPorPromedioConectada() {
   const [backendUrl, setBackendUrl] = useState("https://democracia-por-promedio.onrender.com");
@@ -8573,9 +8794,19 @@ function DemocraciaPorPromedioConectada() {
               setSelectedOption("explain");
               setView("explain");
             }}
-            onChooseCustom={() => {
-              setEntryPurpose(null);
-              setSelectedOption("custom");
+            onChoosePromedio={() => {
+              setEntryPurpose("promedio");
+              setSelectedOption("promedio");
+              setView("custom");
+            }}
+            onChooseMayoria={() => {
+              setEntryPurpose("mayoria");
+              setSelectedOption("mayoria");
+              setView("custom");
+            }}
+            onChooseTabulador={() => {
+              setEntryPurpose("tabulador");
+              setSelectedOption("tabulador");
               setView("custom");
             }}
             onChooseCuotas={() => {
@@ -8602,15 +8833,8 @@ function DemocraciaPorPromedioConectada() {
               setSelectedOption("municipios");
               setView("municipios");
             }}
-            onChooseCooperativas={() => {
-              setEntryPurpose(null);
-              setSelectedOption("cooperativas");
-              setView("custom");
-            }}
-            onChooseShare={() => setView("share")}
           />
         )}
-        {view === "share" && <SharePromoScreen onBack={() => setView("home")} />}
         {view === "municipios" && (
           <MunicipiosDemo
             onBack={() => {
@@ -8641,6 +8865,7 @@ function DemocraciaPorPromedioConectada() {
         {view === "create" && (
           <CreateGroupScreen
             backendUrl={backendUrl}
+            section={SECEX_SECTIONS.includes(selectedOption) ? selectedOption : null}
             onBack={() => setView("custom")}
             prefillName={sessionName}
             prefillEmail={sessionEmail}
@@ -8655,6 +8880,12 @@ function DemocraciaPorPromedioConectada() {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({ template: entryPurpose, memberId }),
+                });
+              } else if (entryPurpose === "tabulador") {
+                await fetch(`${backendUrl}/api/groups/${code}/flows`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ template: "tabuladorSueldos", memberId }),
                 });
               } else if (entryPurpose === "asociaciones") {
                 await fetch(`${backendUrl}/api/groups/${code}/flows`, {
@@ -8710,6 +8941,8 @@ function DemocraciaPorPromedioConectada() {
             memberId={memberId}
             onGroupNameChange={setConnectedGroupName}
             hideFlowStarters={selectedOption === "responsables"}
+            tabuladorMode={selectedOption === "tabulador"}
+            questionType={selectedOption === "promedio" || selectedOption === "mayoria" ? selectedOption : null}
             cooperativasMode={selectedOption === "cooperativas"}
             onExit={() => {
               setGroupCode("");
