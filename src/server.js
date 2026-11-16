@@ -24,10 +24,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Idioma de quien hace la petición. La app manda ?lang=es o ?lang=en en
-// cada llamada; si falta, se usa el idioma con el que se creó el grupo.
+// Idiomas que la app puede pedir. Si llega otro, se ignora y se usa el
+// idioma del grupo (o español). Los textos que falten en un idioma se
+// muestran en español (ver strings.js).
+const SUPPORTED_LANGS = ["es", "en", "fr", "it", "de", "pt", "ar", "bn", "sq", "sr"];
+
+// Idioma de quien hace la petición. La app manda ?lang=xx en cada
+// llamada; si falta, se usa el idioma con el que se creó el grupo.
 function requestLang(req) {
-  return req.query && (req.query.lang === "en" || req.query.lang === "es") ? req.query.lang : null;
+  return req.query && SUPPORTED_LANGS.includes(req.query.lang) ? req.query.lang : null;
 }
 function langOf(req, group) {
   return requestLang(req) || (group && group.lang) || "es";
@@ -103,7 +108,7 @@ app.post("/api/groups", async (req, res) => {
   db.groups[code] = {
     code,
     name,
-    lang: lang === "en" ? "en" : "es",
+    lang: SUPPORTED_LANGS.includes(lang) ? lang : "es",
     admin: { id: adminId, name: adminName, email: adminEmail || null },
     requireApproval: requireApproval !== false,
     secretResponses: secretResponses !== false,
