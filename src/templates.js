@@ -527,7 +527,9 @@ const tabuladorSueldos = {
     return {
       key: "limiteVote",
       type: "mayoria",
-      text: t("tabulador.limiteVote", flowConfig.lang),
+      text: flowConfig.groupName
+        ? t("tabulador.limiteVote.named", flowConfig.lang, { group: flowConfig.groupName })
+        : t("tabulador.limiteVote", flowConfig.lang),
       config: { options: ["Sí", "No"], majorityRule: "absoluta" },
     };
   },

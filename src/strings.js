@@ -43,7 +43,7 @@ const STRINGS = {
 
     // Presupuesto participativo
     "presupuesto.gastosFijos.chained": "Desglosa los gastos fijos del presupuesto (si no hay gastos fijos, deja la lista vacía y continúa).",
-    "presupuesto.gastosFijos.standalone": "Desglosa los gastos fijos del presupuesto (si no hay, deja la lista vacía). Ingresar el presupuesto disponible es opcional. Si lo pones, se usa para calcular a cuánto equivale cada % más adelante.",
+    "presupuesto.gastosFijos.standalone": "Desglosa los gastos fijos del presupuesto (si no hay, deja la lista vacía).",
     "presupuesto.categories": "Propón categorías de gasto para el presupuesto (una por recuadro).",
     "presupuesto.fusionarCategorias": "¿Hay rubros propuestos que en realidad son el mismo? Márquenlos juntos si creen que sí.",
     "presupuesto.selection": "Elige las categorías que te importan (puedes elegir varias). Se descartan las que no lleguen al {threshold}% de apoyo.",
@@ -67,6 +67,7 @@ const STRINGS = {
 
     // Cooperativas: Tabulador de sueldos
     "tabulador.limiteVote": "¿Quieres que exista un límite de desigualdad entre la persona que más gana y la que menos gana en nuestra cooperativa?",
+    "tabulador.limiteVote.named": "¿Quieres que exista un límite de desigualdad entre la persona que más gana y la que menos gana en {group}?",
     "tabulador.vecesPromedio": "¿Cuántas veces más piensas que debe ganar la persona que más gana en nuestra cooperativa, comparada con la persona que menos gana? (considerando que trabajan las mismas horas)",
     "tabulador.configurarPuestos": "Define los puestos de la cooperativa.",
     "tabulador.aprobarPuestos": "¿Aprueban esta lista de puestos? {names}",
@@ -110,7 +111,7 @@ const STRINGS = {
 
     // Participatory budget
     "presupuesto.gastosFijos.chained": "Break down the budget's fixed expenses (if there are none, leave the list empty and continue).",
-    "presupuesto.gastosFijos.standalone": "Break down the budget's fixed expenses (if there are none, leave the list empty). Entering the available budget is optional. If you do, it's used to calculate what each % is worth further along.",
+    "presupuesto.gastosFijos.standalone": "Break down the budget's fixed expenses (if there are none, leave the list empty).",
     "presupuesto.categories": "Propose spending categories for the budget (one per box).",
     "presupuesto.fusionarCategorias": "Are there any proposed categories that are actually the same? Mark them together if you think so.",
     "presupuesto.selection": "Choose the categories that matter to you (you can pick several). Categories that don't reach {threshold}% support are discarded.",
@@ -134,6 +135,7 @@ const STRINGS = {
 
     // Cooperatives: Wage tabulator
     "tabulador.limiteVote": "Do you want there to be a limit on the inequality between the highest and lowest earner in our cooperative?",
+    "tabulador.limiteVote.named": "Do you want there to be a limit on the inequality between the highest and lowest earner in {group}?",
     "tabulador.vecesPromedio": "How many times more do you think the highest earner in our cooperative should make, compared to the lowest earner? (assuming they work the same hours)",
     "tabulador.configurarPuestos": "Define the cooperative's roles.",
     "tabulador.aprobarPuestos": "Do you approve this list of roles? {names}",

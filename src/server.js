@@ -807,7 +807,7 @@ function finishFlowIfLicitacionDone(group, flow) {
   flow.status = "finished";
   if (flow.chainNext && TEMPLATES[flow.chainNext]) {
     const nextTemplate = flow.chainNext;
-    const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}), lang: group.lang || "es" };
+    const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}), lang: group.lang || "es", groupName: group.name };
     group.flows.push({
       id: generateId(),
       template: nextTemplate,
@@ -830,7 +830,7 @@ function finishFlowIfLicitacionDone(group, flow) {
 // encadenado con ese cálculo, se usa el "totalBudget" que el admin haya
 // escrito a mano (comportamiento normal de Presupuesto suelto).
 function getEffectiveFlowConfig(group, flow) {
-  const config = { ...flow.config, lang: group.lang || "es" };
+  const config = { ...flow.config, lang: group.lang || "es", groupName: group.name };
   if (flow.template === "presupuesto" && flow.chainedFromFlowId) {
     const cuotasFlow = (group.flows || []).find((f) => f.id === flow.chainedFromFlowId);
     if (cuotasFlow) {
@@ -941,6 +941,7 @@ app.post("/api/groups/:code/flows", async (req, res) => {
     ...(TEMPLATES[template].defaultConfig || {}),
     ...(template === "responsabilidades" ? { skipOpenVote: true } : {}),
     lang: group.lang || "es",
+    groupName: group.name,
   };
 
   const flow = {
@@ -1383,7 +1384,7 @@ function closeCurrentStage(group, flow) {
 
     if (flow.chainNext && TEMPLATES[flow.chainNext]) {
       const nextTemplate = flow.chainNext;
-      const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}), lang: group.lang || "es" };
+      const nextConfig = { ...(TEMPLATES[nextTemplate].defaultConfig || {}), lang: group.lang || "es", groupName: group.name };
       // Si es Cuotas → Presupuesto (Asociaciones), el presupuesto ya
       // nace sabiendo cuánto se recaudó — así su primera etapa
       // (gastos fijos) no vuelve a pedir "ingresos". Misma lógica que

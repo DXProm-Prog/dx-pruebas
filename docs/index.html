@@ -250,6 +250,7 @@ const FRONTEND_STRINGS = {
     "home.title": "Organicen y decidan",
     "home.tagline": "¿Cuánto tenemos que pagar? ¿En qué usamos los recursos? ¿Quién tiene qué responsabilidades? Decidan juntos, con procesos horizontales, rápidos y efectivos, sin darle poder a nadie y sin dividir al grupo.",
     "flow.availableBudget": "Presupuesto disponible (opcional)",
+    "flow.availableBudget.help": "Es opcional. Si lo pones, se usa para calcular a cuánto equivale cada porcentaje más adelante.",
     "flow.availableBudget.label": "Presupuesto disponible",
     "flow.send": "Enviar",
     "flow.sending": "Enviando…",
@@ -1011,6 +1012,7 @@ const FRONTEND_STRINGS = {
     "home.title": "Organize and Decide",
     "home.tagline": "How much do we need to pay? What should we spend our resources on? Who's responsible for what? Decide together, with horizontal, fast, and effective processes, without giving power to anyone or dividing the group.",
     "flow.availableBudget": "Available budget (optional)",
+    "flow.availableBudget.help": "It is optional. If you enter it, it is used to calculate how much each percentage equals later on.",
     "flow.availableBudget.label": "Available budget",
     "flow.send": "Send",
     "flow.sending": "Sending…",
@@ -7770,6 +7772,20 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
         </div>
       )}
 
+      {stage && stage.type === "gastos_fijos" && isAdmin && !stage.config.ingresosFromCuotas && (
+        <div className="rounded-xl p-3.5 mb-3" style={{ background: BLUE_SOFT }}>
+          <div className="dp-body text-[14px] mb-1" style={{ color: INK }}>{tf("flow.availableBudget", uiLang)}</div>
+          <div className="dp-body text-[10.5px] mb-2.5" style={{ color: INK + "88" }}>{tf("flow.availableBudget.help", uiLang)}</div>
+          <input
+            type="number"
+            value={ingresosDraft}
+            onChange={(e) => setIngresosDraft(e.target.value)}
+            placeholder="$"
+            className="dp-mono rounded-lg px-2.5 py-1.5 text-sm outline-none"
+            style={{ width: "140px", background: "#fff", color: GREEN, fontWeight: 700, border: `1px solid ${BLUE}33` }}
+          />
+        </div>
+      )}
       {stage && stage.type === "gastos_fijos" && (
         <div className="rounded-xl p-3.5" style={{ background: BLUE_SOFT }}>
           <div className="dp-body text-[14px] mb-2" style={{ color: INK }}>{stage.text}</div>
@@ -7780,19 +7796,6 @@ function FlowRunner({ backendUrl, groupCode, memberId, flow, allFlows, isAdmin, 
           )}
           {isAdmin ? (
             <React.Fragment>
-              {!stage.config.ingresosFromCuotas && (
-                <div className="flex items-center gap-2 mb-2.5">
-                  <span className="dp-body text-xs flex-1" style={{ color: INK }}>{tf("flow.availableBudget", uiLang)}</span>
-                  <input
-                    type="number"
-                    value={ingresosDraft}
-                    onChange={(e) => setIngresosDraft(e.target.value)}
-                    placeholder="$"
-                    className="dp-mono rounded-lg px-2.5 py-1.5 text-sm outline-none"
-                    style={{ width: "110px", background: "#fff", color: GREEN, fontWeight: 700, border: `1px solid ${BLUE}33` }}
-                  />
-                </div>
-              )}
               <div className="dp-body text-[11px] font-medium mb-1.5" style={{ color: INK }}>{tf("gastosFijos.label", uiLang)}</div>
               {gastosDraft.map((g, i) => (
                 <div key={i} className="flex items-center gap-2 mb-1.5">
@@ -8310,7 +8313,7 @@ function ConnectedScreen({ backendUrl, groupCode, memberId, onExit, onGroupNameC
           />
         </React.Fragment>
       ) : (
-        isAdmin && !hideFlowStarters && !tabuladorMode && !cooperativasMode && (
+        isAdmin && !hideFlowStarters && !tabuladorMode && !questionType && !cooperativasMode && (
           <div className="flex flex-col gap-2 mb-4">
             <button
               onClick={async () => {
