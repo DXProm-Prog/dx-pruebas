@@ -30,6 +30,60 @@
     box-shadow: 0 0 0 3px rgba(58, 110, 165, 0.22);
   }
   input::placeholder, textarea::placeholder { color: rgba(20, 33, 61, 0.45); }
+
+  /* ---- Versión de escritorio ----
+     La misma página detecta el ancho de la pantalla: en teléfonos se ve
+     la columna de siempre y en computadoras el marco se ensancha, el
+     inicio se vuelve una cuadrícula de dos columnas y cada pantalla de
+     contenido se centra en una columna cómoda de leer. */
+  @media (min-width: 900px) {
+    .app-frame {
+      max-width: 1000px !important;
+      border-radius: 24px !important;
+    }
+    .app-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      column-gap: 24px;
+      padding: 28px 40px 22px 40px !important;
+    }
+    .app-header > div:first-child {
+      grid-column: 2;
+      grid-row: 1;
+      margin-bottom: 0 !important;
+      justify-self: end;
+    }
+    .app-header > h1 {
+      grid-column: 1;
+      grid-row: 1;
+      font-size: 1.8rem !important;
+    }
+    .app-header > div:last-child {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      max-width: 760px;
+    }
+    .home-body {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px !important;
+      padding: 28px 40px 36px 40px !important;
+      align-items: stretch;
+    }
+    .home-body > button:first-child {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+    /* Las demás pantallas se centran en una columna legible */
+    .app-frame > div:not(.app-header):not(.home-body),
+    .app-frame > section {
+      max-width: 700px;
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+    }
+  }
 </style>
 </head>
 <body>
@@ -4585,7 +4639,7 @@ function HomeScreen({ onChooseExplain, onChoosePromedio, onChooseMayoria, onChoo
     { icon: "ti-building-bank", key: "municipios", onClick: onChooseMunicipios },
   ];
   return (
-    <div className="px-4 py-6 flex flex-col gap-3">
+    <div className="home-body px-4 py-6 flex flex-col gap-3">
       <button
         onClick={onChooseExplain}
         className="dp-body self-start flex items-center gap-1.5 text-xs font-semibold px-3.5 py-2 rounded-full"
@@ -8773,8 +8827,8 @@ function DemocraciaPorPromedioConectada() {
   return (
     <LangContext.Provider value={lang}>
     <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
-      <div className="w-full max-w-[420px] rounded-[32px] overflow-hidden shadow-xl" style={{ background: PAGE_BG, border: `1px solid ${BLUE}33` }}>
-        <div className="px-6 pt-7 pb-5" style={{ background: WARM_WHITE }}>
+      <div className="app-frame w-full max-w-[420px] rounded-[32px] overflow-hidden shadow-xl" style={{ background: PAGE_BG, border: `1px solid ${BLUE}33` }}>
+        <div className="app-header px-6 pt-7 pb-5" style={{ background: WARM_WHITE }}>
           <div className="flex items-center justify-between mb-2.5">
             <div className="flex items-center gap-2">
               <LangToggle lang={lang} onChange={changeLang} />
