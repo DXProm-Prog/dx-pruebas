@@ -625,13 +625,23 @@ const STRINGS = {
   },
 };
 
+// Textos cambiados desde el panel de edición (/?textos). Tienen
+// prioridad sobre los de arriba. Se cargan de Supabase al arrancar y
+// cada vez que alguien guarda un cambio (ver textOverrides en server.js).
+let OVERRIDES = {};
+function setOverrides(obj) {
+  OVERRIDES = obj || {};
+}
+
 function t(key, lang, vars = {}) {
   const dict = STRINGS[lang] || STRINGS.es;
-  let str = dict[key] || STRINGS.es[key] || key;
+  const over = OVERRIDES[lang] || {};
+  const overEs = OVERRIDES.es || {};
+  let str = over[key] || dict[key] || overEs[key] || STRINGS.es[key] || key;
   Object.entries(vars).forEach(([k, v]) => {
     str = str.replace(new RegExp(`\\{${k}\\}`, "g"), () => String(v));
   });
   return str;
 }
 
-module.exports = { t, STRINGS };
+module.exports = { t, STRINGS, setOverrides };

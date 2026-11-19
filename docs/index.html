@@ -210,7 +210,8 @@ const nativeFetch = window.fetch.bind(window);
 window.fetch = function (input, init) {
   try {
     if (typeof input === "string" && input.includes("/api/") && !/[?&]lang=/.test(input)) {
-      const current = localStorage.getItem("org_lang") === "en" ? "en" : "es";
+      const savedLang = localStorage.getItem("org_lang");
+      const current = ["es", "en", "fr", "it", "de", "pt", "ar", "bn", "sq", "sr"].includes(savedLang) ? savedLang : "es";
       input += (input.includes("?") ? "&" : "?") + "lang=" + current;
     }
   } catch (e) {}
@@ -1749,6 +1750,20 @@ const FRONTEND_STRINGS = {
   },
 };
 if (window.EXTRA_LANGS) { Object.assign(FRONTEND_STRINGS, window.EXTRA_LANGS); }
+
+// Textos cambiados desde el panel de edición (abrir la app con ?textos).
+// ORIGINAL_STRINGS guarda los textos tal como vienen en este archivo; los
+// cambios llegan del servidor y se guardan también en este navegador para
+// que se vean desde el primer momento, aunque el servidor esté dormido.
+const ORIGINAL_STRINGS = {};
+Object.keys(FRONTEND_STRINGS).forEach((l) => { ORIGINAL_STRINGS[l] = { ...FRONTEND_STRINGS[l] }; });
+function applyTextOverrides(overrides) {
+  Object.keys(ORIGINAL_STRINGS).forEach((l) => {
+    FRONTEND_STRINGS[l] = { ...ORIGINAL_STRINGS[l], ...((overrides && overrides[l]) || {}) };
+  });
+}
+try { applyTextOverrides(JSON.parse(localStorage.getItem("org_text_overrides") || "{}")); } catch (e) {}
+const DEFAULT_BACKEND = "https://democracia-por-promedio.onrender.com";
 
 function tf(key, lang, vars = {}) {
   const dict = FRONTEND_STRINGS[lang] || FRONTEND_STRINGS.es;
@@ -8735,7 +8750,8 @@ function LoginScreen({ onBack }) {
 const STEP_CHAIN_KEYS = ["promedio", "mayoria", "tabulador", "responsables", "cuotas", "presupuesto", "asociaciones", "municipios", "cooperativas"];
 
 function DemocraciaPorPromedioConectada() {
-  const [backendUrl, setBackendUrl] = useState("https://democracia-por-promedio.onrender.com");
+  const [backendUrl, setBackendUrl] = useState(DEFAULT_BACKEND);
+  const [, setTextsRev] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
   const [view, setView] = useState("home"); // home | login | myGroups | custom | explain | create | groupCreated | adminReturn | join | connected
   const [groupCode, setGroupCode] = useState("");
@@ -8761,6 +8777,22 @@ function DemocraciaPorPromedioConectada() {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   }, [lang]);
+
+  // Trae los textos cambiados en el panel de edición y vuelve a pintar.
+  useEffect(() => {
+    fetch(`${backendUrl}/api/texts`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data || !data.overrides) return;
+        const json = JSON.stringify(data.overrides);
+        if (json === localStorage.getItem("org_text_overrides")) return;
+        localStorage.setItem("org_text_overrides", json);
+        applyTextOverrides(data.overrides);
+        setTextsRev((n) => n + 1);
+        document.title = tf("home.title", lang);
+      })
+      .catch(() => {});
+  }, [backendUrl]);
 
   const closeWelcome = () => {
     localStorage.setItem("org_onboarding_seen", "true");
@@ -9096,7 +9128,280 @@ function DemocraciaPorPromedioConectada() {
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<DemocraciaPorPromedioConectada />);
+// ─── Panel de edición de textos ───────────────────────────────────────
+// Se abre con ?textos al final de la dirección de la app. Pide la
+// contraseña ADMIN_PASSWORD (configurada en Render) y permite cambiar
+// cualquier texto en cualquier idioma. No cambia ninguna función: solo
+// las palabras que se muestran. Este panel está solo en español.
+const TEXT_SQL = `create table if not exists text_overrides (
+  scope text not null,
+  lang text not null,
+  key text not null,
+  value text not null,
+  updated_at timestamptz default now(),
+  primary key (scope, lang, key)
+);
+alter table text_overrides enable row level security;`;
+
+function textPlaceholders(str) {
+  return ((str || "").match(/\{[a-zA-Z0-9_]+\}/g) || []).slice().sort();
+}
+
+function checkTextValue(base, value) {
+  const want = textPlaceholders(base);
+  const have = textPlaceholders(value);
+  const missing = want.filter((p) => !have.includes(p));
+  const extra = have.filter((p) => !want.includes(p));
+  if (missing.length) return `Falta ${[...new Set(missing)].join(", ")}. Esa parte se rellena sola con datos del grupo; déjala tal cual.`;
+  if (extra.length) return `${[...new Set(extra)].join(", ")} no existe en este texto. Quítalo o escríbelo sin llaves.`;
+  const basePipes = (base || "").split("|").length;
+  if (basePipes > 1 && value.split("|").length !== basePipes) {
+    return `Este texto es una lista separada por el símbolo | y debe tener ${basePipes} partes (ahora tiene ${value.split("|").length}).`;
+  }
+  return "";
+}
+
+function TextRow({ itemKey, scope, lang, original, esText, current, isChanged, onSave }) {
+  const [value, setValue] = useState(current);
+  const [status, setStatus] = useState("");
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setValue(current); setStatus(""); }, [current, lang, scope]);
+
+  const base = original !== undefined ? original : esText;
+  const problem = value.trim() ? checkTextValue(esText, value) : "";
+  const dirty = value !== current;
+
+  const save = async (newValue) => {
+    setBusy(true);
+    setStatus("");
+    const err = await onSave(scope, lang, itemKey, newValue);
+    setBusy(false);
+    setStatus(err ? "Error: " + err : newValue === "" ? "Regresó al texto original." : "Guardado.");
+  };
+
+  return (
+    <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: WARM_WHITE, border: `1px solid ${isChanged ? GREEN : BLUE + "22"}` }}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-mono" style={{ color: INK + "88" }}>{itemKey}</span>
+        {isChanged && <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: GREEN + "22", color: GREEN }}>modificado</span>}
+      </div>
+      {lang !== "es" && (
+        <div className="text-xs" style={{ color: INK + "99" }}>
+          <b>Español:</b> {esText}
+        </div>
+      )}
+      {original === undefined && lang !== "es" && (
+        <div className="text-xs" style={{ color: CORAL }}>Sin traducción en este idioma: hoy se muestra en español.</div>
+      )}
+      <textarea
+        dir="auto"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        rows={Math.min(8, Math.max(2, Math.ceil((value || "").length / 60)))}
+        className="w-full rounded-xl px-3 py-2 text-sm"
+        style={{ border: `1px solid ${BLUE}44`, color: INK, background: PAGE_BG }}
+      />
+      {problem && <div className="text-xs" style={{ color: CORAL }}>{problem}</div>}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          disabled={!dirty || busy || !!problem || !value.trim()}
+          onClick={() => save(value)}
+          className="px-4 py-2 rounded-xl text-sm font-semibold disabled:opacity-40"
+          style={{ background: BLUE, color: "#fff" }}
+        >
+          {busy ? "Guardando..." : "Guardar"}
+        </button>
+        {dirty && (
+          <button onClick={() => setValue(current)} className="px-3 py-2 rounded-xl text-sm" style={{ color: INK }}>
+            Deshacer
+          </button>
+        )}
+        {isChanged && (
+          <button disabled={busy} onClick={() => save("")} className="px-3 py-2 rounded-xl text-sm" style={{ color: CORAL }}>
+            Restaurar original
+          </button>
+        )}
+        {status && <span className="text-xs" style={{ color: status.startsWith("Error") ? CORAL : GREEN }}>{status}</span>}
+      </div>
+      {isChanged && base !== undefined && (
+        <details className="text-xs" style={{ color: INK + "88" }}>
+          <summary className="cursor-pointer">Ver texto original</summary>
+          <div className="mt-1">{base}</div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function TextAdmin() {
+  const backendUrl = DEFAULT_BACKEND;
+  const [password, setPassword] = useState(() => sessionStorage.getItem("org_text_pw") || "");
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [serverStrings, setServerStrings] = useState({});
+  const [overrides, setOverrides] = useState({ app: {}, server: {} });
+  const [tableError, setTableError] = useState(null);
+  const [lang, setLang] = useState("es");
+  const [scope, setScope] = useState("app");
+  const [query, setQuery] = useState("");
+  const [onlyChanged, setOnlyChanged] = useState(false);
+  const [limit, setLimit] = useState(40);
+
+  useEffect(() => {
+    document.title = "Editar textos";
+    document.documentElement.lang = "es";
+    document.documentElement.dir = "ltr";
+  }, []);
+
+  const headers = (pw) => ({ "Content-Type": "application/json", "x-admin-password": pw });
+
+  const login = async (pw) => {
+    setLoading(true);
+    setError("");
+    try {
+      const r = await fetch(`${backendUrl}/api/admin/texts`, { headers: headers(pw) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || "No se pudo entrar.");
+      sessionStorage.setItem("org_text_pw", pw);
+      setServerStrings(data.serverStrings || {});
+      setOverrides(data.overrides || { app: {}, server: {} });
+      setTableError(data.tableError || null);
+      setLoggedIn(true);
+    } catch (e) {
+      setError(e.message === "Failed to fetch" ? "No se pudo conectar con el servidor. Si estaba dormido, espera un minuto e intenta de nuevo." : e.message);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { if (password) login(password); }, []);
+
+  const saveText = async (sc, lg, key, value) => {
+    try {
+      const r = await fetch(`${backendUrl}/api/admin/texts`, { method: "PUT", headers: headers(password), body: JSON.stringify({ scope: sc, lang: lg, key, value }) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) return data.error || "No se pudo guardar.";
+      setOverrides(data.overrides);
+      localStorage.setItem("org_text_overrides", JSON.stringify(data.overrides.app || {}));
+      applyTextOverrides(data.overrides.app || {});
+      return "";
+    } catch (e) {
+      return "No se pudo conectar con el servidor.";
+    }
+  };
+
+  const shell = (children) => (
+    <div className="min-h-screen flex justify-center py-8 px-3" style={{ background: PAGE_BG }}>
+      <div className="w-full max-w-[760px] flex flex-col gap-4">{children}</div>
+    </div>
+  );
+
+  if (!loggedIn) {
+    return shell(
+      <div className="rounded-3xl p-6 flex flex-col gap-3 mx-auto w-full max-w-[420px]" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <h1 className="text-xl font-bold" style={{ color: INK }}>Editar textos de la app</h1>
+        <p className="text-sm" style={{ color: INK + "aa" }}>Escribe la contraseña de edición (la que pusiste en Render como ADMIN_PASSWORD).</p>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && password) login(password); }}
+          className="rounded-xl px-3 py-2"
+          style={{ border: `1px solid ${BLUE}44` }}
+          placeholder="Contraseña"
+        />
+        <button disabled={!password || loading} onClick={() => login(password)} className="px-4 py-3 rounded-xl font-semibold disabled:opacity-40" style={{ background: BLUE, color: "#fff" }}>
+          {loading ? "Entrando (si el servidor dormía, puede tardar un minuto)..." : "Entrar"}
+        </button>
+        {error && <div className="text-sm" style={{ color: CORAL }}>{error}</div>}
+      </div>
+    );
+  }
+
+  const appKeys = Object.keys(ORIGINAL_STRINGS.es || {});
+  const serverKeys = Object.keys(serverStrings.es || {});
+  const keys = scope === "app" ? appKeys : serverKeys;
+  const originals = scope === "app" ? ORIGINAL_STRINGS : serverStrings;
+  const scopeOver = overrides[scope] || {};
+  const langOver = scopeOver[lang] || {};
+  const q = query.trim().toLowerCase();
+
+  const filtered = keys.filter((k) => {
+    if (onlyChanged && !(k in langOver)) return false;
+    if (!q) return true;
+    const esT = (originals.es || {})[k] || "";
+    const cur = langOver[k] !== undefined ? langOver[k] : ((originals[lang] || {})[k] || "");
+    return k.toLowerCase().includes(q) || esT.toLowerCase().includes(q) || cur.toLowerCase().includes(q);
+  });
+  const changedCount = Object.keys(langOver).length;
+  const totalChanged = Object.values(scopeOver).reduce((n, o) => n + Object.keys(o || {}).length, 0);
+
+  return shell(
+    <>
+      <div className="rounded-3xl p-5 flex flex-col gap-3" style={{ background: WARM_WHITE, border: `1px solid ${BLUE}33` }}>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h1 className="text-xl font-bold" style={{ color: INK }}>Editar textos de la app</h1>
+          <a href="./" target="_blank" rel="noopener" className="text-sm font-semibold" style={{ color: BLUE }}>Abrir la app ↗</a>
+        </div>
+        <p className="text-xs" style={{ color: INK + "99" }}>
+          Los cambios se guardan al instante para todos. Las partes entre llaves, como {"{group}"}, se rellenan solas con datos reales: déjalas igual. Para deshacer un cambio usa "Restaurar original".
+        </p>
+        {tableError && (
+          <div className="rounded-xl p-3 text-xs flex flex-col gap-2" style={{ background: CORAL + "15", color: INK }}>
+            <b style={{ color: CORAL }}>Falta crear la tabla de textos en Supabase.</b>
+            <span>Ve a Supabase → SQL Editor → New query, pega esto y da Run. Luego recarga esta página.</span>
+            <pre className="whitespace-pre-wrap font-mono text-[11px] p-2 rounded-lg" style={{ background: WARM_WHITE }}>{TEXT_SQL}</pre>
+          </div>
+        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label className="text-xs flex flex-col gap-1" style={{ color: INK + "aa" }}>
+            Idioma
+            <select value={lang} onChange={(e) => { setLang(e.target.value); setLimit(40); }} className="rounded-xl px-3 py-2 text-sm" style={{ border: `1px solid ${BLUE}44`, color: INK }}>
+              {APP_LANGS.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
+            </select>
+          </label>
+          <label className="text-xs flex flex-col gap-1" style={{ color: INK + "aa" }}>
+            Qué textos
+            <select value={scope} onChange={(e) => { setScope(e.target.value); setLimit(40); }} className="rounded-xl px-3 py-2 text-sm" style={{ border: `1px solid ${BLUE}44`, color: INK }}>
+              <option value="app">Pantallas de la app ({appKeys.length})</option>
+              <option value="server">Preguntas de los flujos guiados ({serverKeys.length})</option>
+            </select>
+          </label>
+        </div>
+        <input
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setLimit(40); }}
+          placeholder="Buscar: escribe una palabra que aparezca en el texto"
+          className="rounded-xl px-3 py-2 text-sm"
+          style={{ border: `1px solid ${BLUE}44`, color: INK }}
+        />
+        <label className="text-sm flex items-center gap-2" style={{ color: INK }}>
+          <input type="checkbox" checked={onlyChanged} onChange={(e) => setOnlyChanged(e.target.checked)} />
+          Ver solo los que cambié ({changedCount} en este idioma, {totalChanged} en total)
+        </label>
+        <div className="text-xs" style={{ color: INK + "88" }}>{filtered.length} textos encontrados</div>
+      </div>
+
+      {filtered.slice(0, limit).map((k) => {
+        const orig = (originals[lang] || {})[k];
+        const esText = (originals.es || {})[k] || "";
+        const isChanged = k in langOver;
+        const current = isChanged ? langOver[k] : orig !== undefined ? orig : esText;
+        return (
+          <TextRow key={scope + lang + k} itemKey={k} scope={scope} lang={lang} original={orig} esText={esText} current={current} isChanged={isChanged} onSave={saveText} />
+        );
+      })}
+      {filtered.length > limit && (
+        <button onClick={() => setLimit(limit + 40)} className="px-4 py-3 rounded-xl font-semibold" style={{ background: BLUE_SOFT, color: BLUE }}>
+          Mostrar más ({filtered.length - limit} restantes)
+        </button>
+      )}
+    </>
+  );
+}
+
+const IS_TEXT_ADMIN = new URLSearchParams(window.location.search).has("textos");
+ReactDOM.createRoot(document.getElementById("root")).render(IS_TEXT_ADMIN ? <TextAdmin /> : <DemocraciaPorPromedioConectada />);
 </script>
 </body>
 </html>

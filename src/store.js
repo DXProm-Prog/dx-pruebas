@@ -267,4 +267,25 @@ async function pingDatabase() {
   return true;
 }
 
-module.exports = { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase };
+// Textos editados desde el panel de edición. Tabla "text_overrides":
+// scope ("app" = textos de la pantalla, "server" = textos que arma el
+// servidor, como las preguntas de los flujos), lang, key, value.
+async function loadTextOverrides() {
+  const { data, error } = await supabase.from("text_overrides").select("scope, lang, key, value");
+  if (error) throw new Error(`Supabase (textos): ${error.message}`);
+  return data || [];
+}
+
+async function saveTextOverride(scope, lang, key, value) {
+  const { error } = await supabase
+    .from("text_overrides")
+    .upsert({ scope, lang, key, value, updated_at: new Date().toISOString() }, { onConflict: "scope,lang,key" });
+  if (error) throw new Error(`Supabase (guardar texto): ${error.message}`);
+}
+
+async function deleteTextOverride(scope, lang, key) {
+  const { error } = await supabase.from("text_overrides").delete().eq("scope", scope).eq("lang", lang).eq("key", key);
+  if (error) throw new Error(`Supabase (borrar texto): ${error.message}`);
+}
+
+module.exports = { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase, loadTextOverrides, saveTextOverride, deleteTextOverride };

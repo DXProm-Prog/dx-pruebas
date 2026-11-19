@@ -3,12 +3,12 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 
-const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase } = require("./store");
+const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase, loadTextOverrides, saveTextOverride, deleteTextOverride } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
 const { notifyNewJoinRequest, notifyGroupCreated, notifyMemberJoined, notifyResultsToMembers, notifyProposalWinner, notifyInvitation, isConfigured: emailConfigured } = require("./email");
-const { t } = require("./strings");
+const { t, STRINGS, setOverrides } = require("./strings");
 const { computeStageResult, drawResponsabilidades } = require("./flowEngine");
 const { TEMPLATES, rolesFromNames } = require("./templates");
 const { localizeCopy } = require("./localize");
@@ -152,6 +152,102 @@ app.get("/api/keepalive", async (req, res) => {
     res.json({ ok: true, timestamp: new Date().toISOString() });
   } catch (err) {
     res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// ─── Panel de edición de textos ───────────────────────────────────────
+// Permite cambiar cualquier texto de la app, en cualquier idioma, sin
+// tocar el código. Los cambios se guardan en Supabase (text_overrides) y
+// se aplican al instante. Las rutas de escritura piden la contraseña
+// ADMIN_PASSWORD (variable de entorno en Render).
+let textOverrides = { app: {}, server: {} };
+let textOverridesError = null;
+
+async function refreshTextOverrides() {
+  try {
+    const rows = await loadTextOverrides();
+    const next = { app: {}, server: {} };
+    rows.forEach((r) => {
+      if (!next[r.scope]) return;
+      if (!next[r.scope][r.lang]) next[r.scope][r.lang] = {};
+      next[r.scope][r.lang][r.key] = r.value;
+    });
+    textOverrides = next;
+    textOverridesError = null;
+    setOverrides(next.server);
+  } catch (err) {
+    // Si la tabla aún no existe, la app sigue funcionando con los textos
+    // originales; solo el panel avisa que falta crearla.
+    textOverridesError = err.message;
+    console.error("No se pudieron cargar los textos editados:", err.message);
+  }
+}
+refreshTextOverrides();
+
+// Freno contra adivinar la contraseña: 10 intentos fallidos por IP
+// bloquean esa IP 15 minutos.
+const failedLogins = new Map();
+function adminLocked(ip) {
+  const rec = failedLogins.get(ip);
+  return rec && rec.count >= 10 && Date.now() - rec.first < 15 * 60 * 1000;
+}
+function checkAdmin(req, res) {
+  const expected = process.env.ADMIN_PASSWORD;
+  if (!expected) {
+    res.status(503).json({ error: "Falta configurar ADMIN_PASSWORD en Render → Environment." });
+    return false;
+  }
+  const ip = req.headers["x-forwarded-for"] || req.ip || "?";
+  if (adminLocked(ip)) {
+    res.status(429).json({ error: "Demasiados intentos. Espera 15 minutos." });
+    return false;
+  }
+  const given = String(req.headers["x-admin-password"] || "");
+  const a = crypto.createHash("sha256").update(given).digest();
+  const b = crypto.createHash("sha256").update(expected).digest();
+  if (!crypto.timingSafeEqual(a, b)) {
+    const rec = failedLogins.get(ip);
+    if (!rec || Date.now() - rec.first > 15 * 60 * 1000) failedLogins.set(ip, { count: 1, first: Date.now() });
+    else rec.count += 1;
+    res.status(401).json({ error: "Contraseña incorrecta." });
+    return false;
+  }
+  failedLogins.delete(ip);
+  return true;
+}
+
+// Pública: la app la pide al abrir para mostrar los textos cambiados.
+app.get("/api/texts", (req, res) => {
+  res.json({ overrides: textOverrides.app });
+});
+
+// Para el panel: textos originales del servidor + todos los cambios.
+app.get("/api/admin/texts", async (req, res) => {
+  if (!checkAdmin(req, res)) return;
+  await refreshTextOverrides();
+  res.json({ serverStrings: STRINGS, overrides: textOverrides, tableError: textOverridesError });
+});
+
+// Guarda (o, si value viene vacío, borra y regresa al original) un texto.
+app.put("/api/admin/texts", async (req, res) => {
+  if (!checkAdmin(req, res)) return;
+  const { scope, lang, key, value } = req.body || {};
+  if (!["app", "server"].includes(scope)) return res.status(400).json({ error: "scope inválido" });
+  if (!SUPPORTED_LANGS.includes(lang)) return res.status(400).json({ error: "Idioma inválido" });
+  if (!key || typeof key !== "string" || key.length > 200) return res.status(400).json({ error: "Clave inválida" });
+  if (scope === "server" && !(key in STRINGS.es)) return res.status(400).json({ error: "Esa clave no existe en el servidor" });
+  try {
+    if (value === null || value === undefined || String(value).trim() === "") {
+      await deleteTextOverride(scope, lang, key);
+    } else {
+      if (String(value).length > 5000) return res.status(400).json({ error: "Texto demasiado largo" });
+      await saveTextOverride(scope, lang, key, String(value));
+    }
+    await refreshTextOverrides();
+    if (textOverridesError) return res.status(500).json({ error: textOverridesError });
+    res.json({ ok: true, overrides: textOverrides });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
