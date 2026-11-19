@@ -4702,7 +4702,9 @@ function HomeScreen({ onChooseExplain, onChoosePromedio, onChooseMayoria, onChoo
   );
 }
 
-const APP_SHARE_URL = "https://dxprom-prog.github.io/dx-pruebas/";
+// La dirección que se comparte es la misma desde la que se abrió la app,
+// así funciona igual con github.io o con un dominio propio.
+const APP_SHARE_URL = /^https?:$/.test(window.location.protocol) ? window.location.origin + window.location.pathname : "https://dxprom-prog.github.io/dx-pruebas/";
 
 function SharePromoScreen({ onBack }) {
   const lang = useLang();
