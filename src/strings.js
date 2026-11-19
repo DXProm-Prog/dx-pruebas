@@ -634,7 +634,9 @@ function setOverrides(obj) {
 }
 
 function t(key, lang, vars = {}) {
-  const dict = STRINGS[lang] || STRINGS.es;
+  // Un idioma agregado desde el panel no tiene textos aquí: lo que aún no
+  // se traduce se muestra en inglés.
+  const dict = STRINGS[lang] || (OVERRIDES[lang] ? STRINGS.en : STRINGS.es);
   const over = OVERRIDES[lang] || {};
   const overEs = OVERRIDES.es || {};
   let str = over[key] || dict[key] || overEs[key] || STRINGS.es[key] || key;

@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
 
-const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase, loadTextOverrides, saveTextOverride, deleteTextOverride } = require("./store");
+const { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase, loadTextOverrides, saveTextOverride, deleteTextOverride, saveTextOverrides, deleteLangOverrides, deleteTextKeys } = require("./store");
 const { computeTrimmedMean, suggestedMinPercent } = require("./trimmedMean");
 const { tallyOptions, determineWinner, runInstantRunoff } = require("./tally");
 const { toCsv } = require("./csv");
@@ -31,8 +31,13 @@ const SUPPORTED_LANGS = ["es", "en", "fr", "it", "de", "pt", "ar", "bn", "sq", "
 
 // Idioma de quien hace la petición. La app manda ?lang=xx en cada
 // llamada; si falta, se usa el idioma con el que se creó el grupo.
+// Además de los 10 de base, acepta los idiomas agregados desde el panel
+// de edición de textos (textOverrides.langs, más abajo).
+function isSupportedLang(code) {
+  return SUPPORTED_LANGS.includes(code) || Boolean(textOverrides.langs[code]);
+}
 function requestLang(req) {
-  return req.query && SUPPORTED_LANGS.includes(req.query.lang) ? req.query.lang : null;
+  return req.query && isSupportedLang(req.query.lang) ? req.query.lang : null;
 }
 function langOf(req, group) {
   return requestLang(req) || (group && group.lang) || "es";
@@ -108,7 +113,7 @@ app.post("/api/groups", async (req, res) => {
   db.groups[code] = {
     code,
     name,
-    lang: SUPPORTED_LANGS.includes(lang) ? lang : "es",
+    lang: isSupportedLang(lang) ? lang : "es",
     admin: { id: adminId, name: adminName, email: adminEmail || null },
     requireApproval: requireApproval !== false,
     secretResponses: secretResponses !== false,
@@ -160,21 +165,39 @@ app.get("/api/keepalive", async (req, res) => {
 // tocar el código. Los cambios se guardan en Supabase (text_overrides) y
 // se aplican al instante. Las rutas de escritura piden la contraseña
 // ADMIN_PASSWORD (variable de entorno en Render).
-let textOverrides = { app: {}, server: {} };
+// drafts: cambios guardados "sin publicar" (scope "draft_app" o
+// "draft_server" en la tabla). Solo los ve el panel, nunca la app.
+let textOverrides = { app: {}, server: {}, langs: {}, drafts: { app: {}, server: {} } };
 let textOverridesError = null;
 
 async function refreshTextOverrides() {
   try {
     const rows = await loadTextOverrides();
-    const next = { app: {}, server: {} };
+    const next = { app: {}, server: {}, langs: {}, drafts: { app: {}, server: {} } };
     rows.forEach((r) => {
+      if (r.scope === "draft_app" || r.scope === "draft_server") {
+        const d = next.drafts[r.scope.slice(6)];
+        if (!d[r.lang]) d[r.lang] = {};
+        d[r.lang][r.key] = r.value;
+        return;
+      }
+      // Idiomas nuevos: scope "langs", lang = código, key "name" o "dir".
+      if (r.scope === "langs") {
+        if (!next.langs[r.lang]) next.langs[r.lang] = { name: r.lang, dir: "ltr" };
+        next.langs[r.lang][r.key] = r.value;
+        return;
+      }
       if (!next[r.scope]) return;
       if (!next[r.scope][r.lang]) next[r.scope][r.lang] = {};
       next[r.scope][r.lang][r.key] = r.value;
     });
     textOverrides = next;
     textOverridesError = null;
-    setOverrides(next.server);
+    // Un idioma nuevo sin ningún texto del servidor traducido igual debe
+    // existir para que t() use el inglés como base.
+    const serverOver = { ...next.server };
+    Object.keys(next.langs).forEach((code) => { if (!serverOver[code]) serverOver[code] = {}; });
+    setOverrides(serverOver);
   } catch (err) {
     // Si la tabla aún no existe, la app sigue funcionando con los textos
     // originales; solo el panel avisa que falta crearla.
@@ -218,7 +241,8 @@ function checkAdmin(req, res) {
 
 // Pública: la app la pide al abrir para mostrar los textos cambiados.
 app.get("/api/texts", (req, res) => {
-  res.json({ overrides: textOverrides.app });
+  const langs = Object.entries(textOverrides.langs).map(([code, l]) => ({ code, name: l.name, dir: l.dir === "rtl" ? "rtl" : "ltr" }));
+  res.json({ overrides: textOverrides.app, langs });
 });
 
 // Para el panel: textos originales del servidor + todos los cambios.
@@ -231,20 +255,93 @@ app.get("/api/admin/texts", async (req, res) => {
 // Guarda (o, si value viene vacío, borra y regresa al original) un texto.
 app.put("/api/admin/texts", async (req, res) => {
   if (!checkAdmin(req, res)) return;
-  const { scope, lang, key, value } = req.body || {};
+  const { scope, lang, key, value, draft } = req.body || {};
   if (!["app", "server"].includes(scope)) return res.status(400).json({ error: "scope inválido" });
-  if (!SUPPORTED_LANGS.includes(lang)) return res.status(400).json({ error: "Idioma inválido" });
+  if (!isSupportedLang(lang)) return res.status(400).json({ error: "Idioma inválido" });
   if (!key || typeof key !== "string" || key.length > 200) return res.status(400).json({ error: "Clave inválida" });
   if (scope === "server" && !(key in STRINGS.es)) return res.status(400).json({ error: "Esa clave no existe en el servidor" });
+  // draft: true guarda (o, con value vacío, descarta) un borrador sin
+  // publicar. Sin draft, se publica, y su borrador (si había) se borra.
+  const target = draft ? "draft_" + scope : scope;
   try {
     if (value === null || value === undefined || String(value).trim() === "") {
-      await deleteTextOverride(scope, lang, key);
+      await deleteTextOverride(target, lang, key);
     } else {
       if (String(value).length > 5000) return res.status(400).json({ error: "Texto demasiado largo" });
-      await saveTextOverride(scope, lang, key, String(value));
+      await saveTextOverride(target, lang, key, String(value));
+      if (!draft) await deleteTextKeys("draft_" + scope, lang, [key]);
     }
     await refreshTextOverrides();
     if (textOverridesError) return res.status(500).json({ error: textOverridesError });
+    res.json({ ok: true, overrides: textOverrides });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Guarda varios textos de una vez (botón "Guardar todos" del panel).
+app.put("/api/admin/texts/bulk", async (req, res) => {
+  if (!checkAdmin(req, res)) return;
+  const items = (req.body && req.body.items) || [];
+  if (!Array.isArray(items) || !items.length || items.length > 1000) return res.status(400).json({ error: "Lista inválida" });
+  for (const it of items) {
+    if (!it || !["app", "server"].includes(it.scope)) return res.status(400).json({ error: "scope inválido" });
+    if (!isSupportedLang(it.lang)) return res.status(400).json({ error: "Idioma inválido" });
+    if (!it.key || typeof it.key !== "string" || it.key.length > 200) return res.status(400).json({ error: "Clave inválida" });
+    if (it.scope === "server" && !(it.key in STRINGS.es)) return res.status(400).json({ error: "Esa clave no existe en el servidor" });
+    if (typeof it.value !== "string" || !it.value.trim() || it.value.length > 5000) return res.status(400).json({ error: `Texto vacío o demasiado largo: ${it.key}` });
+  }
+  // draft: true = "Guardar sin publicar"; si no, "Publicar todos" (y se
+  // borran los borradores de esos textos).
+  const draft = Boolean(req.body.draft);
+  try {
+    await saveTextOverrides(items.map((it) => ({ scope: draft ? "draft_" + it.scope : it.scope, lang: it.lang, key: it.key, value: it.value })));
+    if (!draft) {
+      const groups = {};
+      items.forEach((it) => { const g = `${it.scope}|${it.lang}`; (groups[g] = groups[g] || []).push(it.key); });
+      for (const [g, keys] of Object.entries(groups)) {
+        const [sc, lg] = g.split("|");
+        await deleteTextKeys("draft_" + sc, lg, keys);
+      }
+    }
+    await refreshTextOverrides();
+    if (textOverridesError) return res.status(500).json({ error: textOverridesError });
+    res.json({ ok: true, overrides: textOverrides });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Agrega un idioma nuevo (o cambia su nombre o dirección de escritura).
+app.post("/api/admin/langs", async (req, res) => {
+  if (!checkAdmin(req, res)) return;
+  const code = String((req.body && req.body.code) || "").trim().toLowerCase();
+  const name = String((req.body && req.body.name) || "").trim();
+  const dir = req.body && req.body.dir === "rtl" ? "rtl" : "ltr";
+  if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(code)) return res.status(400).json({ error: "El código debe tener 2 o 3 letras, por ejemplo nl o tr." });
+  if (SUPPORTED_LANGS.includes(code)) return res.status(400).json({ error: "Ese idioma ya viene incluido en la app." });
+  if (!name || name.length > 40) return res.status(400).json({ error: "Escribe el nombre del idioma (máximo 40 letras)." });
+  try {
+    await saveTextOverrides([
+      { scope: "langs", lang: code, key: "name", value: name },
+      { scope: "langs", lang: code, key: "dir", value: dir },
+    ]);
+    await refreshTextOverrides();
+    if (textOverridesError) return res.status(500).json({ error: textOverridesError });
+    res.json({ ok: true, overrides: textOverrides });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Borra un idioma agregado desde el panel (los 10 de base no se pueden borrar).
+app.delete("/api/admin/langs/:code", async (req, res) => {
+  if (!checkAdmin(req, res)) return;
+  const code = req.params.code;
+  if (SUPPORTED_LANGS.includes(code) || !textOverrides.langs[code]) return res.status(400).json({ error: "Solo se pueden borrar idiomas agregados desde el panel." });
+  try {
+    await deleteLangOverrides(code);
+    await refreshTextOverrides();
     res.json({ ok: true, overrides: textOverrides });
   } catch (err) {
     res.status(500).json({ error: err.message });

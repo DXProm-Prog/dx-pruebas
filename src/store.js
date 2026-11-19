@@ -288,4 +288,26 @@ async function deleteTextOverride(scope, lang, key) {
   if (error) throw new Error(`Supabase (borrar texto): ${error.message}`);
 }
 
-module.exports = { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase, loadTextOverrides, saveTextOverride, deleteTextOverride };
+async function saveTextOverrides(rows) {
+  if (!rows.length) return;
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("text_overrides")
+    .upsert(rows.map((r) => ({ ...r, updated_at: now })), { onConflict: "scope,lang,key" });
+  if (error) throw new Error(`Supabase (guardar textos): ${error.message}`);
+}
+
+// Borra varias claves de un mismo scope e idioma (ej. borradores ya publicados).
+async function deleteTextKeys(scope, lang, keys) {
+  if (!keys.length) return;
+  const { error } = await supabase.from("text_overrides").delete().eq("scope", scope).eq("lang", lang).in("key", keys);
+  if (error) throw new Error(`Supabase (borrar borradores): ${error.message}`);
+}
+
+// Borra un idioma agregado desde el panel, con todas sus traducciones.
+async function deleteLangOverrides(lang) {
+  const { error } = await supabase.from("text_overrides").delete().eq("lang", lang);
+  if (error) throw new Error(`Supabase (borrar idioma): ${error.message}`);
+}
+
+module.exports = { load, save, generateCode, generateId, getGroupsForUser, ensureProfile, pingDatabase, loadTextOverrides, saveTextOverride, deleteTextOverride, saveTextOverrides, deleteLangOverrides, deleteTextKeys };
